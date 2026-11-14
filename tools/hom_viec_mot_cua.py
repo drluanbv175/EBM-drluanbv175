@@ -54,6 +54,17 @@ def tuoi_gio(d: dict, bay_gio: datetime | None = None) -> float | None:
         return None
 
 
+def _muc_chua_do(d: dict) -> list:
+    """Mục ⚪ «chưa đo được» của bảng (khoá `chua_do`, 14/11/2026). Bảng cũ không có khoá ⇒ []. Khoá có mà sai kiểu (không phải
+    danh sách) ⇒ MỘT mục ⚪ nói rõ — bảng hỏng không bao giờ đọc thành «không còn gì chưa đo»."""
+    v = d.get("chua_do")
+    if v is None:
+        return []
+    if isinstance(v, list):
+        return v
+    return [f"khoá chua_do của bảng sai kiểu ({type(v).__name__}) — làm mới: python3 tools/hom_viec_mot_cua.py --lam-moi"]
+
+
 def dong_hom(d: dict | None, bay_gio: datetime | None = None, toi_da: int = TOI_DA_DONG) -> list[str]:
     """Các dòng in ra (≤ toi_da). Thuần — không I/O."""
     if d is None:
@@ -72,13 +83,20 @@ def dong_hom(d: dict | None, bay_gio: datetime | None = None, toi_da: int = TOI_
         ra.append(f"  {bieu} {v.get('ai')} {str(v.get('viec', ''))[:150]}")
     con = len(bac_si) + len(chuong) - cho
     chet = d.get("chet") or []
+    chua_do = _muc_chua_do(d)
     duoi = []
     if con > 0:
         duoi.append(f"+{con} việc nữa")
+    if not bac_si and not chuong:
+        # 14/11/2026: «🟢» CHỈ khi không còn mục nào chưa đo được — giác quan chết LẪN mục ⚪ của giác quan còn sống (vd lịch nền
+        # «KẾT THÚC không đọc được mã», tác vụ trước mốc dấu vết). Trước đó mục ⚪ không vào bảng ⇒ hòm nói «không có việc».
+        n_chua = len(chet) + len(chua_do)
+        duoi.append(f"⚪ không có việc đỏ chờ bác sĩ, còn {n_chua} mục chưa đo được" if n_chua
+                    else "🟢 không có việc nào chờ bác sĩ")
     if chet:
         duoi.append(f"⚪ {len(chet)} giác quan không đo được")
-    if not bac_si and not chuong and not chet:
-        duoi.append("🟢 không có việc nào chờ bác sĩ")
+    if chua_do:
+        duoi.append(f"⚪ {len(chua_do)} mục chưa đo được (vd {str(chua_do[0])[:90]})")
     ra.append("  " + " · ".join(duoi + ["đủ lệnh: python3 tools/tu_de_xuat_viec.py"]))
     return ra[:toi_da]
 

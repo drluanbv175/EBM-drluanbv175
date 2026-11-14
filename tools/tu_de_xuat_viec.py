@@ -71,6 +71,11 @@ _SO_GIAC_QUAN = {"chay": 0}
 _GIAC_QUAN_CHET: list[str] = []
 # Dòng THÔNG TIN (ⓘ) — sự kiện đã qua, không còn việc: in riêng, KHÔNG tính vào danh sách việc (để «🟢 không còn việc» vẫn in được).
 _THONG_TIN: list[str] = []
+# Mục CHƯA ĐO ĐƯỢC (⚪, 14/11/2026, sau thẩm định #356): giác quan CHẠY ĐƯỢC nhưng một phần tử của nó không đo được — vd một
+# tác vụ lịch nền trước mốc dấu vết, một kỳ có dòng KẾT THÚC mà không đọc được mã. Khác giác quan CHẾT (cả công cụ hỏng) nên KHÔNG
+# trừ vào «Giác quan đo được X/Y»; nhưng như giác quan chết, còn mục ⚪ thì bảng và hòm việc KHÔNG BAO GIỜ nói «🟢 không còn việc»
+# (BH08: «không đo được» không phải «ổn»). Trước đó `khong_do_duoc` của cảm biến lịch nền bị bỏ rơi ⇒ im lặng như xanh.
+_CHUA_DO: list[str] = []
 
 
 def _dong_kiem_ke_gradeby(out: str) -> str | None:
@@ -824,6 +829,45 @@ def phan_loai_lich_nen(phat_hien: list[dict]) -> tuple[list[tuple[int, str, str,
     tt = [f"{cu} kỳ lịch nền CŨ đã lỡ nhưng kỳ sau đã chạy lại — không còn việc phải làm "
           "(chi tiết: python3 tools/kiem_lich_nen.py)"] if cu else []
     return viec, tt
+
+
+def muc_chua_do_lich_nen(khong_do_duoc) -> list[str]:
+    """Dòng ⚪ «chưa đo được» từ `khong_do_duoc` của `kiem_lich_nen.kiem()` (14/11/2026, sau thẩm định #356). Thuần.
+
+    Vì sao: bảng chỉ đọc `phat_hien` của cảm biến người chết ⇒ mọi mục «không đo được» (kỳ có KẾT THÚC mà không đọc được mã — trạng
+    thái ⚪ mới của #356 —, tác vụ trước mốc dấu vết, máy không có bản chạy, log/thư mục vắng, loại dấu vết lạ) biến mất, và bảng
+    vẫn in «🟢 KHÔNG CÒN VIỆC NÀO» — chỉ số gộp đọc thành kết luận về toàn bộ. Nay MỖI mục thành một dòng ⚪ (không phải việc: không
+    có lệnh nào làm nó hết ⚪ ngay, nên không đẩy vào danh sách việc 🛎). Kiểu sai (không phải danh sách) ⇒ MỘT dòng ⚪ nói rõ,
+    không bao giờ coi là rỗng."""
+    if not isinstance(khong_do_duoc, (list, tuple)):
+        return [f"lịch nền — khong_do_duoc sai kiểu ({type(khong_do_duoc).__name__}), không đọc được phần chưa đo "
+                "(chi tiết: python3 tools/kiem_lich_nen.py)"]
+    return [f"lịch nền — {str(x)[:220]}" for x in khong_do_duoc]
+
+
+def giac_quan_nguoi_chet_lich_nen(kiem_fn=None) -> list[tuple[int, str, str, str]]:
+    """⑦f CẢM BIẾN NGƯỜI CHẾT lịch nền (T2-01) — tách khỏi `main()` 14/11/2026 để nối dây kiểm được. CHỈ ĐỌC.
+
+    `phat_hien` ⇒ việc 🛎 + dòng ⓘ qua `phan_loai_lich_nen` (không đổi); `khong_do_duoc` ⇒ dòng ⚪ «chưa đo được» vào `_CHUA_DO`
+    qua `muc_chua_do_lich_nen`. Công cụ hỏng / kết quả thiếu khoá ⇒ giác quan chết (⚪), không ghi nửa chừng. `kiem_fn` chỉ để test
+    thay phép đo (không đọc log/sổ thật)."""
+    _SO_GIAC_QUAN["chay"] += 1
+    try:
+        if kiem_fn is None:
+            _sp_kln = _ilu_mea.spec_from_file_location("_kln_tdxv", Path(__file__).resolve().parent / "kiem_lich_nen.py")
+            _kln = _ilu_mea.module_from_spec(_sp_kln)
+            _sp_kln.loader.exec_module(_kln)
+            _kq_kln = _kln.kiem()
+        else:
+            _kq_kln = kiem_fn()
+        _viec, _tt = phan_loai_lich_nen(_kq_kln["phat_hien"])
+        _chua = muc_chua_do_lich_nen(_kq_kln["khong_do_duoc"])
+    except Exception as _exc:  # noqa: BLE001 — cảm biến hỏng phải hiện ra, không được im lặng
+        _ghi_chet(["python3", "tools/kiem_lich_nen.py"], f"lỗi {type(_exc).__name__}")
+        return []
+    _THONG_TIN.extend(_tt)
+    _CHUA_DO.extend(_chua)
+    return _viec
 
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -1705,14 +1749,36 @@ def giac_quan_chu_de_0_lien(dash_dir: Path, san_luong: Path | None = None
     return viec, tt
 
 
-def ghi_json(de_xuat: list, chet: list[str], tep: Path, so_giac_quan: int) -> None:
-    """Bảng đề xuất dạng máy đọc cho hòm việc một cửa (`tools/hom_viec_mot_cua.py`) — ghi nguyên tử, ngoài git (state/)."""
+def ghi_json(de_xuat: list, chet: list[str], tep: Path, so_giac_quan: int, chua_do: list[str] | None = None) -> None:
+    """Bảng đề xuất dạng máy đọc cho hòm việc một cửa (`tools/hom_viec_mot_cua.py`) — ghi nguyên tử, ngoài git (state/).
+
+    `chua_do` (14/11/2026): mục ⚪ «chưa đo được» của giác quan còn sống (`_CHUA_DO`) — khoá riêng, KHÔNG trộn vào `chet` (đếm
+    giác quan chết). Bảng cũ không có khoá này vẫn đọc được (hòm coi như rỗng)."""
     tep.parent.mkdir(parents=True, exist_ok=True)
     tam = tep.with_name(tep.name + f".tam-{os.getpid()}")
     tam.write_text(json.dumps({"sinh_luc": dt.datetime.now().isoformat(timespec="seconds"), "giac_quan": so_giac_quan,
-                               "chet": chet, "viec": [{"uu": u, "ai": a, "viec": v, "lenh": lenh} for u, a, v, lenh in de_xuat]},
+                               "chet": chet, "chua_do": list(chua_do or []),
+                               "viec": [{"uu": u, "ai": a, "viec": v, "lenh": lenh} for u, a, v, lenh in de_xuat]},
                               ensure_ascii=False, indent=1) + "\n", encoding="utf-8", newline="\n")
     os.replace(tam, tep)
+
+
+def dong_tom_tat(n_viec: int, n_chet: int, n_chua: int) -> list[str]:
+    """Dòng tóm tắt đầu bảng khi KHÔNG có việc (thuần, 14/11/2026). Có việc ⇒ [] (bảng tự liệt kê từng dòng).
+
+    «🟢 KHÔNG CÒN VIỆC NÀO» CHỈ khi không việc, không giác quan chết (`n_chet`) VÀ không mục ⚪ chưa đo được (`n_chua`). Còn ⚪ ⇒
+    «không có việc đỏ, còn N mục chưa đo được» — trước đó mục ⚪ của giác quan còn sống không được đếm nên dòng xanh vẫn in
+    (chỉ số gộp đọc thành kết luận về toàn bộ, BH08/BH27)."""
+    if n_viec:
+        return []
+    n = n_chet + n_chua
+    if not n:
+        return ["  🟢 KHÔNG CÒN VIỆC NÀO các bộ đếm nhìn thấy — «đủ rồi» là kết quả",
+                "     hợp lệ; nghỉ cũng là một trạng thái đúng của hệ."]
+    chi_tiet = " · ".join(x for x in (f"{n_chet} giác quan hỏng" if n_chet else "",
+                                      f"{n_chua} mục ⚪ của giác quan còn sống" if n_chua else "") if x)
+    return [f"  ⚪ Không có việc đỏ, còn {n} mục chưa đo được ({chi_tiet}) — KHÔNG THỂ nói «đủ rồi»:",
+            "     im lặng của cảm biến hỏng/chưa đo KHÔNG phải bằng chứng không có việc (BH08/BH27)."]
 
 
 NGOAI_GIAM_SAT_DA_RA = REPO / "state" / "ngoai-giam-sat-da-ra.json"
@@ -2011,16 +2077,8 @@ def main() -> int:
     # ⑦f CẢM BIẾN NGƯỜI CHẾT (T2-01, 20/09/2026): mỗi KỲ lịch nền phải để lại dấu vết đầu ra ĐÚNG HẸN. ⑦d ở trên chỉ so
     # «PASS cuối» nên một lượt chạy tay chen giữa làm kỳ lỡ vô hình (đúng ca 14/09: 3/4 tác vụ bị xoá, không cảm biến nào
     # báo). Nhãn 🛎 = máy làm được (chạy bù) nhưng chưa ai chạy — luôn hiện ở hòm thư bác sĩ (T2-02).
-    _SO_GIAC_QUAN["chay"] += 1
-    try:
-        _sp_kln = _ilu_mea.spec_from_file_location("_kln_tdxv", Path(__file__).resolve().parent / "kiem_lich_nen.py")
-        _kln = _ilu_mea.module_from_spec(_sp_kln)
-        _sp_kln.loader.exec_module(_kln)
-        _viec, _tt = phan_loai_lich_nen(_kln.kiem()["phat_hien"])
-        de_xuat += _viec
-        _THONG_TIN.extend(_tt)
-    except Exception as _exc:  # noqa: BLE001 — cảm biến hỏng phải hiện ra, không được im lặng
-        _ghi_chet(["python3", "tools/kiem_lich_nen.py"], f"lỗi {type(_exc).__name__}")
+    # 14/11/2026: `khong_do_duoc` của cảm biến (kể cả «KẾT THÚC không đọc được mã») ⇒ dòng ⚪ — xem `giac_quan_nguoi_chet_lich_nen`.
+    de_xuat += giac_quan_nguoi_chet_lich_nen()
 
     # ⑦f-bis QUYỀN LƯỢT LỊCH (28/10/2026, BH173) — xem docstring `giac_quan_quyen_lich_nen`.
     de_xuat += giac_quan_quyen_lich_nen()
@@ -2170,21 +2228,19 @@ def main() -> int:
         de_xuat.append((uu, "🤖", dong, lenh))
     if a.json:
         de_xuat.sort(key=lambda x: x[0])
-        ghi_json(de_xuat, list(_GIAC_QUAN_CHET), a.json, _SO_GIAC_QUAN["chay"])
+        ghi_json(de_xuat, list(_GIAC_QUAN_CHET), a.json, _SO_GIAC_QUAN["chay"], list(_CHUA_DO))
 
     hom_nay = dt.date.today().isoformat()
     print("=" * 66)
     print(f"  HỆ TỰ ĐỀ XUẤT VIỆC — {hom_nay} (sinh từ bộ đếm sống, không cảm giác)")
     print("=" * 66)
-    n_chay, n_chet = _SO_GIAC_QUAN["chay"], len(_GIAC_QUAN_CHET)
+    n_chay, n_chet, n_chua = _SO_GIAC_QUAN["chay"], len(_GIAC_QUAN_CHET), len(_CHUA_DO)
     print(f"  Giác quan đo được: {n_chay - n_chet}/{n_chay}"
-          + (f" — {n_chet} KHÔNG đo được (xem cuối bảng)" if n_chet else ""))
-    if not de_xuat and not n_chet:
-        print("  🟢 KHÔNG CÒN VIỆC NÀO các bộ đếm nhìn thấy — «đủ rồi» là kết quả")
-        print("     hợp lệ; nghỉ cũng là một trạng thái đúng của hệ.")
-    elif not de_xuat:
-        print("  ⚪ KHÔNG THỂ nói «đủ rồi»: còn giác quan không đo được — im lặng của cảm biến hỏng")
-        print("     KHÔNG phải bằng chứng không có việc (BH08/BH27).")
+          + (f" — {n_chet} KHÔNG đo được" if n_chet else "")
+          + (f" · {n_chua} mục ⚪ chưa đo được" if n_chua else "")
+          + (" (xem cuối bảng)" if n_chet or n_chua else ""))
+    for _dong_tom in dong_tom_tat(len(de_xuat), n_chet, n_chua):
+        print(_dong_tom)
     if de_xuat:
         de_xuat.sort(key=lambda x: x[0])
         for uu, ai, viec, lenh in de_xuat:
@@ -2192,6 +2248,8 @@ def main() -> int:
             print(f"       → {lenh}")
     for x in _GIAC_QUAN_CHET:
         print(f"  ⚪ giác quan KHÔNG đo được: {x}")
+    for x in _CHUA_DO:
+        print(f"  ⚪ chưa đo được: {x}")
     for x in _THONG_TIN:
         print(f"  ⓘ {x}")
     if not a.gon:
