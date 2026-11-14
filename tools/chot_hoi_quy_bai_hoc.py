@@ -9517,7 +9517,10 @@ def bh173_quyen_luot_lich_khai_dung_lenh():
     Kiểm HÀNH VI: (1) MỌI lệnh trong backtick của SKILL.md các tác vụ đã khai đều được `sync/quyen-lich-nen.json` phủ (thêm lệnh
     mà quên khai ⇒ đỏ ở đây, TRƯỚC khi lượt lịch hỏng); (2) tệp khai KHÔNG chứa lệnh ghi quyết định thay bác sĩ / `--ap-dung`;
     (3) `ap_dung` trên settings giả chỉ THÊM đúng mục khai, sao lưu, chạy lại không thêm trùng; (4) bảng tự đề xuất có gọi
-    giác quan này (BH41)."""
+    giác quan này (BH41). Mở rộng 14/11/2026 (lịch nền phải GÃY ỒN): (5) mọi tác vụ trong sync/lich-nen-ky-vong.json có dấu
+    vết máy-đọc-được (không `khong-co`); (6) tác vụ tháng tiền kiểm `quyen_lich_nen --tac-vu` TRƯỚC bước 1 và DỪNG khi thiếu
+    quyền, `--tac-vu` đo đúng tập (tác vụ khác không làm dừng oan, tên sai không thành «đủ»); (7) `ghi_dau_vet_lich` không
+    ghi chen log của chủ khác."""
     import json as _json
     import tempfile as _tf
     Q = _nap(REPO / "tools" / "quyen_lich_nen.py", "_bh173_qln")
@@ -9550,7 +9553,47 @@ def bh173_quyen_luot_lich_khai_dung_lenh():
             if "_qln.kiem()" in x and not x.lstrip().startswith("#")]
     if not dong:
         return False, "bảng tự đề xuất không gọi giác quan quyền lượt lịch — có công cụ mà không ai gọi (BH41)"
-    return True, "mọi lệnh tác vụ lịch đã khai; không khai lệnh ghi quyết định; ap_dung chỉ thêm + sao lưu; giác quan có gọi"
+    # 14/11/2026 — GÃY ỒN, không gãy âm thầm. (5) Mọi tác vụ trong sổ kỳ vọng phải để lại dấu vết máy-đọc-được: `khong-co`
+    # (tác vụ kỹ thuật tháng tới 14/11) ⇒ cảm biến người chết chỉ in ⚪, lượt bị xoá/cắt ngang vô hình.
+    ky = _json.loads((REPO / "sync" / "lich-nen-ky-vong.json").read_text(encoding="utf-8"))
+    mu = [t["id"] for t in ky.get("tac_vu", []) if (t.get("dau_vet") or {}).get("loai") in (None, "khong-co")]
+    if mu:
+        return False, f"tác vụ lịch không để lại dấu vết máy-đọc-được (cảm biến chỉ in ⚪): {mu}"
+    # (6) Tác vụ tháng phải TIỀN KIỂM quyền (đúng các tác vụ nó thi hành) TRƯỚC bước 1, có lệnh DỪNG — không thì lượt chạy dở
+    # bước 1–4 rồi bị cắt ngang ở lệnh chưa được phép mà vẫn «succeeded» (đo 14/11: lệnh --khong-endnote chưa áp trên máy).
+    sk = (REPO / "sync" / "scheduled-tasks" / "cap-nhat-thang-ebm" / "SKILL.md").read_text(encoding="utf-8")
+    lenh_q = "`python3 tools/quyen_lich_nen.py --tac-vu cap-nhat-thang-ebm,goi-duyet-tuan-ebm`"
+    i_q, i_1 = sk.find(lenh_q), sk.find("`python3 tools/sync_safety_check.py`")
+    if i_q < 0 or i_1 < 0 or i_q > i_1:
+        return False, "tác vụ tháng không tiền kiểm quyen_lich_nen --tac-vu (lệnh của chính lượt) TRƯỚC bước 1"
+    if "DỪNG LƯỢT NGAY" not in sk[i_q:i_1]:
+        return False, "bước 0 tiền kiểm của tác vụ tháng không có lệnh DỪNG lượt khi thiếu quyền/không đo được"
+    with _tf.TemporaryDirectory() as d:
+        g = Path(d)
+        for ten in ("a", "b"):
+            (g / "sync" / "scheduled-tasks" / ten).mkdir(parents=True)
+            (g / "sync" / "scheduled-tasks" / ten / "SKILL.md").write_text(f"`python3 tools/{ten}.py`\n", encoding="utf-8",
+                                                                            newline="\n")
+        (g / "sync" / "quyen-lich-nen.json").write_text(_json.dumps({"nen_tang": "darwin", "tac_vu": {
+            t: {"lenh": [f"python3 tools/{t}.py"], "khong_chay": [], "ghi": []} for t in ("a", "b")}}),
+            encoding="utf-8", newline="\n")
+        (g / ".claude").mkdir()
+        (g / ".claude" / "settings.local.json").write_text(_json.dumps({"permissions": {"allow": ["Bash(python3 tools/a.py)"]}}),
+                                                           encoding="utf-8", newline="\n")
+        ka, kb, kx = (Q.kiem(g, nen_tang="darwin", tac_vu=t) for t in (["a"], ["b"], ["go-sai"]))
+        if ka["thieu_may"] or kb["thieu_may"] != ["Bash(python3 tools/b.py)"] or not kx["khong_do"]:
+            return False, ("--tac-vu đo sai tập hợp (tác vụ khác làm dừng oan / thiếu quyền lọt / tên sai thành «đủ»): "
+                           f"a={ka['thieu_may']} b={kb['thieu_may']} sai-tên={kx['khong_do']}")
+    # (7) Dấu vết ghi bằng công cụ chỉ cho tác vụ tự giao log — không ghi chen log của chủ khác (KẾT THÚC giả = xanh giả).
+    G = _nap(REPO / "tools" / "ghi_dau_vet_lich.py", "_bh173_gdv")
+    for tv_chu_khac in ("kiem-rut-bai-kho-thang", "cap-nhat-thang-ebm"):
+        try:
+            G.duong_log(tv_chu_khac, REPO)
+            return False, f"ghi_dau_vet_lich nhận ghi chen log của chủ khác ({tv_chu_khac}) — giả được dấu vết kỳ lỡ"
+        except G.KhongGhiLoi:
+            pass
+    return True, ("mọi lệnh tác vụ lịch đã khai; không khai lệnh ghi quyết định; ap_dung chỉ thêm + sao lưu; giác quan có gọi; "
+                  "mọi tác vụ có dấu vết; tác vụ tháng tiền kiểm đúng tập + dừng; không giả dấu vết log chủ khác")
 
 
 def bh172_mot_cua_vao_chu_de_chung_cu():

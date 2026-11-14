@@ -19,6 +19,9 @@ Nguồn khai DUY NHẤT: `sync/quyen-lich-nen.json` (đi qua git, bác sĩ duy�
     phủ (thiếu ⇒ SKILL.md có lệnh mới mà chưa khai ⇒ lượt sẽ hỏng); (2) mọi quy tắc khai phải có trong
     `.claude/settings.local.json` của máy (thiếu ⇒ máy chưa áp).
   · `--ap-dung`: sao lưu `settings.local.json` rồi CHỈ THÊM các quy tắc khai còn thiếu (không xoá, không sửa mục khác).
+  · `--tac-vu A,B` (14/11/2026, tiền kiểm của lượt lịch): chỉ KIỂM lệnh/quy tắc của các tác vụ nêu tên — lượt tháng chỉ bị cắt
+    ngang khi lệnh của CHÍNH nó chưa được phép; đo cả tập rồi dừng lượt vì quy tắc của tác vụ khác là đo nhầm tập hợp (dừng oan
+    bộ thu thập an toàn thuốc). Tên chưa khai ⇒ mã 2 (không đo được), không bao giờ «đủ». `--ap-dung` vẫn áp TOÀN BỘ tệp khai.
 Mã thoát: 0 = đủ · 1 = thiếu (in danh sách) · 2 = KHÔNG đo được (máy không phải nền tảng đã khai, thiếu/hỏng tệp) — ⚪, không
 bao giờ là «đủ».
 
@@ -81,8 +84,12 @@ def quy_tac_may(khai: dict, goc: Path = GOC) -> list[str]:
     return ra
 
 
-def kiem(goc: Path = GOC, khai: dict | None = None, settings: Path | None = None, nen_tang: str | None = None) -> dict:
-    """{'khong_do': [lý do], 'thieu_khai': [(tác vụ, lệnh)], 'thieu_may': [quy tắc]}. Thuần đọc."""
+def kiem(goc: Path = GOC, khai: dict | None = None, settings: Path | None = None, nen_tang: str | None = None,
+         tac_vu: list[str] | None = None) -> dict:
+    """{'khong_do': [lý do], 'thieu_khai': [(tác vụ, lệnh)], 'thieu_may': [quy tắc]}. Thuần đọc.
+
+    `tac_vu` (danh sách tên) giới hạn phép kiểm vào đúng các tác vụ đó — dùng cho bước tiền kiểm của một lượt lịch.
+    Tên không có trong tệp khai ⇒ `khong_do` (gõ sai tên ở SKILL.md phải ồn, không được thành «đủ» vì tập rỗng)."""
     ra: dict = {"khong_do": [], "thieu_khai": [], "thieu_may": []}
     if khai is None:
         try:
@@ -90,6 +97,13 @@ def kiem(goc: Path = GOC, khai: dict | None = None, settings: Path | None = None
         except (OSError, ValueError) as e:
             ra["khong_do"].append(f"không đọc được sync/quyen-lich-nen.json ({type(e).__name__})")
             return ra
+    if tac_vu is not None:
+        tat_ca = khai.get("tac_vu", {})
+        la = [t for t in tac_vu if t not in tat_ca]
+        if la or not tac_vu:
+            ra["khong_do"].append("tác vụ chưa khai ở sync/quyen-lich-nen.json: " + (", ".join(la) or "(danh sách rỗng)"))
+            return ra
+        khai = {**khai, "tac_vu": {t: tat_ca[t] for t in tac_vu}}
     for ten, tv in khai.get("tac_vu", {}).items():
         skill = goc / "sync" / "scheduled-tasks" / ten / "SKILL.md"
         try:
@@ -136,17 +150,21 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--ap-dung", action="store_true", help="thêm quy tắc khai còn thiếu vào .claude/settings.local.json")
     ap.add_argument("--json", action="store_true")
     ap.add_argument("--im-khi-on", action="store_true", help="không in gì khi đủ")
+    ap.add_argument("--tac-vu", metavar="TÊN[,TÊN…]",
+                    help="chỉ kiểm lệnh/quy tắc của các tác vụ này (tiền kiểm của một lượt lịch); --ap-dung vẫn áp toàn bộ")
     a = ap.parse_args(argv)
     if a.ap_dung:
         n = ap_dung()
         print(f"✓ Đã thêm {n} quy tắc vào .claude/settings.local.json (sao lưu *.bak-quyen-lich-*)." if n
               else "✓ settings.local.json đã đủ quy tắc khai — không ghi gì.")
-    kq = kiem()
+    ds_tv = None if a.tac_vu is None else [t.strip() for t in a.tac_vu.split(",") if t.strip()]
+    kq = kiem() if ds_tv is None else kiem(tac_vu=ds_tv)
+    pham_vi = "" if ds_tv is None else f" [chỉ xét tác vụ: {', '.join(ds_tv) or '(rỗng)'}]"
     if a.json:
         print(json.dumps(kq, ensure_ascii=False, indent=2))
     if kq["thieu_khai"] or kq["thieu_may"]:
         if not a.json:
-            print("🔴 LƯỢT LỊCH SẼ BỊ CẮT NGANG — có lệnh chưa được phép (lượt vẫn ghi «succeeded»):")
+            print(f"🔴 LƯỢT LỊCH SẼ BỊ CẮT NGANG — có lệnh chưa được phép (lượt vẫn ghi «succeeded»){pham_vi}:")
             for ten, c in kq["thieu_khai"]:
                 print(f"   ✗ {ten}: SKILL.md có lệnh chưa khai ở sync/quyen-lich-nen.json — {c}")
             for q in kq["thieu_may"]:
@@ -155,12 +173,12 @@ def main(argv: list[str] | None = None) -> int:
         return 1
     if kq["khong_do"]:
         if not a.json:
-            print("⚪ Quyền lượt lịch: KHÔNG đo được trọn — không phải «đủ»:")
+            print(f"⚪ Quyền lượt lịch: KHÔNG đo được trọn — không phải «đủ»{pham_vi}:")
             for x in kq["khong_do"]:
                 print(f"   ⚪ {x}")
         return 2
     if not (a.json or a.im_khi_on):
-        print("🟢 Mọi lệnh của lượt lịch đã khai đều đã được phép trên máy này.")
+        print(f"🟢 Mọi lệnh của lượt lịch đã khai đều đã được phép trên máy này.{pham_vi}")
     return 0
 
 

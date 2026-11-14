@@ -5,7 +5,8 @@
     {"id": "cap-nhat-thang-ebm", "cron": "30 18 1 * *", "tu_ngay": "2026-09-01", "grace_gio": 30,
      "dau_vet": {"loai": "log-ket-thuc", "path": "medical-ebm-automation/data/archive/launchd_monthly.log"}},
     {"id": "kiem-tra-hoan-thien-he-thong-thang", "cron": "0 18 3 * *", "tu_ngay": "2026-10-03", "grace_gio": 30,
-     "dau_vet": {"loai": "khong-co"}},
+     "dau_vet": {"loai": "log-ket-thuc", "path": "state/kiem-tra-hoan-thien-he-thong.log", "ghi_boi": "tools/ghi_dau_vet_lich.py",
+                 "_ghi_chu": "14/11/2026: tác vụ là phiên agent thuần (không script ghi log) — lệnh đầu lượt ghi BẮT ĐẦU, lệnh cuối lượt ghi KẾT THÚC qua tools/ghi_dau_vet_lich.py (giờ do máy lấy). Trước đó khai khong-co ⇒ cảm biến chỉ in ⚪ «không canh được»."}},
     {"id": "kiem-rut-bai-kho-thang", "cron": "30 18 4 * *", "tu_ngay": "2026-10-04", "grace_gio": 30,
      "dau_vet": {"loai": "log-ket-thuc", "path": "state/kiem-rut-bai-kho.log"}}
   ]

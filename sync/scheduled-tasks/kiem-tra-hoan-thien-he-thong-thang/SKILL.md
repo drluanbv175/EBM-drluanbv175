@@ -25,6 +25,16 @@ chiếu nhau không, CI có chạy thật không, tài liệu CLAUDE.md có đo�
 đã lỗi thời so với thực tế không. Đây là một "kiểm tra sức khỏe kỹ sư" định kỳ, không phải quét
 chứng cứ y khoa.
 
+DẤU VẾT LƯỢT — BẮT BUỘC (14/11/2026; cảm biến `tools/kiem_lich_nen.py` chỉ canh được tác vụ để lại dấu vết máy-đọc-được):
+- Lệnh Bash ĐẦU TIÊN của lượt: `python3 tools/ghi_dau_vet_lich.py kiem-tra-hoan-thien-he-thong-thang --bat-dau`
+- Lệnh Bash CUỐI CÙNG của lượt (sau báo cáo, sau commit/push nếu có):
+  `python3 tools/ghi_dau_vet_lich.py kiem-tra-hoan-thien-he-thong-thang --ma <0|1|2>` — 0 = mọi mảng sạch, không sửa gì ·
+  1 = có việc cho bác sĩ hoặc đã tự sửa/mở PR · 2 = có mảng KHÔNG đo được/không chạy được.
+Công cụ nối dòng BẮT ĐẦU/KẾT THÚC (giờ do máy lấy) vào `state/kiem-tra-hoan-thien-he-thong.log` khai ở
+`sync/lich-nen-ky-vong.json`. Có BẮT ĐẦU mà thiếu KẾT THÚC ⇒ cảm biến báo 🔴 «lượt bị cắt ngang/chết giữa chừng»; thiếu cả hai
+⇒ 🔴 kỳ lỡ. KHÔNG tự gõ dòng vào log bằng Write/Edit (dấu vết tự khai giờ là dấu vết giả). Lệnh in «⚪ KHÔNG ghi dấu vết…»
+(mã 2) ⇒ chép nguyên văn vào báo cáo, không chạy lại kiểu khác.
+
 QUY TẮC BẮT BUỘC (dự án này có kỷ luật rất cao — đọc CLAUDE.md để hiểu vì sao từng quy tắc
 tồn tại, phần lớn xuất phát từ một lỗi thật đã xảy ra):
 1. KHÔNG tin lời tự khai "đã sửa"/"PASS" trong CLAUDE.md — luôn TỰ CHẠY LẠI mã sống để xác nhận.
@@ -109,3 +119,6 @@ việc người khác, rồi commit theo đúng lệ dự án (thông điệp ti
 Request do bác sĩ duyệt; nếu nhánh làm việc đã có PR mở thì chỉ đẩy commit lên nhánh đó. KHÔNG hỏi
 lại người dùng — đây là phiên chạy nền không có ai theo dõi trực tiếp; nếu gặp quyết định thật sự cần
 người (không phải việc máy tự quyết được), chỉ ghi vào báo cáo, không dừng lại chờ.
+
+BƯỚC CUỐI BẮT BUỘC: chạy lệnh ghi dòng KẾT THÚC ở mục «DẤU VẾT LƯỢT» phía trên (`--ma` theo kết quả báo cáo). Thiếu bước này thì
+kỳ tháng bị cảm biến tính là LỠ dù báo cáo đã viết xong.
