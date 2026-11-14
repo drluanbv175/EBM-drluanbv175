@@ -30,7 +30,9 @@
       "ghi": ["queue/**", "alerts/**", "state/**", "EBM-Dashboards/surveillance/**"]
     },
     "kiem-rut-bai-kho-thang": {
+      "_ghi_chu": "14/11/2026: thêm bước 0 TIỀN KIỂM (quyen_lich_nen --tac-vu chỉ xét lệnh của chính lượt này; mẫu như cap-nhat-thang-ebm và kiem-tra-hoan-thien-he-thong-thang) — thiếu quyền/không đo được ⇒ dừng lượt ồn (alerts/ + tin nhắn) thay vì bị cắt ngang giữa lệnh chu trình 20+ phút mà vẫn «succeeded». Lệnh --ap-dung chỉ IN cho bác sĩ tự chạy ⇒ khong_chay. Lượt không ghi KẾT THÚC khi dừng ở bước 0 (log do chu_trinh_chung_cu ghi; ghi_dau_vet_lich không ghi chen log chủ khác) ⇒ cảm biến báo 🔴 kỳ lỡ, đúng sự thật.",
       "lenh": [
+        "python3 tools/quyen_lich_nen.py --tac-vu kiem-rut-bai-kho-thang",
         "python3 tools/sync_safety_check.py",
         "python3 tools/chu_trinh_chung_cu.py --vong 3 --ghi-log state/kiem-rut-bai-kho.log",
         "python3 tools/mau_ky_rut_bai.py",
@@ -38,7 +40,7 @@
         "~/.ebm-venv/bin/python medical-ebm-automation/tools/tai_retraction_watch.py",
         "~/.ebm-venv/bin/python tools/kiem_rut_bai_endnote.py"
       ],
-      "khong_chay": ["python3 tools/gan_tag_endnote.py --huong-dan"],
+      "khong_chay": ["python3 tools/gan_tag_endnote.py --huong-dan", "python3 tools/quyen_lich_nen.py --ap-dung"],
       "ghi": ["alerts/**", "state/**"]
     },
     "kiem-tra-hoan-thien-he-thong-thang": {

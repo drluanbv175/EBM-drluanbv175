@@ -17,7 +17,29 @@ Trước 28/09/2026 không tác vụ lịch nào tái kiểm kho — một bài 
 không ai biết (tác vụ quý `kiem-thang-diem-quy` từng phủ 32 thang điểm, đã bỏ 13/11/2026 theo bác sĩ). Tác vụ này là owner DUY NHẤT
 của việc tái kiểm định kỳ đó; không nối trùng qua tools/tu_khoi_dong.py.
 
+QUY TẮC CHẠY LỆNH — lượt lịch KHÔNG có ai bấm «cho phép» (14/11/2026): mỗi lần gọi Bash chạy ĐÚNG MỘT lệnh viết Y NHƯ ở bước
+tương ứng (không `cd`, không nối `&&`/`;`/`|`, không chuyển hướng `>`). Mọi lệnh đã khai ở khoá `kiem-rut-bai-kho-thang` của
+`sync/quyen-lich-nen.json`, áp vào máy bằng `python3 tools/quyen_lich_nen.py --ap-dung` (bác sĩ chạy). Lệnh chưa được phép làm
+lượt bị CẮT NGANG ngay tại đó mà bộ lập lịch vẫn ghi «succeeded» — vì vậy có BƯỚC 0 tiền kiểm bên dưới. Đọc tệp ⇒ công cụ Read.
+
 CÁC BƯỚC:
+0. TIỀN KIỂM QUYỀN (14/11/2026; lượt phải GÃY ỒN, không gãy âm thầm — mẫu theo bước 0 của `cap-nhat-thang-ebm`). Lệnh Bash
+   ĐẦU TIÊN của lượt: `python3 tools/quyen_lich_nen.py --tac-vu kiem-rut-bai-kho-thang` (quyền của ĐÚNG các lệnh lượt này sẽ
+   gõ — khoá `kiem-rut-bai-kho-thang` của `sync/quyen-lich-nen.json`).
+   - mã 0 (🟢) ⇒ làm tiếp bước 1.
+   - mã 1 (🔴 có lệnh của lượt này chưa được phép trên máy, hoặc SKILL có lệnh chưa khai/lệnh ghép — lượt sẽ bị cắt ngang giữa
+     chừng, vd ở lệnh chu trình bước 2 chạy 20+ phút, mà bộ lập lịch vẫn ghi «succeeded») HOẶC mã 2 (⚪ KHÔNG đo được quyền —
+     «không đo được» không phải «đủ») ⇒ DỪNG LƯỢT NGAY, KHÔNG chạy bước 1–4. Kỳ này KHÔNG được tái kiểm: không có dòng
+     «KẾT THÚC» mới trong state/kiem-rut-bai-kho.log nên cảm biến `tools/kiem_lich_nen.py` tự báo 🔴 kỳ lỡ — đúng sự thật;
+     KHÔNG tự gõ dòng vào log (dấu vết tự khai là dấu vết giả). Tin nhắn cuối mở đầu bằng «🔴 LƯỢT RÚT BÀI THÁNG DỪNG Ở BƯỚC 0 —
+     tiền kiểm quyền mã <n>», dán NGUYÊN VĂN các dòng ✗/⚪ công cụ in, và lệnh bác sĩ tự chạy
+     `python3 tools/quyen_lich_nen.py --ap-dung` rồi «Run now». Đồng thời thêm ĐÚNG MỘT dòng «- 🔴 Lượt rút bài tháng
+     kiem-rut-bai-kho-thang DỪNG ở bước 0 (tiền kiểm quyền, mã <n>): <số lệnh chưa được phép / lý do ⚪> — bác sĩ chạy
+     quyen_lich_nen.py --ap-dung rồi Run now» vào `alerts/<YYYY-MM-DD>.md` bằng Write/Edit (khuôn «# CẢNH BÁO KHẨN — <ngày>»
+     như các dòng alerts khác; idempotent, không nhân đôi). Nếu chính danh sách ✗ có quy tắc `Edit(…/alerts/**)` thì KHÔNG ghi
+     alerts (lệnh ghi sẽ bị cắt ngang) — chỉ báo trong tin nhắn cuối.
+   - Windows: BỎ QUA bước 0 — hợp đồng quyền `sync/quyen-lich-nen.json` chỉ khai cho macOS (`nen_tang: darwin`, cùng cách
+     `tools/dong_bo_tac_vu_lich.py` coi là «không áp»); ghi «⚪ bước 0 không áp trên Windows» vào báo cáo rồi làm tiếp bước 1.
 1. `python3 tools/sync_safety_check.py` (Windows: `py -3 tools\sync_safety_check.py`). 🔴 ⇒ DỪNG, báo nguyên văn.
 1b. LÀM MỚI NỀN RETRACTION WATCH khi quá hạn (thêm 07/11/2026, bác sĩ chọn «Làm 1 và 2»: đo 07/11 nền 48 ngày tuổi — hạn 30 —
    vì chu trình chỉ tải khi nền VẮNG, không tải khi CŨ):

@@ -11,8 +11,8 @@ Trên Windows đổi lệnh: `python3` → `py -3`; `~/.ebm-venv/bin/python` →
 Đường dẫn tương đối viết bằng `/` dùng được nguyên trên cả hai; tệp tạm ghi vào `state/` của thư mục làm việc, không dùng `/tmp`.
 
 Đây là tác vụ nền hằng tháng cho dự án EBM Copilot của bác sĩ Luân — repo gốc
-(THƯ MỤC LÀM VIỆC ở trên; nhánh làm việc hiện tại;
-kiểm bằng `git branch --show-current`, remote `drluanbv175/EBM-drluanbv175`) và repo nghiên cứu
+(THƯ MỤC LÀM VIỆC ở trên; nhánh làm việc hiện tại — đo ở mảng ⑥, SAU bước 0;
+remote `drluanbv175/EBM-drluanbv175`) và repo nghiên cứu
 sống lồng bên trong `medical-ebm-automation/` (remote `drluanbv175/medical-ebm-automation`,
 venv `~/.ebm-venv`). Đọc kỹ `CLAUDE.md` ở gốc TRƯỚC khi làm gì — đó là doctrine đầy đủ, rất dài,
 ghi lại hàng trăm bài học đã vá; tự đối chiếu doctrine với mã sống thay vì tin lời khai trong đó.
@@ -42,8 +42,8 @@ lệnh lượt này sẽ gõ, khai ở khoá `kiem-tra-hoan-thien-he-thong-thang
 - mã 1 (🔴 có lệnh của lượt này chưa được phép trên máy, hoặc SKILL có lệnh chưa khai/lệnh ghép — lượt sẽ bị cắt ngang giữa
   chừng mà bộ lập lịch vẫn ghi «succeeded») HOẶC mã 2 (⚪ KHÔNG đo được quyền — «không đo được» không phải «đủ»)
   ⇒ DỪNG LƯỢT NGAY, KHÔNG chạy mảng ①–⑨, và KHÔNG ghi dòng KẾT THÚC (không gõ lệnh `--ma` của mục «DẤU VẾT LƯỢT»). Lý do:
-  cảm biến `tools/kiem_lich_nen.py` chỉ đọc MỐC GIỜ của dòng KẾT THÚC, không đọc mã — ghi KẾT THÚC (dù mã 2) là kỳ được tính
-  «đúng hẹn», tức xanh giả cho một kỳ không chạy. Để BẮT ĐẦU đứng một mình thì cảm biến tự báo 🔴 «có BẮT ĐẦU nhưng KHÔNG có
+  cảm biến `tools/kiem_lich_nen.py` (từ 14/11/2026 đọc mã KẾT THÚC) chỉ xếp «KẾT THÚC (mã 2)» là 🟠 «lượt không trọn» — kém rõ
+  hơn, và trước đó còn tính là «đúng hẹn» (xanh giả). Để BẮT ĐẦU đứng một mình thì cảm biến tự báo 🔴 «có BẮT ĐẦU nhưng KHÔNG có
   KẾT THÚC — … xem python3 tools/quyen_lich_nen.py», đúng gốc (đo khi thẩm định 14/11/2026). Kết thúc bằng tin nhắn mở đầu
   «🔴 LƯỢT KỸ THUẬT THÁNG DỪNG Ở BƯỚC 0 — tiền kiểm quyền mã <n> (cố ý không ghi KẾT THÚC)», dán NGUYÊN VĂN các dòng ✗/⚪ công
   cụ in, và lệnh bác sĩ tự chạy `python3 tools/quyen_lich_nen.py --ap-dung` rồi «Run now» (lượt chạy lại trong hạn ghi đủ
@@ -121,7 +121,8 @@ sự chạy (không phải `runner_id:0` hay `queued` treo, dấu hiệu Actions
 09/2026). Nếu CI đỏ hoặc không chạy thật, báo rõ — đây là việc CHỈ bác sĩ xử lý được qua giao
 diện web GitHub (Settings → Actions), không phải lỗi agent sửa được.
 
-**⑥ Nhánh mồ côi / worktree có việc thật chưa merge.** `git worktree list` và
+**⑥ Nhánh mồ côi / worktree có việc thật chưa merge.** Nhánh đang checkout của cây chính: `git branch --show-current`
+(14/11/2026: dời từ phần giới thiệu xuống đây — không lệnh đo nào đứng trước bước 0 tiền kiểm). `git worktree list` và
 `git for-each-ref --count=20 --sort=-committerdate --no-merged=master refs/heads refs/remotes` (root repo — 20 nhánh mới nhất
 chưa gộp vào master); với nhánh đáng ngờ xem `git log --oneline -10 master..<nhánh>`. Nếu thấy nhánh có commit thật
 (không phải nhánh rác/thử nghiệm) mang sửa lỗi có giá trị mà chưa vào nhánh làm việc chính, ghi

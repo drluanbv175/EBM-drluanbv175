@@ -9532,8 +9532,12 @@ def bh173_quyen_luot_lich_khai_dung_lenh():
     khai ⇒ mọi lệnh của nó «chưa khai»; (12) tác vụ kỹ thuật tháng tiền kiểm `quyen_lich_nen --tac-vu` của CHÍNH nó ngay sau
     BẮT ĐẦU, trước mảng ①, DỪNG khi thiếu quyền; khai của nó không có lệnh SỬA (commit/push/PR/Edit). Đính chính thẩm định
     14/11/2026: (11) thêm lệnh ghép được quy tắc «*» phủ (đột biến bỏ luật lệnh ghép từng sống sót), lệnh có chỗ điền «<…>»
-    (từng bị coi là mẫu mô tả ⇒ lọt), nháy dính giữa từ (từng báo oan); (12) dừng ở bước 0 KHÔNG ghi KẾT THÚC — cảm biến chỉ
-    đọc mốc giờ KẾT THÚC, không đọc mã, nên «KẾT THÚC (mã 2)» biến kỳ không chạy thành «đúng hẹn»; đo bằng chính cảm biến."""
+    (từng bị coi là mẫu mô tả ⇒ lọt), nháy dính giữa từ (từng báo oan); (12) dừng ở bước 0 KHÔNG ghi KẾT THÚC — khi đó cảm biến
+    chỉ đọc mốc giờ KẾT THÚC, không đọc mã, nên «KẾT THÚC (mã 2)» biến kỳ không chạy thành «đúng hẹn»; đo bằng chính cảm biến.
+    Mở rộng 14/11/2026 (việc I, dọn mức thấp lịch nền): (13) MỌI tác vụ trong sổ kỳ vọng (kể cả tác vụ rút bài ngày 4) có bước 0
+    `quyen_lich_nen --tac-vu <tập chứa chính nó>` đứng TRƯỚC lệnh việc đầu tiên, có DỪNG LƯỢT NGAY trước lệnh đó — luật chung,
+    tác vụ mới thêm vào sổ mà thiếu bước 0 cũng đỏ; (14) cảm biến nay ĐỌC mã KẾT THÚC: mã 2 (hoặc «tổng thể=CÓ BƯỚC LỖI») ⇒
+    🟠 «lượt không trọn», không đúng hẹn; mã 0/1 (lượt đi hết) ⇒ đúng hẹn; không đọc được mã ⇒ ⚪ (không ok, không lỡ)."""
     import json as _json
     import tempfile as _tf
     Q = _nap(REPO / "tools" / "quyen_lich_nen.py", "_bh173_qln")
@@ -9683,8 +9687,9 @@ def bh173_quyen_luot_lich_khai_dung_lenh():
         return False, "tác vụ kỹ thuật tháng không tiền kiểm quyen_lich_nen --tac-vu của chính nó giữa BẮT ĐẦU và mảng ①"
     if "DỪNG LƯỢT NGAY" not in skt[i_q:i_viec]:
         return False, "bước 0 của tác vụ kỹ thuật tháng không DỪNG lượt khi thiếu quyền/không đo được"
-    # Đính chính thẩm định 14/11/2026: lượt dừng ở bước 0 phải làm cảm biến người chết ĐỎ. kiem_lich_nen chỉ đọc MỐC GIỜ dòng
-    # KẾT THÚC, không đọc mã ⇒ bước 0 ghi «KẾT THÚC (mã 2)» là kỳ không chạy được tính «đúng hẹn» (xanh giả). Đo HÀNH VI: repo
+    # Đính chính thẩm định 14/11/2026: lượt dừng ở bước 0 phải làm cảm biến người chết ĐỎ. Khi đó kiem_lich_nen chỉ đọc MỐC GIỜ
+    # dòng KẾT THÚC, không đọc mã ⇒ bước 0 ghi «KẾT THÚC (mã 2)» là kỳ không chạy được tính «đúng hẹn» (xanh giả); từ (14) mã 2
+    # ra 🟠 nhưng BẮT ĐẦU đứng một mình (🔴, chỉ đúng gốc quyền) vẫn là đường dừng đúng. Đo HÀNH VI: repo
     # tạm mang đúng mục sổ kỳ vọng thật, ghi BẮT ĐẦU + mọi lệnh dấu vết của khối bước 0 bằng chính ghi_dau_vet_lich, đọc cảm
     # biến ⇒ phải 🔴; đối chứng lượt chạy trọn (BẮT ĐẦU + KẾT THÚC) ⇒ phải đúng hẹn (không thì phép đo dựng sai, đỏ vô nghĩa).
     i_b0, i_qt = skt.find("\nBƯỚC 0 — TIỀN KIỂM QUYỀN"), skt.find("\nQUY TẮC CHẠY LỆNH")
@@ -9719,11 +9724,55 @@ def bh173_quyen_luot_lich_khai_dung_lenh():
     xau12 = [c for c in khai["tac_vu"].get(tvkt, {}).get("lenh", []) if sua.search(c)]
     if xau12:
         return False, f"khai quyền tác vụ kỹ thuật tháng có lệnh SỬA (lượt lịch không tự sửa — để phiên có người): {xau12}"
+    # (13) 14/11/2026 (việc I): luật CHUNG cho mọi tác vụ trong sổ kỳ vọng — bước 0 tiền kiểm quyền của chính nó TRƯỚC lệnh việc
+    # đầu tiên, có DỪNG trước lệnh đó. Tác vụ rút bài ngày 4 từng thiếu: lượt bị cắt ngang giữa lệnh chu trình 20+ phút mà vẫn
+    # «succeeded». Lệnh «việc» = mọi lệnh SKILL trừ chính các công cụ tiền kiểm/dấu vết (quyen_lich_nen, ghi_dau_vet_lich,
+    # kiem_lich_nen); vị trí đo theo đúng phép dò lệnh của quyen_lich_nen (bỏ mẫu mô tả «…»).
+    khong_viec = re.compile(r"python3 tools/(?:quyen_lich_nen|ghi_dau_vet_lich|kiem_lich_nen)\.py\b")
+    for t13 in ky.get("tac_vu", []):
+        id13 = str(t13.get("id"))
+        try:
+            vb13 = (REPO / "sync" / "scheduled-tasks" / id13 / "SKILL.md").read_text(encoding="utf-8")
+        except OSError:
+            return False, f"không đọc được SKILL của tác vụ lịch {id13} — không kiểm được bước 0"
+        vt13 = []
+        for m in Q._LENH_RE.finditer(vb13):
+            c = " ".join(m.group(1).split())
+            if not (c.startswith(Q._DAU_MOI) and Q.MAU_MO_TA in Q._CHO_DIEN.sub("X", c)):
+                vt13.append((m.start(), c))
+        tk13 = [s for s, c in vt13 if c.startswith("python3 tools/quyen_lich_nen.py --tac-vu ")
+                and id13 in c.split("--tac-vu ", 1)[1].split()[0].split(",")]
+        viec13 = [(s, c) for s, c in vt13 if not khong_viec.match(c)]
+        if not tk13:
+            return False, f"tác vụ lịch {id13} không có bước 0 tiền kiểm quyen_lich_nen --tac-vu của chính nó"
+        if viec13 and tk13[0] > viec13[0][0]:
+            return False, f"bước 0 tiền kiểm của {id13} đứng SAU lệnh việc đầu tiên ({viec13[0][1]}) — lượt đã chạy dở mới kiểm"
+        if "DỪNG LƯỢT NGAY" not in vb13[tk13[0]:(viec13[0][0] if viec13 else len(vb13))]:
+            return False, f"bước 0 tiền kiểm của {id13} không DỪNG lượt khi thiếu quyền/không đo được"
+    # (14) 14/11/2026 (việc I): cảm biến ĐỌC mã KẾT THÚC — đo HÀNH VI trên log giả, kỳ tháng 04/11 18:30, xét 06/11.
+    so14 = {"cua_so_ngay": 40, "tac_vu": [{"id": "tv", "cron": "30 18 4 * *", "tu_ngay": "2026-10-01", "grace_gio": 30,
+            "dau_vet": {"loai": "log-ket-thuc", "path": "state/tv.log"}}]}
+    tin14 = {}
+    for ten14, duoi in (("ma0", "tv (mã 0)"), ("ma1", "tv (mã 1)"), ("ma2", "tv (mã 2)"), ("loi", "— tổng thể=CÓ BƯỚC LỖI ====="),
+                        ("pass", "— bước (1)=0, tổng thể=PASS ====="), ("mu", "tv")):
+        with _tf.TemporaryDirectory() as d:
+            ghi9(Path(d) / "state" / "tv.log", "===== 2026-10-04 19:00:00 : KẾT THÚC tv (mã 0)\n"
+                 f"===== 2026-11-04 19:06:01 : KẾT THÚC {duoi}\n")
+            tin14[ten14] = K.kiem(_dt.datetime(2026, 11, 6, 9, 0), so14, Path(d), Path(d) / "bc")
+    for ten14 in ("ma0", "ma1", "pass"):
+        if tin14[ten14] != {"phat_hien": [], "khong_do_duoc": [], "ok": 1}:
+            return False, f"cảm biến không coi lượt trọn ({ten14}) là đúng hẹn: {tin14[ten14]}"
+    for ten14 in ("ma2", "loi"):
+        if tin14[ten14]["ok"] or [(p["muc"], p["uu"]) for p in tin14[ten14]["phat_hien"]] != [("khong_tron", 1)]:
+            return False, f"lượt KHÔNG trọn ({ten14}) vẫn được tính đúng hẹn/không ra 🟠: {tin14[ten14]}"
+    if tin14["mu"]["ok"] or tin14["mu"]["phat_hien"] or not tin14["mu"]["khong_do_duoc"]:
+        return False, f"KẾT THÚC không đọc được mã không ra ⚪ (bị tính đúng hẹn hoặc lỡ): {tin14['mu']}"
     return True, ("mọi lệnh tác vụ lịch đã khai; không khai lệnh ghi quyết định; ap_dung chỉ thêm + sao lưu; giác quan có gọi; "
                   "mọi tác vụ có dấu vết; tác vụ tháng tiền kiểm đúng tập + dừng; không giả dấu vết log chủ khác; tác vụ tháng "
                   "không tự đọc mã sổ xác minh; không chép SKILL khi quyền chưa xanh; thiếu log từ mốc ⇒ 🔴; bắt lệnh "
                   "ghép/git/gh + tác vụ chưa khai khoá; tác vụ kỹ thuật tiền kiểm chính nó + không khai lệnh sửa; dừng ở "
-                  "bước 0 ⇒ cảm biến 🔴")
+                  "bước 0 ⇒ cảm biến 🔴; mọi tác vụ trong sổ có bước 0 tiền kiểm chính nó; cảm biến đọc mã KẾT THÚC (2 ⇒ 🟠, "
+                  "0/1 ⇒ đúng hẹn, không đọc được ⇒ ⚪)")
 
 
 def bh172_mot_cua_vao_chu_de_chung_cu():

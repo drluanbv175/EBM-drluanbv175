@@ -148,3 +148,101 @@ def test_moi_ten_da_bo_neo_vao_tep_nhat_ky_ghi_loi_bac_si():
 def test_chot_duoc_noi_vao_run_verification():
     """Chốt không ai gọi thì không tồn tại — pre-commit chạy run_verification()."""
     assert "doctrine_tac_vu_lich" in [c["name"] for c in V.run_verification()["checks"]]
+
+
+# ── Khe test do người duyệt #348 nêu + quét đột biến lại 14/11/2026 (việc I): 10 đột biến từng sống sót ─────────────────
+
+
+def _con(tmp_path: Path, i: int) -> Path:
+    """Thư mục con riêng cho từng ca trong một test (mỗi ca dựng bộ ba giả lập của mình)."""
+    d = tmp_path / f"ca{i}"
+    d.mkdir()
+    return d
+
+
+def test_am_tinh_gia_tac_vu_lich_tuan_thu_hai(tmp_path):
+    """Âm tính giả #348: cụm bổ nghĩa «lịch tuần thứ Hai» từng làm regex bỏ qua tên đứng sau."""
+    kq = _kiem(tmp_path, "Gói nằm sẵn tối thứ Hai (tác vụ lịch tuần thứ Hai `goi-duyet-tuan-ebm`).\n")
+    assert kq["status"] == "FAIL" and any("goi-duyet-tuan-ebm" in e and "ĐÃ BỎ" in e for e in kq["errors"]), kq
+
+
+def test_tu_vung_lich_xen_giua_van_bi_bat(tmp_path):
+    for i, cau in enumerate(("Tác vụ ngày 4 18:30 `tac-vu-ma`.\n", "Tác vụ kỹ thuật tháng `tac-vu-ma`.\n",
+                             "Tác vụ hằng tháng `tac-vu-ma`.\n", "Tác vụ T2 `tac-vu-ma`.\n")):
+        kq = _kiem(_con(tmp_path, i), cau)
+        assert kq["status"] == "FAIL", (cau, kq)
+
+
+def test_tu_khong_phai_tu_vung_lich_khong_bi_bat_nham(tmp_path):
+    """Chốt chặn commit: chỉ «tác vụ + từ vựng lịch + `tên`» mới nói `tên` là tác vụ; agent/repo/quy trình không phải."""
+    kq = _kiem(tmp_path, "Tác vụ tháng gọi agent `dieu-phoi-lam-sang`.\n"
+                         "Tác vụ lịch trong repo `medical-ebm-automation`.\n"
+                         "Tác vụ tháng đọc quy trình `goi-duyet-tuan-ebm`.\n")
+    assert kq["status"] == "PASS", kq
+
+
+def test_ten_khong_phai_kebab_sau_cum_tac_vu_bo_qua(tmp_path):
+    """Đột biến «bỏ lọc kebab»: lệnh/tệp sau «tác vụ:» không phải tên tác vụ."""
+    kq = _kiem(tmp_path, "Khôi phục tác vụ: `SKILL.md` · tác vụ lịch: `list_scheduled_tasks`.\n")
+    assert kq["status"] == "PASS", kq
+
+
+def test_dau_hai_cham_va_ngoac_mo_truoc_ten(tmp_path):
+    """Đột biến «bỏ [:(]?»: «tác vụ lịch: `x`» và «tác vụ (`x`)» vẫn là gọi tên tác vụ."""
+    for i, cau in enumerate(("Chạy bởi tác vụ lịch: `tac-vu-ma`.\n", "Chạy bởi tác vụ (`tac-vu-ma`).\n")):
+        kq = _kiem(_con(tmp_path, i), cau)
+        assert kq["status"] == "FAIL", (cau, kq)
+
+
+def test_chu_hoa_dau_cau(tmp_path):
+    """Đột biến «bỏ IGNORECASE»: «Tác vụ» viết hoa đầu câu không được lọt."""
+    kq = _kiem(tmp_path, "Tác vụ lịch `tac-vu-ma` chạy tối.\n")
+    assert kq["status"] == "FAIL", kq
+
+
+def test_moi_dau_noi_danh_sach_ten(tmp_path):
+    """Đột biến «bỏ hoặc/·//»: mọi dấu nối danh sách đều đưa tên sau vào luật 1."""
+    for i, noi in enumerate((" hoặc ", " · ", " / ")):
+        kq = _kiem(_con(tmp_path, i), f"Các tác vụ `cap-nhat-thang-ebm`{noi}`tac-vu-ma` chạy tối.\n")
+        assert kq["status"] == "FAIL" and any("`tac-vu-ma`" in e for e in kq["errors"]), (noi, kq)
+
+
+def test_ten_chi_co_trong_so_ky_vong_la_con_song(tmp_path):
+    """Đột biến «luật 1 chỉ xét thư mục»: tác vụ khai ở sổ kỳ vọng (chưa có thư mục SKILL) vẫn là tác vụ sống."""
+    kq = _kiem(tmp_path, "Chạy bởi tác vụ lịch `chi-trong-so`.\n", ky_vong=["cap-nhat-thang-ebm", "chi-trong-so"])
+    assert kq["status"] == "PASS", kq
+
+
+def test_duong_dan_toi_ten_chi_co_trong_so_van_bi_chan(tmp_path):
+    """Đột biến «luật 2 nhận sổ»: đường dẫn scheduled-tasks/<tên> phải trỏ THƯ MỤC có thật, sổ kỳ vọng không thay được."""
+    kq = _kiem(tmp_path, "Đọc `sync/scheduled-tasks/chi-trong-so/SKILL.md`.\n", ky_vong=["cap-nhat-thang-ebm", "chi-trong-so"])
+    assert kq["status"] == "FAIL" and any("scheduled-tasks/chi-trong-so" in e for e in kq["errors"]), kq
+
+
+def test_ranh_gioi_tu_phia_truoc_ten_da_bo(tmp_path):
+    """Đột biến «bỏ lookbehind luật 3»: `x-kiem-thang-diem-quy` không phải `kiem-thang-diem-quy`."""
+    kq = _kiem(tmp_path, "Công cụ `x-kiem-thang-diem-quy` (chạy tay).\n")
+    assert kq["status"] == "PASS", kq
+
+
+def test_tai_lieu_vang_la_fail(tmp_path):
+    """Đột biến «tài liệu vắng im»: tài liệu khai mà không thấy ⇒ không đối chiếu được ⇒ FAIL."""
+    tai_lieu, tm, so = _moi_truong(tmp_path, "Không nhắc gì.\n")
+    kq = V.check_tac_vu_lich_trong_doctrine({"AGENTS.md": tmp_path / "vang.md", **tai_lieu}, tm, so)
+    assert kq["status"] == "FAIL" and any("không thấy" in e and "vang.md" in e for e in kq["errors"]), kq
+
+
+def test_thu_muc_nguon_vang_ma_so_hop_le_van_fail(tmp_path):
+    """Đột biến «thư mục vắng im»: thiếu riêng thư mục nguồn (sổ vẫn đọc được) cũng là không đo được."""
+    tai_lieu, _tm, so = _moi_truong(tmp_path, "Không nhắc gì.\n")
+    kq = V.check_tac_vu_lich_trong_doctrine(tai_lieu, tmp_path / "vang", so)
+    assert kq["status"] == "FAIL" and any("không thấy thư mục nguồn" in e for e in kq["errors"]), kq
+
+
+def test_so_ky_vong_sai_cau_truc_la_fail_khong_phai_sap(tmp_path):
+    """Đột biến «bỏ KeyError/TypeError»: JSON hợp lệ nhưng sai cấu trúc ⇒ FAIL có lý do, không ném ngoại lệ."""
+    for i, noi_dung in enumerate(('{"khac": 1}', '{"tac_vu": [{"ten": "x"}]}', '{"tac_vu": null}')):
+        tai_lieu, tm, so = _moi_truong(_con(tmp_path, i), "Không nhắc gì.\n")
+        so.write_text(noi_dung, encoding="utf-8", newline="\n")
+        kq = V.check_tac_vu_lich_trong_doctrine(tai_lieu, tm, so)
+        assert kq["status"] == "FAIL" and any("không đọc được sổ kỳ vọng" in e for e in kq["errors"]), (noi_dung, kq)

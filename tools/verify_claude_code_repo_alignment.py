@@ -197,8 +197,16 @@ _LA_KEBAB = re.compile(rf"{_TEN_KEBAB}\Z")
 # «tác vụ [lịch|nền|tháng|quý|tuần|…] `tên`[, `tên` …]» — văn bản nói tên đó LÀ một tác vụ lịch.
 # Chỉ nhận tên trong dấu huyền đứng NGAY sau cụm «tác vụ …» (cho phép «:» hoặc «(» xen giữa),
 # nên «Tác vụ lịch (app Claude trên Mac): đo sống bằng `list_scheduled_tasks`» không bị bắt.
+# 14/11/2026 (thẩm định #348): từ bổ nghĩa xen giữa là TỪ VỰNG LỊCH khai sẵn (thứ trong tuần, giờ, «ngày 4»,
+# «đầu/cuối», «kỹ thuật/nội dung»…), tối đa 6 cụm — trước đó chỉ nhận lịch|nền|tháng|quý|tuần|ngày nên «tác vụ lịch
+# tuần thứ Hai `goi-duyet-tuan-ebm`» lọt (âm tính giả). Cố ý KHÔNG nhận từ bất kỳ: «tác vụ tháng gọi agent `x`»,
+# «tác vụ tháng đọc quy trình `goi-duyet-tuan-ebm`» không nói `x` là tác vụ — chốt chặn commit, dương tính giả đắt hơn.
+_BO_NGU_LICH = (
+    r"(?:lịch|nền|tháng|quý|tuần|định\s+kỳ|(?:hằng|hàng|mỗi)\s+\w+|ngày(?:\s+\d{1,2}(?:/\d{1,2})?)?"
+    r"|thứ\s+(?:hai|ba|tư|năm|sáu|bảy|[2-7])|chủ\s+nhật|cn|t[2-7]|\d{1,2}(?::|h)\d{2}"
+    r"|sáng|chiều|tối|đêm|đầu|cuối|giữa|kỹ\s+thuật|nội\s+dung|riêng|chính|cũ|mới)(?![^\W_])")
 _NGU_CANH_TAC_VU = re.compile(
-    r"tác vụ(?:\s+(?:lịch|nền|tháng|quý|tuần|ngày|định kỳ|hằng\s+\w+))*\s*[:(]?\s*"
+    rf"tác vụ(?:\s+{_BO_NGU_LICH}){{0,6}}\s*[:(]?\s*"
     r"((?:`[^`\n]+`(?:\s*(?:,|·|/|và|hoặc)\s*)?)+)",
     re.IGNORECASE)
 _TEN_TRONG_HUYEN = re.compile(r"`([^`\n]+)`")

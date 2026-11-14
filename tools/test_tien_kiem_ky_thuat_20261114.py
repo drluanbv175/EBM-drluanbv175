@@ -15,6 +15,10 @@ bước 0 tiền kiểm CHÍNH nó, DỪNG khi thiếu quyền; mọi lệnh là
 đọc mã, nên «KẾT THÚC (mã 2)» làm kỳ không chạy thành «đúng hẹn» (xanh giả; đo bằng chính cảm biến, test hành vi dưới);
 (b) lệnh ghép được một quy tắc có «*» phủ vẫn phải bị báo (đột biến bỏ luật lệnh ghép từng sống sót); (c) «…» xét sau khi
 thay chỗ điền «<…>»; (d) nháy dính giữa từ (`--format="%H|%s"`) không bị báo oan là ống.
+
+Đính chính 14/11/2026 (việc I, lịch nền dọn mức thấp): `kiem_lich_nen` nay ĐỌC mã KẾT THÚC — mã 0/1 là lượt trọn, mã 2 là
+🟠 «lượt không trọn». Bước 0 vẫn KHÔNG ghi KẾT THÚC (BẮT ĐẦU đứng một mình ra 🔴 chỉ đúng gốc quyền — rõ hơn 🟠). Đối chứng
+«chạy trọn» thay chỗ điền `--ma <0|1|2>` bằng từng mã trọn (0, 1) thay vì đọc nó thành 2.
 """
 
 from __future__ import annotations
@@ -275,7 +279,17 @@ def test_luot_chay_tron_thi_cam_bien_xanh(tmp_path):
     sk = SKILL.read_text(encoding="utf-8")
     cuoi = _dau_vet_trong(sk[sk.index("\nDẤU VẾT LƯỢT"):sk.index("\nBƯỚC 0 — TIỀN KIỂM QUYỀN")])
     assert cuoi[0] is None and len(cuoi) == 2 and cuoi[1] in (0, 1, 2), cuoi
-    assert _tin_hieu_cam_bien(tmp_path, cuoi) == {"phat_hien": [], "khong_do_duoc": [], "ok": 1}
+    # Chỗ điền `--ma <0|1|2>` đọc thành 2; lượt đi HẾT ghi 0 (sạch) hoặc 1 (có việc cho bác sĩ) — cả hai phải đúng hẹn.
+    for ma in (0, 1):
+        d = tmp_path / f"ma{ma}"
+        assert _tin_hieu_cam_bien(d, [None, ma]) == {"phat_hien": [], "khong_do_duoc": [], "ok": 1}, ma
+
+
+def test_luot_ghi_ket_thuc_ma_2_la_khong_tron_khong_phai_dung_hen(tmp_path):
+    # 14/11/2026: «KẾT THÚC (mã 2)» = có mảng không đo được/không chạy được ⇒ 🟠 «lượt không trọn», không còn xanh giả.
+    kq = _tin_hieu_cam_bien(tmp_path, [None, 2])
+    assert kq["ok"] == 0 and [(p["muc"], p["uu"]) for p in kq["phat_hien"]] == [("khong_tron", 1)], kq
+    assert "mã 2" in kq["phat_hien"][0]["thong_diep"]
 
 
 if __name__ == "__main__":

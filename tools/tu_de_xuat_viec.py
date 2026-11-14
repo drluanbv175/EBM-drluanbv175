@@ -872,6 +872,40 @@ def _bo_dau_trang_thai(dong: str) -> str:
     return re.sub(r"^\s*(?:🟢|🟡|⚪|🔴)\s*", "", dong or "")
 
 
+def giac_quan_quyen_lich_nen(kiem_fn=None) -> list[tuple[int, str, str, str]]:
+    """QUYỀN LƯỢT LỊCH (⑦f-bis, 28/10/2026, BH173) — báo TRƯỚC kỳ, CHỈ ĐỌC.
+
+    ⑦f (cảm biến người chết) chỉ thấy SAU khi kỳ đã lỡ; lượt lịch không có ai bấm «cho phép» nên lệnh chưa nằm trong
+    permissions.allow cắt ngang lượt mà vẫn ghi «succeeded» (W44). Ba nhánh của `quyen_lich_nen.kiem()`:
+      · `thieu_khai` ⇒ 👤 (lệnh SKILL.md chưa khai — khai thêm là quyết định của bác sĩ);
+      · `thieu_may` ⇒ 🤖 (quy tắc đã khai mà máy chưa áp — `--ap-dung` chỉ thêm đúng mục đã khai);
+      · `khong_do` ⇒ ⚪ giác quan chết (14/11/2026): trước đó nhánh này IM — máy không phải nền tảng đã khai, tệp khai/SKILL/
+        settings hỏng hay vắng thì bảng không nói gì, đọc như «quyền đủ». «Không đo được» không bao giờ là «đủ» (BH08).
+    Công cụ hỏng (ngoại lệ) ⇒ ⚪ như mọi giác quan. `kiem_fn` chỉ để test thay phép đo (không đọc settings thật)."""
+    _SO_GIAC_QUAN["chay"] += 1
+    ra: list[tuple[int, str, str, str]] = []
+    try:
+        if kiem_fn is None:
+            _sp_qln = _ilu_mea.spec_from_file_location("_qln_tdxv", Path(__file__).resolve().parent / "quyen_lich_nen.py")
+            _qln = _ilu_mea.module_from_spec(_sp_qln)
+            _sp_qln.loader.exec_module(_qln)
+            _kq_qln = _qln.kiem()
+        else:
+            _kq_qln = kiem_fn()
+        if _kq_qln["thieu_khai"]:
+            ra.append((0, "👤", f"{len(_kq_qln['thieu_khai'])} lệnh trong SKILL.md tác vụ lịch CHƯA khai quyền "
+                       f"(vd {_kq_qln['thieu_khai'][0][0]}: {_kq_qln['thieu_khai'][0][1][:80]}) — lượt lịch sẽ bị cắt ngang "
+                       "mà vẫn ghi «succeeded»", "khai ở sync/quyen-lich-nen.json rồi python3 tools/quyen_lich_nen.py --ap-dung"))
+        if _kq_qln["thieu_may"]:
+            ra.append((0, "🤖", f"{len(_kq_qln['thieu_may'])} quy tắc quyền lượt lịch đã khai mà máy CHƯA áp — lượt lịch kế "
+                       "tiếp sẽ bị cắt ngang", "python3 tools/quyen_lich_nen.py --ap-dung"))
+        if _kq_qln["khong_do"]:
+            _ghi_chet(["", "quyền lượt lịch"], "không đo được — " + "; ".join(str(x) for x in _kq_qln["khong_do"])[:160])
+    except Exception as _exc:  # noqa: BLE001 — cảm biến hỏng phải hiện ra, không được im lặng
+        _ghi_chet(["python3", "tools/quyen_lich_nen.py"], f"lỗi {type(_exc).__name__}")
+    return ra
+
+
 def giac_quan_bo_canh_nen(thu_muc_la: Path | None = None, thu_muc_tools: Path | None = None,
                           tep_so_email: Path | None = None, bay_gio: float | None = None,
                           nen_tang: str | None = None) -> list[tuple[int, str, str, str]]:
@@ -1988,24 +2022,8 @@ def main() -> int:
     except Exception as _exc:  # noqa: BLE001 — cảm biến hỏng phải hiện ra, không được im lặng
         _ghi_chet(["python3", "tools/kiem_lich_nen.py"], f"lỗi {type(_exc).__name__}")
 
-    # ⑦f-bis QUYỀN LƯỢT LỊCH (28/10/2026, BH173): ⑦f chỉ thấy SAU khi kỳ đã lỡ; lượt lịch không có ai bấm «cho phép» nên lệnh
-    # chưa nằm trong permissions.allow cắt ngang lượt mà vẫn ghi «succeeded» (W44). Báo TRƯỚC kỳ: lệnh SKILL.md chưa khai (👤 —
-    # khai thêm là quyết định của bác sĩ) · quy tắc đã khai mà máy chưa áp (🤖 — `--ap-dung` chỉ thêm đúng mục đã khai).
-    _SO_GIAC_QUAN["chay"] += 1
-    try:
-        _sp_qln = _ilu_mea.spec_from_file_location("_qln_tdxv", Path(__file__).resolve().parent / "quyen_lich_nen.py")
-        _qln = _ilu_mea.module_from_spec(_sp_qln)
-        _sp_qln.loader.exec_module(_qln)
-        _kq_qln = _qln.kiem()
-        if _kq_qln["thieu_khai"]:
-            de_xuat.append((0, "👤", f"{len(_kq_qln['thieu_khai'])} lệnh trong SKILL.md tác vụ lịch CHƯA khai quyền "
-                            f"(vd {_kq_qln['thieu_khai'][0][0]}: {_kq_qln['thieu_khai'][0][1][:80]}) — lượt lịch sẽ bị cắt ngang "
-                            "mà vẫn ghi «succeeded»", "khai ở sync/quyen-lich-nen.json rồi python3 tools/quyen_lich_nen.py --ap-dung"))
-        if _kq_qln["thieu_may"]:
-            de_xuat.append((0, "🤖", f"{len(_kq_qln['thieu_may'])} quy tắc quyền lượt lịch đã khai mà máy CHƯA áp — lượt lịch kế "
-                            "tiếp sẽ bị cắt ngang", "python3 tools/quyen_lich_nen.py --ap-dung"))
-    except Exception as _exc:  # noqa: BLE001 — cảm biến hỏng phải hiện ra, không được im lặng
-        _ghi_chet(["python3", "tools/quyen_lich_nen.py"], f"lỗi {type(_exc).__name__}")
+    # ⑦f-bis QUYỀN LƯỢT LỊCH (28/10/2026, BH173) — xem docstring `giac_quan_quyen_lich_nen`.
+    de_xuat += giac_quan_quyen_lich_nen()
 
     # ⑦f-ter BỘ CANH NỀN (14/11/2026): ba bộ canh chưa cài launchd (👤, gộp một dòng) + bộ canh lịch nền tự hỏng (🛎) — CHỈ
     # ĐỌC plist và sổ lượt chạy; không đo được ⇒ ⚪, không bao giờ 🟢. Xem docstring `giac_quan_bo_canh_nen`.
