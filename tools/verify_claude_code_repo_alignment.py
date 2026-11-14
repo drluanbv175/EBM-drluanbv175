@@ -206,14 +206,19 @@ _LA_KEBAB = re.compile(rf"{_TEN_KEBAB}\Z")
 # giờ dạng «7h», «7 giờ», «7g30»; «mùng/mồng N»; MỘT cặp ngoặc «(…)» chỉ chứa từ vựng lịch (1–4 từ, ngăn bằng khoảng trắng/dấu
 # phẩy) tính là một cụm; gạch ngang «—»/«–»/«-» như «:» trước tên. Vẫn KHÔNG nhận từ ngoài từ vựng, kể cả trong ngoặc:
 # «tác vụ tháng (quy trình `x`)», «Tác vụ lịch (app Claude trên Mac): … `x`», «tác vụ tháng — gọi agent `x`» không bị bắt.
+# 14/11/2026 (thẩm định #363, hai đường báo oan MỚI do lượt mở rộng trên): (a) gạch chỉ là dấu ngăn khi nằm CÙNG DÒNG với
+# «tác vụ …» — trước đó `\s*` trước gạch ăn cả xuống dòng nên gạch đầu dòng markdown «- `x`» ở dòng SAU «… là tác vụ» bị đọc
+# thành «tác vụ — `x`»; (b) «lúc|vào» chỉ là từ vựng lịch khi còn một cụm nữa theo sau — «gộp/chép tác vụ vào `x`» nghĩa là
+# «vào trong `x`», không nói `x` là tác vụ lịch. «:»/«(» vẫn được qua dòng như bản trước PR (không đổi hành vi cũ).
 _TU_LICH = (
     r"(?:lịch|nền|tháng|quý|tuần|định\s+kỳ|(?:hằng|hàng|mỗi)\s+\w+|ngày(?:\s+\d{1,2}(?:/\d{1,2})?)?|m[ùồ]ng\s+\d{1,2}"
     r"|thứ\s+(?:hai|ba|tư|năm|sáu|bảy|[2-7])|chủ\s+nhật|cn|t[2-7]"
     r"|\d{1,2}(?::\d{2}|\s*(?:h|g|giờ)(?:\s*\d{2})?)"
-    r"|lúc|vào|sáng|chiều|tối|đêm|đầu|cuối|giữa|kỹ\s+thuật|nội\s+dung|riêng|chính|cũ|mới)(?![^\W_])")
+    r"|(?:lúc|vào)(?!\s*(?:[:(—–-]\s*)?`)"
+    r"|sáng|chiều|tối|đêm|đầu|cuối|giữa|kỹ\s+thuật|nội\s+dung|riêng|chính|cũ|mới)(?![^\W_])")
 _BO_NGU_LICH = rf"(?:{_TU_LICH}|\(\s*{_TU_LICH}(?:\s*,?\s+{_TU_LICH}|\s*,\s*{_TU_LICH}){{0,3}}\s*\))"
 _NGU_CANH_TAC_VU = re.compile(
-    rf"tác vụ(?:\s+{_BO_NGU_LICH}){{0,8}}\s*(?:[:(]|[—–]|-{{1,2}})?\s*"
+    rf"tác vụ(?:\s+{_BO_NGU_LICH}){{0,8}}(?:\s*[:(]|[^\S\n]*(?:[—–]|-{{1,2}}))?\s*"
     r"((?:`[^`\n]+`(?:\s*(?:,|·|/|và|hoặc)\s*)?)+)",
     re.IGNORECASE)
 _TEN_TRONG_HUYEN = re.compile(r"`([^`\n]+)`")

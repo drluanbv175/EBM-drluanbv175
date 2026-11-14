@@ -232,6 +232,9 @@ AM_TINH_GIA = (  # câu GỌI `tên` là tác vụ lịch — chốt PHẢI bắ
     "Chạy bởi tác vụ lịch 18g30 `goi-duyet-tuan-ebm`.",
     "Chạy bởi tác vụ mùng 4 `goi-duyet-tuan-ebm`.",
     "Chạy bởi tác vụ lịch (thứ Hai, 18:00) `goi-duyet-tuan-ebm`.",
+    # thẩm định #363: gạch CÙNG DÒNG rồi tên ở dòng sau vẫn bị bắt; «vào/lúc» còn cụm theo sau vẫn là từ vựng lịch
+    "Chạy bởi tác vụ mới —\n`goi-duyet-tuan-ebm`.",
+    "Chạy bởi tác vụ lịch vào (thứ Hai) `goi-duyet-tuan-ebm`.",
 )
 
 
@@ -251,6 +254,13 @@ DUONG_TINH = (  # câu KHÔNG nói `tên` là tác vụ lịch — chốt chặn
     "Tác vụ 2 gói `goi-duyet-tuan-ebm`.",
     "Tác vụ tháng vào repo `goi-duyet-tuan-ebm`.",
     "Tác vụ tháng đọc quy trình `goi-duyet-tuan-ebm` lúc 18:00.",
+    # thẩm định #363 (a): gạch đầu dòng markdown ở dòng SAU «… tác vụ» không phải dấu ngăn «tác vụ — `x`»
+    "Quy trình này không còn là tác vụ\n\n- `goi-duyet-tuan-ebm`: gói duyệt.",
+    "Danh sách tác vụ lịch\n- `goi-duyet-tuan-ebm`",
+    # thẩm định #363 (b): «vào/lúc» đứng ngay trước tên nghĩa là «vào trong `x`», không phải mốc giờ
+    "Gộp tác vụ vào `goi-duyet-tuan-ebm`.",
+    "Chép tác vụ lịch vào `goi-duyet-tuan-ebm`.",
+    "Chép tác vụ lúc `goi-duyet-tuan-ebm`.",
 )
 
 
