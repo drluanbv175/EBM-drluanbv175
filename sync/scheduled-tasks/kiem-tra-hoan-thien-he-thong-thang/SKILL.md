@@ -38,10 +38,10 @@ Công cụ nối dòng BẮT ĐẦU/KẾT THÚC (giờ do máy lấy) vào `stat
 BƯỚC 0 — TIỀN KIỂM QUYỀN (14/11/2026; lượt phải GÃY ỒN, không gãy âm thầm — mẫu theo bước 0 của `cap-nhat-thang-ebm`).
 Ngay sau lệnh BẮT ĐẦU, chạy `python3 tools/quyen_lich_nen.py --tac-vu kiem-tra-hoan-thien-he-thong-thang` (quyền của ĐÚNG các
 lệnh lượt này sẽ gõ, khai ở khoá `kiem-tra-hoan-thien-he-thong-thang` của `sync/quyen-lich-nen.json`):
-- mã 0 (🟢) ⇒ làm tiếp các mảng ①–⑨.
+- mã 0 (🟢) ⇒ làm tiếp các mảng ①–⑩.
 - mã 1 (🔴 có lệnh của lượt này chưa được phép trên máy, hoặc SKILL có lệnh chưa khai/lệnh ghép — lượt sẽ bị cắt ngang giữa
   chừng mà bộ lập lịch vẫn ghi «succeeded») HOẶC mã 2 (⚪ KHÔNG đo được quyền — «không đo được» không phải «đủ»)
-  ⇒ DỪNG LƯỢT NGAY, KHÔNG chạy mảng ①–⑨, và KHÔNG ghi dòng KẾT THÚC (không gõ lệnh `--ma` của mục «DẤU VẾT LƯỢT»). Lý do:
+  ⇒ DỪNG LƯỢT NGAY, KHÔNG chạy mảng ①–⑩, và KHÔNG ghi dòng KẾT THÚC (không gõ lệnh `--ma` của mục «DẤU VẾT LƯỢT»). Lý do:
   cảm biến `tools/kiem_lich_nen.py` (từ 14/11/2026 đọc mã KẾT THÚC) chỉ xếp «KẾT THÚC (mã 2)» là 🟠 «lượt không trọn» — kém rõ
   hơn, và trước đó còn tính là «đúng hẹn» (xanh giả). Để BẮT ĐẦU đứng một mình thì cảm biến tự báo 🔴 «có BẮT ĐẦU nhưng KHÔNG có
   KẾT THÚC — … xem python3 tools/quyen_lich_nen.py», đúng gốc (đo khi thẩm định 14/11/2026). Kết thúc bằng tin nhắn mở đầu
@@ -86,7 +86,7 @@ tồn tại, phần lớn xuất phát từ một lỗi thật đã xảy ra):
    `cd medical-ebm-automation && ~/.ebm-venv/bin/python -m pytest -k "<phần liên quan>" -q`.
 7. Nếu mọi thứ sạch (không tìm ra gì cần sửa), đó là kết quả HỢP LỆ — không cần bịa việc để làm.
 
-VIỆC CẦN KIỂM MỖI LẦN CHẠY (9 mảng, làm tuần tự):
+VIỆC CẦN KIỂM MỖI LẦN CHẠY (10 mảng, làm tuần tự):
 
 **① Dây nối 11 cổng G0-G10.** Dùng công cụ Grep (mẫu `quality_gate|evaluate_study`, tệp
 `medical-ebm-automation/tools/approve_gate.py`) rồi Read quanh mỗi match — xác nhận 6 cổng cứng canonical (G2,G4,G5,G8,G9,G10)
@@ -142,6 +142,22 @@ sạch, ghi rõ nếu có "BÀI HỌC TÁI PHÁT"). `python3 tools/kiem_plugin_d
 trị khi có sổ dài hạn. Chạy `python3 tools/do_su_dung_cong_cu.py --thang <THÁNG TRƯỚC, YYYY-MM> --ghi` (chỉ đếm TÊN tool/skill/
 lệnh/agent/MCP/mô hình — không giữ nội dung hội thoại), rồi `python3 tools/do_su_dung_cong_cu.py --tong-hop`; ghi số tháng đã có
 vào báo cáo. KHÔNG đề xuất tắt công cụ khi sổ mới có < 3 tháng.
+
+**⑩ Giả lập định kỳ hệ nghiên cứu — canary tháng (thêm 15/11/2026, R9).** Hai lượt giả lập đề tài chạy TAY (13–14/11/2026)
+tìm ra 33 khiếm khuyết; mảng này lặp lại phép đo đó mỗi tháng để bản sửa sau không âm thầm làm hỏng lại chỗ đã sửa. Chạy (Bash
+`run_in_background: true` rồi ĐỢI thông báo xong — vài phút) `~/.ebm-venv/bin/python medical-ebm-automation/tools/gia_lap_dinh_ky.py --truc-tuyen`.
+Công cụ dựng đề tài TỔNG HỢP (RCT kết cục nhị phân + cắt ngang mô tả) trong THƯ MỤC TẠM, một «PI giả lập» điền `gate_params`
+G0/G1/G3 và chép dấu vân tay qua `run_pipeline.py` của bản sao tạm, rồi chạy test đầu–cuối G10 tám thiết kế (pytest, khoá GIẢ
+của conftest). Không đụng `exports/` thật, không ký gì, không sửa mã; G0 tra PubMed/ClinicalTrials.gov thật (mạng hỏng ⇒ dùng
+nền G0 lưu từ lượt trước và báo G0 không đo được). Công cụ tự ghi mốc `medical-ebm-automation/state/gia-lap-dinh-ky-gan-nhat.json`
+để so lần sau (đọc chi tiết bằng Read). Đọc mã thoát:
+- mã 0 ⇒ 🟢 không có khiếm khuyết MỚI so với lần trước.
+- mã 1 ⇒ mỗi dòng «🆕 …» công cụ in thành một dòng «🛎 việc sửa cho phiên có người: <khoá 🆕 nguyên văn> — bằng chứng: tệp mốc
+  trên (khoá `moi`, `kich_ban`) — kiểm lại: chạy lại lệnh trên». Có dòng «ℹ️ Lần đầu ở chế độ này» ⇒ ghi là MỐC ĐẦU TIÊN (mọi
+  khiếm khuyết đang có tính là mới), không gọi là hồi quy. Dòng «✔️ đã hết» chép kèm — bằng chứng bản sửa đã có tác dụng.
+- mã 2 ⇒ ⚪ có phần KHÔNG đo được (chép nguyên văn dòng «⚪ không đo được: …», vd G0 khi NCBI chặn/mất mạng, pytest không chạy);
+  «không đo được» không phải «ổn». Không chạy lại theo cách khác.
+Lượt lịch KHÔNG sửa gì theo kết quả này — sửa là việc của phiên có người.
 
 BÁO CÁO: viết một bản tóm tắt ngắn gọn BẰNG TIẾNG VIỆT (đúng theo chỉ thị ngôn ngữ toàn cục của
 người dùng) liệt kê: bước 0 (mã tiền kiểm), mảng nào sạch, mảng nào có việc cần bác sĩ xử lý (kèm lệnh cụ thể để tự
