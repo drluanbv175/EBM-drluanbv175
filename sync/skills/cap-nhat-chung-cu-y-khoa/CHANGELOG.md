@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.60.0 — 2026-11-14 (bảng mã sổ xác minh: `CAN_KIEM_RUT_LAI`, `CAN_PHU_MO_COI`, `SO_DANG_KHOA`)
+
+Bảng «Lý do hết hiệu lực — Cách sửa — Mã» (mục BH14) theo kịp mã đang chạy: thêm `CAN_KIEM_RUT_LAI` (quá hạn kiểm rút bài —
+đã từng kiểm được; `--quet`/`--phu-mo-coi`/`--kiem-rut-lai` sửa được, không cần khoá API; có từ 08/11) và `CAN_PHU_MO_COI`
+(bản ghi TRẦN chưa xác minh tồn tại; `--phu-mo-coi --vong 3`, máy tự sửa; có từ #349); `CAN_XEM_TAY` nay chỉ còn ngày hỏng/
+URL trần. Thêm đoạn mã cấp lượt `SO_HONG` · `KHONG_DO_DUOC` · `SO_DANG_KHOA` — mã mới của khoá ghi sổ: `tools/so_xac_minh_nguon.py`
+ghi dưới khoá tệp + gộp ba chiều, hết hạn chờ khoá ⇒ không ghi gì, mã 3. Chỉ đổi doctrine; công cụ của skill không đổi.
+
 ## v1.59.0 — 2026-11-08 (tóm tắt Word ⑨: mục «Áp dụng nhanh tại phòng khám» ngay sau kết luận)
 
 Bác sĩ 08/11/2026: «Tóm tắt tiếng việt đảm bảo đúng chuẩn,chính xác nhất và giúp áp dụng nhanh cho thực hành lâm sàng».
