@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.61.0 — 2026-11-14 (dạy kiểm chéo ngữ nghĩa ④-bis/④-ter: K1–K4 + K3b/K4b mới, mức CẢNH BÁO)
+
+PR #359 thêm K3b (nguồn khuyến cáo CÓ ĐIỀU KIỆN mà mục đã rụng điều kiện) và K4b (mục «KHÔNG làm» khi nguồn ủng hộ) vào
+bước ④-ter của bộ năm, cùng dòng «🟠 theo phép». Trước bản này SKILL.md chưa dạy phép kiểm ngữ nghĩa nào (K1–K4 chạy trong
+`xuat_goi_cap_nhat.py` từ 25/09/2026 mà cả skill lẫn đội agent không chỗ nào dạy cách đọc). Thêm một khối ngay sau danh sách bộ năm: nghĩa từng
+phép, mức CẢNH BÁO (không đổi mã thoát; chuyển CHẶN là việc bác sĩ), cách đọc dòng `Tổng: … (🟠 theo phép: …)`, 🟠 = đọc lại
+nguồn (không phải «sai», không tự đổi `decision`/`gradeLevel`), và độ nhạy đo bằng `tools/do_nhay_kiem_ngu_nghia.py`
+(lượt 14/11/2026c: K3b ~1%, K4b ~25%) — «không có 🟠» KHÔNG có nghĩa là đúng. Chỉ đổi doctrine; công cụ của skill không đổi.
+
 ## v1.60.0 — 2026-11-14 (bảng mã sổ xác minh: `CAN_KIEM_RUT_LAI`, `CAN_PHU_MO_COI`, `SO_DANG_KHOA`)
 
 Bảng «Lý do hết hiệu lực — Cách sửa — Mã» (mục BH14) theo kịp mã đang chạy: thêm `CAN_KIEM_RUT_LAI` (quá hạn kiểm rút bài —

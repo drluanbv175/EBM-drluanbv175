@@ -8892,10 +8892,15 @@ def bh130_tac_vu_lich_chay_duoc_ca_mac_lan_windows():
 
 def bh131_goi_tuan_doc_ma_ket_qua_rut_bai_kho():
     """28/09 — tác vụ tháng `kiem-rut-bai-kho-thang` ghi «KẾT THÚC … (mã N)» vào state/kiem-rut-bai-kho.log, nhưng chỉ
-    `kiem_lich_nen` đọc log đó và chỉ đọc THỜI ĐIỂM (kỳ có chạy không), không đọc MÃ: phát hiện rút bài (mã 1) nằm im.
-    Chốt 2 vế: (a) HÀNH VI `doc_ket_qua_rut_bai_kho.doc()` trên log dựng bằng CHÍNH `chu_trinh_chung_cu.ghi_dau_vet` —
+    `kiem_lich_nen` đọc log đó, và đọc cho câu hỏi LỊCH: tới 14/11 chỉ đọc THỜI ĐIỂM; từ #356 (14/11) đọc cả mã nhưng chỉ để
+    phân xử lượt TRỌN/KHÔNG TRỌN (`MA_TRON` = {0, 1} — mã 1 là lượt đi hết, kỳ đúng hẹn, không cảnh báo). Không ai đọc mã
+    theo nghĩa NỘI DUNG ⇒ phát hiện rút bài (mã 1) nằm im. (Đính chính 14/11: mô tả cũ «chỉ đọc THỜI ĐIỂM, không đọc MÃ».)
+    Chốt 3 vế: (a) HÀNH VI `doc_ket_qua_rut_bai_kho.doc()` trên log dựng bằng CHÍNH `chu_trinh_chung_cu.ghi_dau_vet` —
     dòng CUỐI quyết định (sạch cũ không che phát hiện mới), quá cửa sổ/mã 2/không log ⇒ ⚪ chứ không 🟢;
-    (b) SKILL gói tuần gọi công cụ, đặt 🔴 LÊN ĐẦU và cấm viết «kho sạch» khi ⚪."""
+    (b) SKILL gói tuần gọi công cụ, đặt 🔴 LÊN ĐẦU và cấm viết «kho sạch» khi ⚪;
+    (c) 14/11 — hai bộ đọc của CÙNG một log hiểu cùng một mã: `kiem_lich_nen._ket_thuc_co_ma` đọc dòng do `ghi_dau_vet` ghi
+    ra đúng một dòng KẾT THÚC, đúng thời điểm, nhãn «mã N» (đổi khuôn ở một bên mà quên bên kia ⇒ cảm biến lịch mù kỳ rút bài
+    hoặc đọc sai mã trong khi gói tuần vẫn đọc đúng — hai nơi báo khác nhau về cùng một lượt)."""
     import datetime as _dt
     import tempfile as _tf
     d = _nap(REPO / "tools" / "doc_ket_qua_rut_bai_kho.py", "_bh131_doc")
@@ -8921,7 +8926,20 @@ def bh131_goi_tuan_doc_ma_ket_qua_rut_bai_kho():
     for can in ("tools/doc_ket_qua_rut_bai_kho.py", "LÊN ĐẦU", "không viết «kho sạch»"):
         if can not in vb:
             return False, f"SKILL gói tuần thiếu «{can}» — kết quả rút bài kho không tới tay bác sĩ"
-    return True, "gói tuần đọc MÃ kết quả rút bài kho (dòng cuối; 🔴 lên đầu; ⚪ khi không đo được)"
+    k = _nap(REPO / "tools" / "kiem_lich_nen.py", "_bh131_kln")
+    luc = nay - _dt.timedelta(days=1)
+    with _tf.TemporaryDirectory() as td:
+        for ma in (0, 1, 2, 130):
+            tep = Path(td) / f"ma{ma}.log"
+            c.ghi_dau_vet(tep, ma, luc)
+            dong = k._ket_thuc_co_ma(tep) or []
+            if len(dong) != 1 or dong[0][0] != luc:
+                return False, (f"kiem_lich_nen đọc {len(dong)} dòng KẾT THÚC (kỳ vọng 1, lúc {luc:%d/%m %H:%M}) từ dòng mã {ma}"
+                               " do ghi_dau_vet ghi — cảm biến lịch mù kỳ rút bài")
+            if dong[0][2] != f"mã {ma}":
+                return False, f"kiem_lich_nen đọc «{dong[0][2]}» từ dòng mã {ma} — hai bộ đọc của cùng một log hiểu khác mã"
+    return True, ("gói tuần đọc MÃ kết quả rút bài kho (dòng cuối; 🔴 lên đầu; ⚪ khi không đo được); cảm biến lịch đọc cùng "
+                  "dòng ra cùng mã")
 
 
 def bh153_phep_do_khong_lam_ban_cay_git():

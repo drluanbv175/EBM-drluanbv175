@@ -3,8 +3,12 @@
 """Đọc KẾT QUẢ lượt tái kiểm rút bài kho gần nhất cho gói duyệt tuần — 28/09/2026 (N4).
 
 Vì sao: tác vụ tháng `kiem-rut-bai-kho-thang` nối một dòng «KẾT THÚC chu_trinh_chung_cu (mã N)» vào
-`state/kiem-rut-bai-kho.log`. `kiem_lich_nen.py` chỉ canh kỳ đó CÓ CHẠY hay không, không đọc MÃ. Nếu không ai đọc mã,
-một phát hiện rút bài (mã 1) nằm im trong log cho tới lượt bác sĩ tự mở. Gói tuần là nơi bác sĩ chắc chắn đọc.
+`state/kiem-rut-bai-kho.log`. `kiem_lich_nen.py` đọc log đó cho câu hỏi LỊCH: tới 14/11/2026 chỉ đọc THỜI ĐIỂM (kỳ có
+chạy không); từ PR #356 đọc cả mã, nhưng chỉ để phân xử lượt TRỌN hay KHÔNG TRỌN (`kiem_lich_nen.MA_TRON` = {0, 1}: mã 1 là
+lượt đi hết ⇒ kỳ đúng hẹn, không cảnh báo; mã 2/mã lạ ⇒ 🟠 «lượt KHÔNG TRỌN»). Cảm biến lịch cố ý KHÔNG coi mã 1 là việc
+cần làm. Nếu không ai đọc mã theo nghĩa NỘI DUNG, một phát hiện rút bài (mã 1) nằm im trong log cho tới lượt bác sĩ tự mở.
+Gói tuần là nơi bác sĩ chắc chắn đọc. (Đính chính 14/11/2026: câu cũ «kiem_lich_nen chỉ canh kỳ đó CÓ CHẠY, không đọc MÃ»
+đã lỗi thời sau #356; lý do tồn tại của công cụ này không đổi.)
 
 Luật (chỉ dòng KẾT THÚC CUỐI CÙNG có giá trị — một lượt sạch cũ không che lượt có phát hiện mới):
   🔴 mã 1 và còn trong cửa sổ tươi → có việc cần bác sĩ (nguồn bị rút/đáng ngờ) — đặt LÊN ĐẦU gói tuần.
