@@ -142,6 +142,12 @@ VIEC_MAY = [
     # Thêm 18/10/2026 — cầu nạp sổ cái hub (EBM_MASTER/tools/ingest_dashboard.py) nay có nguồn chuẩn
     # trong git (sync/ebm-master-tools/); không ai chạy bước chép thì PR đã gộp không có hiệu lực (BH41).
     # Chỉ tua nhanh từ phiên bản đã biết + chỉ từ master sạch; bản chạy có sửa riêng ⇒ giữ lại chờ bác sĩ.
+    # Thêm 14/11/2026 — bác sĩ chọn «Một chiều + tự động»: kho chứng cứ ở lại OneDrive, Cloud đọc gương tóm tắt qua git.
+    # Hook đã sinh lại gương mỗi phiên nhưng không gì commit/đẩy ⇒ đo 14/11: 7 tệp đo sống chờ trên Mac 9 ngày (BH41).
+    # Chỉ danh sách trắng đo sống, chỉ từ master tua nhanh được, an toàn không 🔴; tệp/commit khác để nguyên.
+    ("Dữ liệu đo sống (gương Cloud, sổ nguồn, cảnh báo) chưa lên GitHub",
+     [PY, "tools/day_do_song_cloud.py", "--im-khi-on"],
+     [PY, "tools/day_do_song_cloud.py", "--ap-dung", "--im-khi-on"], False),
     ("Công cụ sổ cái hub (EBM_MASTER/tools) tụt hậu nguồn git",
      [PY, "tools/dong_bo_cong_cu_hub.py", "--im-khi-on"],
      [PY, "tools/dong_bo_cong_cu_hub.py", "--ap-dung"], False),
