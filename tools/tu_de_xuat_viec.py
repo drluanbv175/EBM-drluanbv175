@@ -27,6 +27,7 @@ import json
 import os
 import re
 import shutil
+import stat
 import subprocess
 import sys
 import time
@@ -823,6 +824,151 @@ def phan_loai_lich_nen(phat_hien: list[dict]) -> tuple[list[tuple[int, str, str,
     tt = [f"{cu} kỳ lịch nền CŨ đã lỡ nhưng kỳ sau đã chạy lại — không còn việc phải làm "
           "(chi tiết: python3 tools/kiem_lich_nen.py)"] if cu else []
     return viec, tt
+
+
+# ---------------------------------------------------------------------------------------------------------------------
+# BỘ CANH NỀN (14/11/2026): ba công cụ chỉ có giá trị khi CHẠY NỀN — không cài thì không ai canh, cài mà hỏng thì im lặng.
+# ---------------------------------------------------------------------------------------------------------------------
+# Thư mục agent launchd của người dùng — hằng mô-đun, ĐỌC LÚC GỌI (test vá hằng này; không chốt làm mặc định tham số).
+LAUNCH_AGENTS = Path.home() / "Library" / "LaunchAgents"
+# (tệp công cụ, mô tả ngắn). Nhãn launchd KHÔNG viết lại ở đây: đọc hằng `NHAN_LAUNCHD` trong mã nguồn chính công cụ (ast,
+# không import) ⇒ công cụ đổi nhãn thì giác quan đổi theo; không đọc được nhãn ⇒ ⚪, không đoán.
+BO_CANH_NEN = (
+    ("canh_dia_onedrive.py", "canh đĩa + log OneDrive, mỗi 5 phút"),
+    ("canh_mang_vpn.py", "canh mạng/VPN, mỗi phút"),
+    ("canh_lich_nen_email.py", "canh lịch nền qua email, mỗi ngày 09:00"),
+)
+_TEP_CANH_EMAIL = "canh_lich_nen_email.py"
+
+
+def _nhan_launchd(tep: Path) -> str | None:
+    """Giá trị hằng `NHAN_LAUNCHD = "<chuỗi>"` ở cấp mô-đun của một công cụ; None khi thiếu tệp / không phân tích được."""
+    try:
+        cay = ast.parse(tep.read_text(encoding="utf-8"))
+    except (OSError, SyntaxError, ValueError):
+        return None
+    for nut in cay.body:
+        if (isinstance(nut, ast.Assign) and len(nut.targets) == 1 and isinstance(nut.targets[0], ast.Name)
+                and nut.targets[0].id == "NHAN_LAUNCHD" and isinstance(nut.value, ast.Constant)
+                and isinstance(nut.value.value, str) and nut.value.value.strip()):
+            return nut.value.value
+    return None
+
+
+def _da_cai_plist(thu_muc: Path, nhan: str) -> bool | None:
+    """Có tệp `<nhan>.plist` trong thư mục LaunchAgents không — đúng phép đo `da_cai_launchd()` của ba công cụ, nhưng KHÔNG
+    nuốt lỗi: `Path.is_file()` trả False cả khi bị từ chối quyền đọc (⇒ «chưa cài» giả). Vắng tệp/vắng thư mục ⇒ False (đo
+    được: chưa cài); lỗi khác (quyền, đường dẫn hỏng) ⇒ None = KHÔNG ĐO ĐƯỢC. Tệp `.plist.disabled-*` không tính là đã cài."""
+    try:
+        return stat.S_ISREG((thu_muc / f"{nhan}.plist").stat().st_mode)
+    except FileNotFoundError:
+        return False
+    except OSError:
+        return None
+
+
+def _bo_dau_trang_thai(dong: str) -> str:
+    """Bỏ biểu tượng trạng thái đầu dòng của công cụ (🟢🟡⚪) — bảng tự in 🔴/🟠/🟡 theo ưu tiên."""
+    return re.sub(r"^\s*(?:🟢|🟡|⚪|🔴)\s*", "", dong or "")
+
+
+def giac_quan_bo_canh_nen(thu_muc_la: Path | None = None, thu_muc_tools: Path | None = None,
+                          tep_so_email: Path | None = None, bay_gio: float | None = None,
+                          nen_tang: str | None = None) -> list[tuple[int, str, str, str]]:
+    """BỘ CANH NỀN CHƯA CÀI + SỨC KHOẺ BỘ CANH LỊCH NỀN (14/11/2026) — hai giác quan, CHỈ ĐỌC.
+
+    Vì sao: #344 thêm `canh_lich_nen_email.py --suc-khoe` (bộ canh tự hỏng phải tự lộ ra) nhưng không giác quan nào gọi nó ⇒
+    bộ canh hỏng vẫn im lặng. Đo 14/11/2026: không plist nào trong ~/Library/LaunchAgents gọi ba bộ canh nền.
+
+    ① Launchd (macOS): mỗi bộ canh trong `BO_CANH_NEN` đã có `<NHAN_LAUNCHD>.plist` chưa. Chưa ⇒ MỘT dòng 👤 gộp mọi bộ canh
+       chưa cài, kèm lệnh cài từng cái (cài là việc của bác sĩ — giác quan KHÔNG cài). Không phải macOS / không đọc được nhãn /
+       lỗi quyền ⇒ giác quan chết (⚪) — KHÔNG BAO GIỜ coi là đã cài, cũng không bao giờ in 🟢.
+    ② Sức khoẻ bộ canh lịch nền: gọi THẲNG hàm `suc_khoe()` của `canh_lich_nen_email.py` (import, không parse chuỗi in; công
+       cụ không có `--json`) với sổ lượt chạy + kết quả đo plist ở ①:
+         mã 0 (khoẻ) ⇒ không dòng nào · mã 1 ⇒ 🛎 (phiên Claude chạy tay công cụ để chẩn), RIÊNG nhãn lượt cuối
+         `kenh_chua_bat` ⇒ 👤 với lệnh `python3 tools/nhap_kenh_canh_bao.py` (công cụ nhập kênh chuyên trách, CHỈ BÁC SĨ
+         TỰ CHẠY, ô nhập ẩn — máy không đụng kho secrets). KHÔNG chỉ `--xem-truoc`: nhánh đó không đo kênh, lịch xanh thì
+         in «🟢 Không có lỗi đỏ» ⇒ xanh giả ngay trên đường khắc phục (thẩm định PR #346). Kênh chưa bật mà agent đã cài
+         còn > `HAN_CU_GIAY` không có lượt mới ⇒ thêm MỘT dòng 🛎 riêng (agent không chạy là việc máy chẩn được, không
+         trộn vào việc của bác sĩ). Sổ thiếu mốc lượt cuối ⇒ 🛎 «sổ hỏng», dù nhãn còn sót là `kenh_chua_bat`.
+         mã 3 ⇒ chỉ khi ① ĐO ĐƯỢC là chưa cài; khi đó dòng gộp của ① đã nói ⇒ không thêm dòng, không nhân đôi. Mã 3 với
+         `da_cai` None (không phải macOS, hoặc không đọc được nhãn/plist) = «chưa có lượt chạy, không biết đã cài chưa»:
+         ① đã ghi ⚪ «không đo được» ⇒ KHÔNG thêm dòng 👤 «chưa cài» lặp lại mỗi phiên (docstring `suc_khoe`).
+
+    Trả (ưu tiên, nhãn, mô tả, lệnh). Tham số chỉ để test chạy trên thư mục tạm (không đọc ~/Library thật)."""
+    nen_tang = nen_tang or sys.platform
+    thu_muc_la = thu_muc_la if thu_muc_la is not None else LAUNCH_AGENTS
+    thu_muc_tools = thu_muc_tools if thu_muc_tools is not None else Path(__file__).resolve().parent
+    bay_gio = time.time() if bay_gio is None else bay_gio
+    ra: list[tuple[int, str, str, str]] = []
+
+    # ① launchd
+    _SO_GIAC_QUAN["chay"] += 1
+    da_cai: dict[str, bool | None] = {}
+    if nen_tang != "darwin":
+        da_cai = {tep: None for tep, _ in BO_CANH_NEN}
+        _ghi_chet(["", "bộ canh nền launchd"], f"nền tảng {nen_tang} không có launchd — không đo được agent nền "
+                  "(Windows: Task Scheduler cài tay)")
+    else:
+        khong_do: list[str] = []
+        for tep, _ in BO_CANH_NEN:
+            nhan = _nhan_launchd(thu_muc_tools / tep)
+            if nhan is None:
+                da_cai[tep] = None
+                khong_do.append(f"{tep}: không đọc được NHAN_LAUNCHD")
+                continue
+            da_cai[tep] = _da_cai_plist(thu_muc_la, nhan)
+            if da_cai[tep] is None:
+                khong_do.append(f"{tep}: không đọc được {nhan}.plist")
+        if khong_do:
+            _ghi_chet(["", "bộ canh nền launchd"], "; ".join(khong_do)[:160])
+        chua_cai = [(tep, mo_ta) for tep, mo_ta in BO_CANH_NEN if da_cai.get(tep) is False]
+        if chua_cai:
+            ra.append((2, "👤", f"{len(chua_cai)}/{len(BO_CANH_NEN)} bộ canh nền CHƯA cài agent launchd ("
+                       + "; ".join(f"{tep.removesuffix('.py')} — {mo_ta}" for tep, mo_ta in chua_cai)
+                       + ") — không chạy nền thì không ai canh; đo bằng plist ở ~/Library/LaunchAgents. Cài là việc của bác sĩ "
+                       "(bỏ --ap-dung để xem trước plist)",
+                       " ; ".join(f"python3 tools/{tep} --cai-launchd --ap-dung" for tep, _ in chua_cai)))
+
+    # ② sức khoẻ bộ canh lịch nền (sổ lượt chạy)
+    da_cai_email = da_cai.get(_TEP_CANH_EMAIL)
+    if da_cai_email is False:
+        return ra  # mã 3 chắc chắn — dòng gộp ở ① đã nhắc cài, không nhân đôi
+    _SO_GIAC_QUAN["chay"] += 1
+    try:
+        sp = _ilu_mea.spec_from_file_location("_canh_email_tdxv", thu_muc_tools / _TEP_CANH_EMAIL)
+        ce = _ilu_mea.module_from_spec(sp)
+        sp.loader.exec_module(ce)
+        so = ce.doc_state(tep_so_email if tep_so_email is not None else ce.TEP_STATE)
+        ma, dong = ce.suc_khoe(so, bay_gio, da_cai_email)
+    except Exception as exc:  # noqa: BLE001 — cảm biến hỏng phải hiện ra, không được im lặng
+        _ghi_chet(["", "sức khoẻ bộ canh lịch nền"], f"lỗi {type(exc).__name__}")
+        return ra
+    lenh_chan = "python3 tools/canh_lich_nen_email.py  # chạy tay: đo lại + in lý do"
+    if ma == 1:
+        lan = so.get("lan_chay_cuoi") if isinstance(so.get("lan_chay_cuoi"), dict) else {}
+        try:
+            luc: float | None = float(lan.get("luc"))
+        except (TypeError, ValueError):
+            luc = None  # suc_khoe đã báo «sổ hỏng» — nhãn còn sót không được đẩy thành việc bác sĩ
+        if luc is not None and lan.get("ket_qua") == "kenh_chua_bat":
+            ra.append((2, "👤", f"bộ canh lịch nền: kênh email CHƯA bật (lượt cuối {dt.datetime.fromtimestamp(luc):%H:%M %d/%m})"
+                       " — lỗi đỏ của lịch nền KHÔNG tới được bác sĩ. Bác sĩ tự nhập kênh (ô nhập ẩn; máy không đụng kho "
+                       "secrets, không xem giá trị)",
+                       "python3 tools/nhap_kenh_canh_bao.py  # bác sĩ tự chạy (ô nhập ẩn); xem khoá thiếu: "
+                       "python3 tools/canh_lich_nen_email.py"))
+            # Lý do thứ hai cùng dòng của suc_khoe (agent đã cài mà quá hạn không có lượt) là việc máy chẩn được ⇒ 🛎 riêng.
+            if da_cai_email is True and bay_gio - luc > ce.HAN_CU_GIAY:
+                ra.append((2, "🛎", _bo_dau_trang_thai(dong), lenh_chan))
+        else:
+            ra.append((2, "🛎", _bo_dau_trang_thai(dong), lenh_chan))
+    elif ma == 3 and da_cai_email is None:
+        # Chưa có lượt chạy, không biết đã cài chưa (da_cai False đã return ở trên): ① đã ghi ⚪ «không đo được» — không
+        # nhắc «chưa cài» giả mỗi phiên. Mã 3 khi ① đo được là ĐÃ cài thì rơi xuống «mã lạ» bên dưới, không bị nuốt.
+        pass
+    elif ma != 0:
+        _ghi_chet(["", "sức khoẻ bộ canh lịch nền"], f"mã lạ {ma}")
+    return ra
 
 
 _SHA_RE = re.compile(r"[0-9a-f]{40,64}")
@@ -1807,6 +1953,10 @@ def main() -> int:
                             "tiếp sẽ bị cắt ngang", "python3 tools/quyen_lich_nen.py --ap-dung"))
     except Exception as _exc:  # noqa: BLE001 — cảm biến hỏng phải hiện ra, không được im lặng
         _ghi_chet(["python3", "tools/quyen_lich_nen.py"], f"lỗi {type(_exc).__name__}")
+
+    # ⑦f-ter BỘ CANH NỀN (14/11/2026): ba bộ canh chưa cài launchd (👤, gộp một dòng) + bộ canh lịch nền tự hỏng (🛎) — CHỈ
+    # ĐỌC plist và sổ lượt chạy; không đo được ⇒ ⚪, không bao giờ 🟢. Xem docstring `giac_quan_bo_canh_nen`.
+    de_xuat += giac_quan_bo_canh_nen()
 
     # ⑦h URL MIỀN CHẶN BOT (02/10/2026): bác sĩ tự vượt kiểm tra chống bot, máy ghi bằng chứng — xem docstring.
     for uu, dong, lenh in giac_quan_url_chan_bot(DASH):
