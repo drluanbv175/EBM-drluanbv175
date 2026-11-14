@@ -11,9 +11,8 @@ khẳng định của CLAUDE.md với mã sống).
 
 **Sửa:** chỉ văn bản mô tả trong CLAUDE.md (không đụng số liệu y khoa, cổng hay lịch).
 
-**Còn treo (việc của bác sĩ):** thư mục runtime `~/.claude/scheduled-tasks/kiem-thang-diem-quy/`
-vẫn còn trên máy Mac lúc đo — nếu tác vụ còn đăng ký trong app thì sẽ vẫn bắn; kiểm bằng
-`list_scheduled_tasks` và gỡ trong app nếu còn.
+**Lịch:** `list_scheduled_tasks` 14/11 xác nhận tác vụ KHÔNG còn đăng ký trong app; chỉ còn thư mục
+runtime `~/.claude/scheduled-tasks/kiem-thang-diem-quy/` mồ côi (vô hại, không bắn).
 
 **Bài học:** con số đếm thành phần (số làn, số tác vụ) trong doctrine trôi theo mã; ưu tiên chỉ
 lệnh liệt kê (`--liet-ke-lan`) thay vì ghi cứng số.
