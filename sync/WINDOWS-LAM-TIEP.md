@@ -213,7 +213,10 @@ CHÍNH các công cụ của repo y khoa bằng Python của `~/.ebm-venv` (Wind
 mẫu nhập Excel/.sav · kiểm từng ô · nhập kép · cổng tiếp nhận · xuất/mở SPSS và RStudio · phân tích G6
 trên dữ liệu ĐÃ KHOÁ + kiểm chéo SPSS/R · đọc kết quả. Có 9 công cụ.
 
-- **Claude Code:** `.mcp.json` về theo `git pull`, không phải làm gì thêm (cần `uv` trong PATH như 6c).
+- **Claude Code:** `.mcp.json` về theo `git pull` nhưng chỉ phiên mở ở repo gốc thấy (và phải duyệt). Để dùng ở MỌI
+  phiên — kể cả phiên trong repo y khoa — khai phạm vi người dùng như `endnote-ebm` (Mac đã làm 14/11/2026), mỗi máy
+  một lần: `claude mcp add --scope user spss-r-ebm -- <python của ~/.ebm-venv> "<repo gốc>/tools/mcp/spss_r_ebm_mcp.py"`
+  (Windows: `%USERPROFILE%\.ebm-venv\Scripts\python.exe`) → kiểm `claude mcp get spss-r-ebm` ra «✔ Connected».
 - **Claude Desktop / khung chat:** mỗi máy chạy một lần, ở thư mục repo gốc:
   `python tools/mcp/spss_r_ebm_mcp.py --cai-claude-desktop` (chạy khô) → thêm `--ap-dung` (sao lưu
   `claude_desktop_config.json` trước khi ghi, chỉ thêm khoá `spss-r-ebm`) → thoát hẳn rồi mở lại Claude.
