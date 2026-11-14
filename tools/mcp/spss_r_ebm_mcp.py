@@ -9,11 +9,16 @@ gọi CHÍNH các công cụ đã đo của repo y khoa (`medical-ebm-automation
   • nhap_lieu_excel.py — mẫu nhập (Excel / SPSS .sav), kiểm từng ô, nhập kép, cổng tiếp nhận;
   • mo_trong_phan_mem.py — xuất .sav/.rds có kiểm (khứ hồi từng ô, ba chiều) rồi mở SPSS/RStudio;
   • kiem_cheo_g6.py — kiểm chéo G6 bằng SPSS + R;
-  • run_stats_analysis.py — PHÂN TÍCH CHÍNH G6 đúng đặc tả SAP, CHỈ trên dữ liệu ĐÃ KHOÁ (G5), rồi kiểm chéo SPSS + R.
+  • run_stats_analysis.py — PHÂN TÍCH CHÍNH G6 đúng đặc tả SAP, CHỈ trên dữ liệu ĐÃ KHOÁ (G5), rồi kiểm chéo SPSS + R
+    (F2/F3 14/11/2026: Poisson vững `poisson_pr`, hiệp biến phân loại → biến giả, lọc quần thể `loc`);
+  • (F4, 14/11/2026) clean_research_dataset.py — LÀM SẠCH bản sao sau cổng tiếp nhận (query log, không sửa nguồn, không
+    khoá); g5_quality_gate.evaluate_study(write=False) — «còn thiếu gì để khoá G5» CHỈ ĐỌC; bien_phai_sinh.py — kiểm/tính/
+    đối chiếu biến phái sinh; chay_sap_g6.py — chạy TRỌN đặc tả SAP G6 (mỗi phân tích một gate) trên dữ liệu đã khoá.
 
 Rào chắn (không có ngoại lệ):
   • Công cụ CÓ TÁC DỤNG (sinh mẫu, tiếp nhận, xuất/mở, chạy kiểm chéo) CHẠY KHÔ mặc định — `ap_dung: true` mới làm.
-  • KHÔNG có công cụ khoá dữ liệu (G5), ký cổng, sửa giá trị dữ liệu hay xoá tệp — việc của người có thẩm quyền.
+  • KHÔNG có công cụ khoá dữ liệu (G5), ký cổng, sửa giá trị dữ liệu, đóng query, duyệt công thức/đặc tả hay xoá tệp —
+    việc của người có thẩm quyền (cột `nguoi_duyet`, `G6_DAC_TA_SAP.json → nguoi_duyet` do thống kê viên/PI ghi).
   • Phân tích chính KHÔNG BAO GIỜ truyền cờ ghi đè cổng (`--i-confirm-sap-locked`, `--i-confirm-irb-approved`), không chạy
     trên dữ liệu chưa khoá (không «xem trước kết quả» trước khi khoá SAP/dữ liệu) và không tự chọn biến — đặc tả lấy từ
     lời gọi (theo SAP) hoặc dùng lại đúng đặc tả của lượt G6 trước.
@@ -50,7 +55,7 @@ for _s in (sys.stdin, sys.stdout, sys.stderr):
 
 GOC = Path(__file__).resolve().parents[2]  # repo gốc — thư mục chứa .mcp.json
 TEN_MAY_CHU = "spss-r-ebm"
-PHIEN_BAN = "1.0.0"
+PHIEN_BAN = "1.1.0"
 GIAO_THUC = ("2025-06-18", "2025-03-26", "2024-11-05")
 CAN_KIEM = "Cần bác sĩ kiểm chứng."
 DUOI_NHAP = (".xlsx", ".xlsm", ".sav")
@@ -87,8 +92,12 @@ def _cuoi(chu: str, n: int) -> str:
     return "\n".join(dong[-n:])
 
 
-def chay_cong_cu(tep: str, doi_so: list[str], thoi_han: int = 900) -> dict:
-    """Chạy một công cụ chuẩn của repo y khoa (tiến trình con, không đụng kênh giao thức stdout)."""
+TRAN_JSON = 400_000  # ký tự — đầu ra --json của công cụ chuẩn đọc TRỌN (80 dòng cuối sẽ cắt giữa JSON nhiều dòng)
+
+
+def chay_cong_cu(tep: str, doi_so: list[str], thoi_han: int = 900, *, tron: bool = False) -> dict:
+    """Chạy một công cụ chuẩn của repo y khoa (tiến trình con, không đụng kênh giao thức stdout). `tron=True`: giữ TRỌN
+    stdout (lệnh --json) thay vì 80 dòng cuối."""
     yk = thu_muc_y_khoa()
     cc = yk / "tools" / tep
     if not cc.exists():
@@ -116,7 +125,7 @@ def chay_cong_cu(tep: str, doi_so: list[str], thoi_han: int = 900) -> dict:
         }
     return {
         "ma_thoat": k.returncode,
-        "dau_ra": _cuoi(k.stdout, 80),
+        "dau_ra": (k.stdout or "").strip()[:TRAN_JSON] if tron else _cuoi(k.stdout, 80),
         "loi": _cuoi(k.stderr, 20),
     }
 
@@ -343,9 +352,16 @@ def cc_tiep_nhan(a: dict) -> dict:
         kq = chay_cong_cu("nhap_lieu_excel.py", doi_so, 600)
         tom = _tom_bao_cao(_doc_json(ra / f"{tep.stem}_bao_cao_nhap.json"))
         return {"chay_kho": True, **tom, "se_tiep_nhan": tom.get("trang_thai") == "SACH", "ma_thoat_kiem": kq["ma_thoat"],
-                "ghi_chu": "Chỉ khi SẠCH cổng tiếp nhận (quét PII, chép bản chỉ đọc vào exports/<mã>) mới chạy. "
-                           "ap_dung: true để chạy thật."}  # fmt: skip
-    return chay_cong_cu("nhap_lieu_excel.py", [*doi_so, "--tiep-nhan"], 900)
+                "se_lam_sach_sau": bool(a.get("lam_sach", True)),
+                "ghi_chu": "Chỉ khi SẠCH cổng tiếp nhận (quét PII, chép bản chỉ đọc vào exports/<mã>) mới chạy; tiếp nhận xong "
+                           "tự LÀM SẠCH bản sao (lam_sach=false để tắt). ap_dung: true để chạy thật."}  # fmt: skip
+    kq = chay_cong_cu("nhap_lieu_excel.py", [*doi_so, "--tiep-nhan"], 900)
+    if kq.get("ma_thoat") == 0 and a.get("lam_sach", True):
+        try:
+            kq["lam_sach"] = cc_lam_sach({"study": study, "ap_dung": True})
+        except (ValueError, RuntimeError) as e:  # tiếp nhận đã xong — làm sạch lỗi thì báo, không phủ kết quả tiếp nhận
+            kq["lam_sach"] = {"loi": f"{type(e).__name__}: {e}"[:400], "goi_y": "chạy lại công cụ lam_sach"}
+    return kq
 
 
 def cc_xuat(a: dict) -> dict:
@@ -408,6 +424,8 @@ KHOA_DAC_TA = (
     "event",
     "cot_cum",
     "don_vi_phoi_nhiem",
+    "hiep_bien_phan_loai",
+    "loc",
 )
 
 
@@ -456,9 +474,12 @@ def _doi_so_phan_tich(study: str, tep: str, dt: dict, a: dict) -> list[str]:
                   ("outcome_type", "--outcome-type"), ("cot_cum", "--cot-cum")):  # fmt: skip
         if dt.get(k):
             ds += [co, _gia_tri(dt[k])]
-    cov = dt.get("covariates") or []
-    if cov:
-        ds += ["--covariates", ",".join(_gia_tri(c) for c in cov) if isinstance(cov, list) else _gia_tri(cov)]
+    for k, co in (("covariates", "--covariates"), ("hiep_bien_phan_loai", "--hiep-bien-phan-loai")):
+        v = dt.get(k) or []
+        if v:
+            ds += [co, ",".join(_gia_tri(c) for c in v) if isinstance(v, list) else _gia_tri(v)]
+    if dt.get("loc"):
+        ds += ["--loc", _gia_tri(dt["loc"])]
     if dt.get("don_vi_phoi_nhiem") not in (None, ""):
         ds += ["--don-vi-phoi-nhiem", _gia_tri(dt["don_vi_phoi_nhiem"])]
     if a.get("vars"):
@@ -480,11 +501,27 @@ def cc_phan_tich(a: dict) -> dict:
                 "goi_y": "Trước khi khoá chỉ nên kiểm chất lượng nhập (nhap_lieu_kiem), không xem kết quả phân tích."}  # fmt: skip
     dt = _dac_ta(a, study)
     ds = _doi_so_phan_tich(study, khoa["tep"], dt, a)
+    _can_ban_moi("run_stats_analysis.py", ds)
     if not a.get("ap_dung"):
         return {"chay_kho": True, "du_lieu_khoa": khoa, "dac_ta": dt, "se_chay": ["run_stats_analysis.py", *ds],
                 "ghi_chu": "Đặc tả phải đúng SAP đã khoá. ap_dung: true để chạy (kèm kiểm chéo SPSS + R)."}  # fmt: skip
     kq = chay_cong_cu("run_stats_analysis.py", ds, 3600)
     return {**kq, "ket_qua": cc_ket_qua({"study": study}).get("ket_qua")}
+
+
+# Cờ chỉ có từ bản F2/F3 của repo y khoa — bản cũ (argparse) sẽ báo «unrecognized arguments» khó hiểu: chặn sớm, nói rõ.
+_CO_BAN_MOI = {"--hiep-bien-phan-loai": "F2 (Poisson vững + hiệp biến phân loại)", "--loc": "F3 (lọc quần thể)",
+               "poisson_pr": "F2 (Poisson vững)"}  # fmt: skip
+
+
+def _can_ban_moi(tep: str, ds: list[str]) -> None:
+    try:
+        nguon = (thu_muc_y_khoa() / "tools" / tep).read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return  # chay_cong_cu sẽ báo «không thấy công cụ»
+    thieu = [mo_ta for co, mo_ta in _CO_BAN_MOI.items() if co in ds and f'"{co}"' not in nguon]  # khớp chuỗi có nháy: «--loc» ≠ «--locked»
+    if thieu:
+        raise RuntimeError(f"repo y khoa chưa có bản {', '.join(thieu)} của {tep} — kéo bản mới (PR đã gộp) rồi chạy lại")
 
 
 def _gon(x, tran: int = 3000):
@@ -513,6 +550,201 @@ def cc_ket_qua(a: dict) -> dict:
         kiem_cheo = kc.get("dau_ra")
     return {"ket_qua": {k: _gon(tom[k]) for k in khoa if k in tom}, "kiem_cheo_g6": kiem_cheo, "tep": str(p),
             "ghi_chu": "Kết quả TƯ VẤN — thống kê viên xác nhận ở G6 (G6-HUMAN-01). " + CAN_KIEM}  # fmt: skip
+
+
+# ─────────────────────── F4 (14/11/2026): làm sạch · G5 · biến phái sinh · SAP ───────────────────────
+
+_ID = re.compile(r"[A-Za-z0-9_][A-Za-z0-9_.-]*")
+
+
+def _trong(goc: Path, p: Path) -> bool:
+    try:
+        p.resolve().relative_to(goc.resolve())
+        return True
+    except ValueError:
+        return False
+
+
+def _tep_trong_de_tai(study: str, v, ten: str, duoi: tuple[str, ...]) -> Path:
+    """Tệp nằm TRONG exports/<mã> (bản sao sau cổng tiếp nhận) — không nhận tệp thô ngoài đề tài."""
+    d = thu_muc_y_khoa() / "exports" / study
+    p = Path(str(v)).expanduser()
+    p = (p if p.is_absolute() else d / p).resolve()
+    if not _trong(d, p):
+        raise ValueError(f"{ten}: chỉ nhận tệp trong exports/{study}/ (bản sao đã qua cổng tiếp nhận)")
+    if p.suffix.lower() not in duoi:
+        raise ValueError(f"{ten}: chỉ nhận {', '.join(duoi)}")
+    if not p.exists():
+        raise ValueError(f"không thấy tệp: {p}")
+    return p
+
+
+def _tom_lam_sach(bc: dict | None) -> dict:
+    if not isinstance(bc, dict):
+        return {"bao_cao_lam_sach": None}
+    return {k: bc.get(k) for k in ("status", "cleaned_at", "source_filename", "clean_dataset_path", "query_log", "row_count",
+                                    "column_count", "dictionary_loaded", "dictionary_blocker", "safe_action_counts",
+                                    "open_query_count", "n_query_resolved", "query_summary", "query_resolution_errors",
+                                    "blocker", "ready_for_lock")}  # fmt: skip
+
+
+def _ke_lam_sach(a: dict, study: str) -> tuple[list[str], dict]:
+    d = thu_muc_y_khoa() / "exports" / study
+    meta = _doc_json(d / "study_meta.json") or {}
+    if a.get("data"):
+        data = _tep_trong_de_tai(study, a["data"], "data", (".csv",))
+    else:
+        rel = ((meta.get("real_data_intake") or {}) if isinstance(meta, dict) else {}).get("raw_readonly_path")
+        if not rel:
+            raise ValueError("chưa có bản sao sau cổng tiếp nhận (study_meta.real_data_intake) — chạy nhap_lieu_tiep_nhan "
+                             "trước, hoặc truyền «data» (CSV trong exports/<mã>/)")
+        data = _tep_trong_de_tai(study, rel, "raw_readonly_path", (".csv",))
+    td = a.get("tu_dien")
+    tu_dien = (_tep_trong_de_tai(study, td, "tu_dien", (".csv", ".json")) if td
+               else (d / f"G5_REDCap_dictionary_{study}.csv" if (d / f"G5_REDCap_dictionary_{study}.csv").exists() else None))
+    ds = ["--study", study, "--data", str(data)] + (["--dictionary", str(tu_dien)] if tu_dien else [])
+    if a.get("cot_ma_nc"):
+        ds += ["--id-column", _gia_tri(a["cot_ma_nc"])]
+    if a.get("giai_quyet_query"):
+        ds += ["--query-resolutions", str(_tep_trong_de_tai(study, a["giai_quyet_query"], "giai_quyet_query",
+                                                            (".csv", ".json")))]  # fmt: skip
+    return ds, {"data": str(data), "tu_dien": str(tu_dien) if tu_dien else None}
+
+
+def cc_lam_sach(a: dict) -> dict:
+    study = _ma_de_tai(a)
+    ds, nguon = _ke_lam_sach(a, study)
+    bc_p = thu_muc_y_khoa() / "exports" / study / "DATA_CLEANING_report.json"
+    if not a.get("ap_dung"):
+        return {"chay_kho": True, **nguon, "se_chay": ["clean_research_dataset.py", *ds],
+                "lan_truoc": _tom_lam_sach(_doc_json(bc_p)),
+                "ghi_chu": "Làm sạch trên BẢN SAO (03_clean_working): chỉ thao tác an toàn (bỏ khoảng trắng, chuẩn hoá mã "
+                           "thiếu); giá trị mơ hồ thành query mở, KHÔNG tự sửa. Không khoá dữ liệu. ap_dung: true để chạy."}  # fmt: skip
+    kq = chay_cong_cu("clean_research_dataset.py", ds, 1800)
+    tom = _tom_lam_sach(_doc_json(bc_p))
+    buoc = ("Sẵn sàng để NGƯỜI có thẩm quyền khoá (lock_analysis_dataset.py — máy chủ không khoá)." if tom.get("ready_for_lock")
+            else "Còn query mở: PI/quản lý dữ liệu đối chiếu phiếu gốc, ghi tệp giải quyết (giai_quyet_query) rồi làm sạch "
+                 "lại." if tom.get("open_query_count") else "Xem «blocker» trong báo cáo.")  # fmt: skip
+    return {**kq, **nguon, **tom, "buoc_tiep": buoc, "ghi_chu": "Báo cáo/query log không chứa giá trị thô. " + CAN_KIEM}
+
+
+_MA_G5 = """import json, sys
+from pathlib import Path
+sys.path.insert(0, 'tools')
+import g5_quality_gate as Q
+s = sys.argv[1]
+r = Q.evaluate_study(s, Path('exports') / s, repo_root=Path('.').resolve(), write=False)
+print(json.dumps(r, ensure_ascii=False, default=str))
+"""
+
+
+def cc_g5_con_thieu(a: dict) -> dict:
+    """«Còn thiếu gì để khoá G5» — chấm bằng ĐÚNG hàm của cổng với write=False: không ghi báo cáo, study_meta, checkpoint."""
+    study = _ma_de_tai(a)
+    yk = thu_muc_y_khoa()
+    if not (yk / "tools" / "g5_quality_gate.py").exists():
+        raise RuntimeError("repo y khoa chưa có tools/g5_quality_gate.py")
+    k = None
+    try:
+        k = subprocess.run([python_du_an(), "-c", _MA_G5, study], cwd=yk, capture_output=True, text=True, encoding="utf-8",
+                           errors="replace", timeout=300, stdin=subprocess.DEVNULL, check=False,
+                           env={**os.environ, "PYTHONDONTWRITEBYTECODE": "1"})  # fmt: skip
+        bc = json.loads(k.stdout.strip().splitlines()[-1])
+        if not isinstance(bc, dict):
+            raise ValueError("đầu ra không phải báo cáo")
+    except (subprocess.TimeoutExpired, ValueError, IndexError, OSError) as e:
+        return {"trang_thai": None, "khong_do_duoc": type(e).__name__, "loi": _cuoi(k.stderr, 8) if k is not None else None,
+                "ghi_chu": "KHÔNG đo được ≠ đạt. " + CAN_KIEM}  # fmt: skip
+    tieu_chi = bc.get("automatic_criteria") or []
+    chua = [{k: x.get(k) for k in ("id", "label", "status", "action")} for x in tieu_chi if x.get("status") != "PASS"]
+    return {"trang_thai": bc.get("status"), "so_tieu_chi": len(tieu_chi), "chua_dat": chua,
+            "viec_can_lam": bc.get("actions") or [], "khoa_ky_thuat_hop_le": bc.get("technical_lock_valid"),
+            "phe_duyet_nguoi_hop_le": bc.get("human_approval_valid"), "vai_da_ky": bc.get("vai_da_ky"),
+            "dong_ky_du": bc.get("dong_ky_du"), "co_du_lieu_that": bc.get("real_data_present"),
+            "ghi_chu": "CHỈ ĐỌC (không ghi báo cáo/study_meta/checkpoint). Khoá dữ liệu và ký G5 (DATA_MANAGER + PI) là việc "
+                       "của người — máy chủ không có công cụ đó. " + CAN_KIEM}  # fmt: skip
+
+
+def _ds_ten(v, ten: str) -> str:
+    ds = v if isinstance(v, list) else str(v).split(",")
+    ds = [str(x).strip() for x in ds if str(x).strip()]
+    if not ds or any(not _ID.fullmatch(x) for x in ds):
+        raise ValueError(f"{ten}: danh sách tên/mã không hợp lệ (chữ, số, «_ . -», không bắt đầu bằng «-»)")
+    return ",".join(ds)
+
+
+def _json_dau_ra(kq: dict):
+    """Đọc JSON của lệnh --json; đọc được thì bỏ «dau_ra» thô khỏi kq (khỏi trả hai lần), không đọc được thì giữ để chẩn đoán."""
+    try:
+        v = json.loads(kq.get("dau_ra") or "null")
+    except ValueError:
+        return None
+    kq.pop("dau_ra", None)
+    return v
+
+
+def cc_bien_phai_sinh(a: dict) -> dict:
+    study = _ma_de_tai(a)
+    lenh = a.get("lenh") or "kiem"
+    if lenh == "kiem":
+        kq = chay_cong_cu("bien_phai_sinh.py", ["kiem", "--study", study, "--json"], 300, tron=True)
+        v = _json_dau_ra(kq)  # gọi TRƯỚC khi trải kq — hàm bỏ «dau_ra» thô khỏi kq
+        return {**kq, "ket_qua": _gon(v, 20000), "ghi_chu": "Chỉ đọc: công thức hợp lệ không, đã duyệt chưa (dấu khớp "
+                "công thức), thứ tự tính. Người duyệt ghi cột nguoi_duyet — máy chủ không ghi. " + CAN_KIEM}  # fmt: skip
+    if lenh not in ("tinh", "doi_chieu"):
+        raise ValueError("lenh: kiem · tinh · doi_chieu")
+    if not a.get("data"):
+        raise ValueError("thiếu «data» (CSV đã khoá hoặc CSV nhập liệu ngoài repo)")
+    data = Path(str(a["data"])).expanduser().resolve()
+    if data.suffix.lower() != ".csv" or not data.exists():
+        raise ValueError(f"data: cần tệp .csv có thật — nhận {data}")
+    ds = ["tinh" if lenh == "tinh" else "doi-chieu", "--study", study, "--data", str(data)]
+    if lenh == "tinh":
+        ra = Path(str(a["ra"])).expanduser().resolve() if a.get("ra") else data.parent / f"{data.stem}_bien_phai_sinh"
+        if _trong(thu_muc_y_khoa(), ra):
+            raise ValueError("ra: thư mục ra phải NGOÀI repo y khoa")
+        ds += ["--ra", str(ra)]
+    else:
+        ds += (["--khong-spss"] if a.get("khong_spss") else []) + (["--khong-r"] if a.get("khong_r") else [])
+    if a.get("chi"):
+        ds += ["--chi", _ds_ten(a["chi"], "chi")]
+    if not a.get("ap_dung"):
+        return {"chay_kho": True, "se_chay": ["bien_phai_sinh.py", *ds],
+                "ghi_chu": ("Tính biến phái sinh tất định, ghi CSV ra NGOÀI repo." if lenh == "tinh" else
+                            "SPSS và R tự tính lại ĐỘC LẬP từ công thức rồi so từng ô (vài phút).")
+                           + " Chỉ biến ĐÃ DUYỆT mới tính. ap_dung: true để chạy."}  # fmt: skip
+    return {**chay_cong_cu("bien_phai_sinh.py", ds, 3600), "ghi_chu": CAN_KIEM}
+
+
+def cc_chay_sap(a: dict) -> dict:
+    study = _ma_de_tai(a)
+    lenh = a.get("lenh") or "kiem"
+    if lenh in ("kiem", "ket_qua"):
+        kq = chay_cong_cu("chay_sap_g6.py", ["kiem" if lenh == "kiem" else "ket-qua", "--study", study, "--json"], 300,
+                          tron=True)
+        v = _json_dau_ra(kq)
+        return {**kq, "ket_qua": _gon(v, 6000),
+                "ghi_chu": ("Chỉ đọc: đặc tả G6_DAC_TA_SAP.json hợp lệ không, SAP còn khớp sha256_sap không, đã duyệt chưa."
+                            if lenh == "kiem" else "Chỉ đọc: kết quả từng phân tích của lượt chạy SAP gần nhất.") + " "
+                           + CAN_KIEM}  # fmt: skip
+    if lenh != "chay":
+        raise ValueError("lenh: kiem · chay · ket_qua")
+    khoa = du_lieu_khoa(study)
+    if not khoa.get("tep"):
+        return {"tu_choi": True, "ly_do": "chưa có dữ liệu ĐÃ KHOÁ (G5) — chạy SAP chỉ sau khi SAP (G4) và dữ liệu (G5) được "
+                "NGƯỜI có thẩm quyền khoá. Chi tiết: " + str(khoa.get("ly_do"))}  # fmt: skip
+    ds = ["chay", "--study", study] + (["--chi", _ds_ten(a["chi"], "chi")] if a.get("chi") else [])
+    if a.get("kiem_cheo", True):
+        ds.append("--kiem-cheo")
+    if not a.get("ap_dung"):
+        kt = chay_cong_cu("chay_sap_g6.py", ["kiem", "--study", study, "--json"], 300, tron=True)
+        return {"chay_kho": True, "du_lieu_khoa": khoa, "dac_ta": _gon(_json_dau_ra(kt), 4000), "ma_thoat_kiem": kt["ma_thoat"],
+                "se_chay": ["chay_sap_g6.py", *ds],
+                "ghi_chu": "Đặc tả phải ĐÃ DUYỆT (thống kê viên/PI) và khớp SAP đã khoá — công cụ tự chặn nếu không. Mỗi phân "
+                           "tích một gate (G6 cho vai «chinh», G6_<id> cho mục khác); mục «chua_tu_dong» liệt kê để làm tay. "
+                           "ap_dung: true để chạy (có kiểm chéo: lâu)."}  # fmt: skip
+    kq = chay_cong_cu("chay_sap_g6.py", ds, 14400)
+    return {**kq, "ket_qua": cc_chay_sap({"study": study, "lenh": "ket_qua"}).get("ket_qua")}
 
 
 def _sc(props: dict, bat_buoc: list[str] | None = None) -> dict:
@@ -581,8 +813,11 @@ CONG_CU = [
     (
         "nhap_lieu_tiep_nhan",
         "Đưa tệp đã nhập qua CỔNG TIẾP NHẬN chuẩn (quét PII, chép bản chỉ đọc vào exports/<mã>) — CHỈ khi "
-        "kiểm SẠCH. Chạy khô mặc định (chỉ kiểm và báo có đủ điều kiện không).",
-        _sc({"study": _ST, "tep": _TP, "ra": _RA, "ap_dung": _AP}, ["study", "tep"]),
+        "kiểm SẠCH; tiếp nhận xong tự LÀM SẠCH bản sao (như công cụ lam_sach). Chạy khô mặc định (chỉ kiểm và báo có đủ "
+        "điều kiện không).",
+        _sc({"study": _ST, "tep": _TP, "ra": _RA, "ap_dung": _AP,
+             "lam_sach": {"type": "boolean", "description": "tiếp nhận xong tự làm sạch bản sao (mặc định true)"}},
+            ["study", "tep"]),
         cc_tiep_nhan,
     ),
     (
@@ -613,7 +848,8 @@ CONG_CU = [
         "phan_tich_g6",
         "PHÂN TÍCH CHÍNH G6 (run_stats_analysis.py): mô tả, Bảng 1, kết cục chính, hồi quy đa biến, sống còn, "
         "dữ liệu thiếu/MI… CHỈ trên dữ liệu ĐÃ KHOÁ (G5, kiểm bằng hàm của cổng) — chưa khoá ⇒ từ chối, không có cờ ghi đè. Đặc "
-        "tả theo SAP đã khoá (outcome, group, covariates, outcome_type, time/event, cot_cum, don_vi_phoi_nhiem) hoặc "
+        "tả theo SAP đã khoá (outcome, group, covariates, hiep_bien_phan_loai, outcome_type kể cả poisson_pr, loc, time/event, "
+        "cot_cum, don_vi_phoi_nhiem) hoặc "
         "dung_dac_ta_truoc=true để dùng lại đúng đặc tả lượt trước; KHÔNG tự chọn biến. Mặc định kèm kiểm chéo SPSS + R. Chạy "
         "khô mặc định.",
         _sc(
@@ -624,8 +860,13 @@ CONG_CU = [
                 "covariates": {"type": "array", "items": {"type": "string"}},
                 "outcome_type": {
                     "type": "string",
-                    "enum": ["auto", "binary", "continuous", "ordinal"],
+                    "enum": ["auto", "binary", "continuous", "ordinal", "poisson_pr"],
+                    "description": "poisson_pr = Poisson vững (tỷ số tỷ lệ hiện mắc PR) cho kết cục nhị phân phổ biến",
                 },
+                "hiep_bien_phan_loai": {"type": "array", "items": {"type": "string"},
+                                        "description": "hiệp biến PHÂN LOẠI (mã nguyên ≥ 0) → biến giả, tham chiếu mã nhỏ nhất"},
+                "loc": {"type": "string", "description": "quần thể phân tích theo SAP, ngôn ngữ công thức biến phái sinh "
+                        "(vd «PhieuHopLe == 1») — giữ ca = 1; SPSS/R lọc y hệt"},
                 "time": {"type": "string"},
                 "event": {"type": "string"},
                 "cot_cum": {"type": "string"},
@@ -646,6 +887,50 @@ CONG_CU = [
         _sc({"study": _ST}, ["study"]),
         cc_ket_qua,
     ),
+    (
+        "lam_sach",
+        "LÀM SẠCH bản sao sau cổng tiếp nhận (clean_research_dataset.py): mặc định dữ liệu = bản tiếp nhận ghi trong "
+        "study_meta, từ điển = G5_REDCap_dictionary; chỉ thao tác an toàn (bỏ khoảng trắng, chuẩn hoá mã thiếu), giá trị mơ hồ "
+        "thành QUERY mở (không tự sửa); giai_quyet_query = tệp giải quyết query do PI/quản lý dữ liệu ghi. Không khoá dữ "
+        "liệu. Trả trạng thái, số query mở, ready_for_lock. Chạy khô mặc định.",
+        _sc({"study": _ST, "data": {"type": "string", "description": "CSV trong exports/<mã>/ (mặc định: bản tiếp nhận)"},
+             "tu_dien": {"type": "string", "description": "từ điển .csv/.json trong exports/<mã>/"},
+             "cot_ma_nc": {"type": "string", "description": "cột mã nghiên cứu (kiểm trùng)"},
+             "giai_quyet_query": {"type": "string", "description": "tệp giải quyết query .csv/.json trong exports/<mã>/"},
+             "ap_dung": _AP}, ["study"]),
+        cc_lam_sach,
+    ),  # fmt: skip
+    (
+        "g5_con_thieu",
+        "CÒN THIẾU GÌ ĐỂ KHOÁ G5: chấm bằng đúng hàm của cổng G5 (g5_quality_gate) ở chế độ KHÔNG GHI — trả trạng "
+        "thái, các tiêu chí chưa đạt kèm việc cần làm, khoá kỹ thuật/phê duyệt người đã hợp lệ chưa, vai đã ký. Chỉ đọc.",
+        _sc({"study": _ST}, ["study"]),
+        cc_g5_con_thieu,
+    ),
+    (
+        "bien_phai_sinh",
+        "BIẾN PHÁI SINH (bien_phai_sinh.py, công thức máy đọc ở exports/<mã>/_bien-phai-sinh.csv): lenh=kiem (chỉ đọc — "
+        "công thức hợp lệ, đã duyệt chưa, thứ tự tính) · tinh (tính tất định trên CSV, ghi ra NGOÀI repo) · doi_chieu (SPSS "
+        "và R tự tính lại độc lập, so từng ô). Chỉ biến ĐÃ DUYỆT mới tính; duyệt (cột nguoi_duyet) là việc của thống kê "
+        "viên/PI. tinh/doi_chieu chạy khô mặc định.",
+        _sc({"study": _ST, "lenh": {"type": "string", "enum": ["kiem", "tinh", "doi_chieu"]},
+             "data": {"type": "string", "description": "CSV (đã khoá hoặc nhập liệu) cho tinh/doi_chieu"},
+             "ra": {"type": "string", "description": "thư mục ra NGOÀI repo (tinh)"},
+             "chi": {"type": "array", "items": {"type": "string"}, "description": "chỉ các biến này"},
+             "khong_spss": {"type": "boolean"}, "khong_r": {"type": "boolean"}, "ap_dung": _AP}, ["study"]),
+        cc_bien_phai_sinh,
+    ),  # fmt: skip
+    (
+        "chay_sap_g6",
+        "CHẠY TRỌN SAP G6 một lệnh (chay_sap_g6.py) theo đặc tả exports/<mã>/G6_DAC_TA_SAP.json: lenh=kiem (chỉ đọc — đặc "
+        "tả hợp lệ, khớp SAP đã khoá, đã duyệt chưa) · chay (mọi phân tích; mỗi mục một gate; CHỈ trên dữ liệu ĐÃ KHOÁ, đặc "
+        "tả ĐÃ DUYỆT; mặc định kèm kiểm chéo SPSS + R) · ket_qua (chỉ đọc). Mục «chua_tu_dong» được liệt kê để làm tay. "
+        "chay chạy khô mặc định.",
+        _sc({"study": _ST, "lenh": {"type": "string", "enum": ["kiem", "chay", "ket_qua"]},
+             "chi": {"type": "array", "items": {"type": "string"}, "description": "chỉ chạy các id phân tích này"},
+             "kiem_cheo": {"type": "boolean"}, "ap_dung": _AP}, ["study"]),
+        cc_chay_sap,
+    ),  # fmt: skip
 ]
 _BANG = {ten: ham for ten, _mt, _sc_, ham in CONG_CU}
 
@@ -664,7 +949,9 @@ def xu_ly(tin: dict) -> dict | None:
               "serverInfo": {"name": TEN_MAY_CHU, "version": PHIEN_BAN},
               "instructions": "SPSS · R/RStudio · nhập liệu của bác sĩ: mọi bước đi qua công cụ chuẩn của repo y khoa; công cụ "
                               "có tác dụng CHẠY KHÔ mặc định (ap_dung: true mới làm); KHÔNG có công cụ khoá dữ liệu, ký cổng, "
-                              "sửa giá trị hay xoá. Trả lời bác sĩ bằng tiếng Việt, kèm «Cần bác sĩ kiểm chứng»."}  # fmt: skip
+                              "duyệt công thức/đặc tả, đóng query, sửa giá trị hay xoá. Thứ tự đề tài: nhap_lieu_kiem → "
+                              "nhap_lieu_tiep_nhan (tự lam_sach) → g5_con_thieu → [người khoá G5] → bien_phai_sinh kiem → "
+                              "chay_sap_g6 (hoặc phan_tich_g6) → kiem_cheo_g6. Trả lời bác sĩ bằng tiếng Việt, kèm «Cần bác sĩ kiểm chứng»."}  # fmt: skip
     elif pt == "ping":
         kq = {}
     elif pt == "tools/list":
