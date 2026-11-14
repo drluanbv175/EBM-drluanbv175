@@ -194,7 +194,9 @@ def _chu_trinh(a: argparse.Namespace) -> int:
         # Thứ tự để sổ HỘI TỤ trong một lượt: quét hub (`--quet-ledger`: phán quyết rút bài cho định danh chỉ-có-trong-hub,
         # có thể TẠO bản ghi chưa có ngày xác minh) rồi mới phủ mồ côi (xác minh tồn tại cho mọi PMID/DOI còn thiếu, kể cả
         # bản ghi hub vừa tạo). `--quet-ledger` cũng chưa quy trình nào gọi ⇒ phán quyết rút bài của thẻ hub hết hạn lặng lẽ.
-        if _co_dashboard_that() and rc != 3:
+        # Vá 14/11/2026: lượt quét dashboard vướng KHOÁ GHI (kể cả mã 2 «dương tính chưa vào sổ») ⇒ bỏ ③a/③b — mỗi lệnh
+        # sẽ lại chờ khoá tới hạn rồi cũng không ghi được gì; việc «chạy lại khi khoá nhả» đã có ở dòng tổng kết.
+        if _co_dashboard_that() and rc != 3 and "SO_DANG_KHOA" not in out:
             _rc_a, out_a = chay([PY, "tools/so_xac_minh_nguon.py", "--quet-ledger", "--vong", str(a.vong)],
                                 f"③a Rút bài cho định danh chỉ-có-trong-hub ({a.vong} vòng)")
             _rc_b, out_b = chay([PY, "tools/so_xac_minh_nguon.py", "--phu-mo-coi", "--vong", str(a.vong)],
@@ -203,7 +205,14 @@ def _chu_trinh(a: argparse.Namespace) -> int:
     khong_do_duoc = (rc == 3 or "KHONG_DO_DUOC" in out
                      # chuỗi của bản so_xac_minh_nguon CŨ (trả 2/1 cho hai ca này) — vẫn phải ra ⚪, không ra 🔴
                      or "Không thấy dashboard nào khớp" in out or "Sổ trống" in out)
-    if rc == 2 and "SO_HONG" in out:
+    if "DUONG_TINH_CHUA_VAO_SO" in out:
+        # Vá 14/11/2026 (thẩm định #355): lượt này VỪA THẤY dương tính rút bài/EoC rồi không ghi được vì khoá ⇒ so_xac_minh_nguon
+        # in danh sách + «[MA] DUONG_TINH_CHUA_VAO_SO» (mã 2). Trước đó chỉ có «SO_DANG_KHOA» (mã 3) nên chu trình ra ⚪ «khoá
+        # bận» — dương tính mới mất im lặng. Đặt TRƯỚC nhánh SO_DANG_KHOA (dòng đó cũng có mặt).
+        viec_can_lam.append("🔴 DƯƠNG TÍNH RÚT BÀI MỚI CHƯA VÀO SỔ — lượt này thấy nguồn đã rút/EoC nhưng KHÔNG ghi được vì sổ "
+                            "đang bị lượt khác giữ khoá (danh sách ở ③④). Coi như nguồn đã rút ngay từ bây giờ; chạy lại chu "
+                            "trình khi lượt kia xong để dương tính vào sổ. KHÔNG xoá tệp khoá.")
+    elif rc == 2 and "SO_HONG" in out:
         # SỔ HỎNG (26/09/2026, phát hiện #3): so_xac_minh_nguon từ chối đọc/ghi sổ hỏng và trả 2 kèm dòng
         # «[MA] SO_HONG». Vẫn là việc ĐỎ (dương tính rút bài đã biết có thể đã mất) nhưng KHÔNG được gọi là
         # «có nguồn rút bỏ hẳn» — chưa ai thấy bài nào bị rút ở lượt này.
@@ -282,7 +291,11 @@ def _chu_trinh(a: argparse.Namespace) -> int:
     elif rc != 0:
         # Mã lạ (tiến trình bị giết, lỗi chưa đặt tên…) — KHÔNG được rơi im lặng thành 🟢 (vá #28, 26/09/2026).
         viec_can_lam.append(f"⚪ Bước ③④ thoát mã lạ ({rc}) — chưa đo được xác minh nguồn/rút bài; xem phần ③④.")
-    if "SO_DANG_KHOA" in out_phu and "SO_DANG_KHOA" not in out:
+    if "DUONG_TINH_CHUA_VAO_SO" in out_phu:
+        # Vá 14/11/2026: ③a (rút bài thẻ hub) / ③b (phủ mồ côi) thấy dương tính rồi vướng khoá ⇒ 🔴, không phải ⚪.
+        viec_can_lam.append("🔴 Bước ③a/③b thấy DƯƠNG TÍNH rút bài/EoC nhưng KHÔNG ghi được vào sổ vì khoá (danh sách ở "
+                            "③a/③b) — coi như nguồn đã rút; chạy lại `--quet-ledger` / `--phu-mo-coi` khi lượt kia xong.")
+    elif "SO_DANG_KHOA" in out_phu and "SO_DANG_KHOA" not in out:
         # Vá 14/11/2026: ③a/③b vướng khoá ghi ⇒ phán quyết rút bài thẻ hub / phủ mồ côi của lượt này KHÔNG vào sổ.
         viec_can_lam.append("⚪ Bước ③a/③b không ghi được vì sổ đang bị lượt khác giữ khoá — phần đó chưa vào sổ; chạy lại "
                             "`--quet-ledger` / `--phu-mo-coi` khi lượt kia xong (xem ③a/③b).")
