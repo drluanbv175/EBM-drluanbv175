@@ -211,7 +211,11 @@ trả 0.
 Cùng khuôn với `endnote-ebm`. Máy chủ `tools/mcp/spss_r_ebm_mcp.py` (chỉ dùng thư viện chuẩn) gọi
 CHÍNH các công cụ của repo y khoa bằng Python của `~/.ebm-venv` (Windows: `~/.ebm-venv/Scripts/python.exe`):
 mẫu nhập Excel/.sav · kiểm từng ô · nhập kép · cổng tiếp nhận · xuất/mở SPSS và RStudio · phân tích G6
-trên dữ liệu ĐÃ KHOÁ + kiểm chéo SPSS/R · đọc kết quả. Có 9 công cụ.
+trên dữ liệu ĐÃ KHOÁ + kiểm chéo SPSS/R · đọc kết quả. Có 13 công cụ. F4 (14/11/2026) thêm 4: `lam_sach`
+(làm sạch bản sao sau tiếp nhận; `nhap_lieu_tiep_nhan` nay tự gọi), `g5_con_thieu` (chấm cổng G5 KHÔNG ghi),
+`bien_phai_sinh` (kiểm/tính/đối chiếu SPSS–R), `chay_sap_g6` (chạy trọn đặc tả SAP); `phan_tich_g6` nhận thêm
+`poisson_pr`, `hiep_bien_phan_loai`, `loc`. Công cụ của repo y khoa chưa gộp (vd `chay_sap_g6.py`) ⇒ máy chủ báo
+«kéo bản mới», không chạy bản cũ với cờ mới.
 
 - **Claude Code:** `.mcp.json` về theo `git pull` nhưng chỉ phiên mở ở repo gốc thấy (và phải duyệt). Để dùng ở MỌI
   phiên — kể cả phiên trong repo y khoa — khai phạm vi người dùng như `endnote-ebm` (Mac đã làm 14/11/2026), mỗi máy
@@ -221,9 +225,10 @@ trên dữ liệu ĐÃ KHOÁ + kiểm chéo SPSS/R · đọc kết quả. Có 9 
   `python tools/mcp/spss_r_ebm_mcp.py --cai-claude-desktop` (chạy khô) → thêm `--ap-dung` (sao lưu
   `claude_desktop_config.json` trước khi ghi, chỉ thêm khoá `spss-r-ebm`) → thoát hẳn rồi mở lại Claude.
 - **Rào chắn:** công cụ có tác dụng chạy khô mặc định (`ap_dung: true` mới làm); KHÔNG có công cụ khoá
-  dữ liệu, ký cổng, sửa giá trị hay xoá tệp; phân tích chính không bao giờ truyền cờ ghi đè cổng, từ chối
+  dữ liệu, ký cổng, duyệt công thức/đặc tả, đóng query, sửa giá trị hay xoá tệp; phân tích chính không bao giờ truyền cờ ghi đè cổng, từ chối
   khi dữ liệu chưa khoá, không tự chọn biến; tên biến bắt đầu bằng «-» bị từ chối (chặn chèn cờ).
-- Kiểm: `python -m pytest tools/test_spss_r_ebm_mcp_20261114.py` (repo y khoa giả, không cần SPSS/R).
+- Kiểm: `python -m pytest tools/test_spss_r_ebm_mcp_20261114.py tools/test_spss_r_ebm_mcp_f4_20261114.py` (repo y khoa
+  giả, không cần SPSS/R). Máy chủ đã khai ở Claude Code/Desktop tự nhận công cụ mới khi `git pull` + mở phiên mới.
 
 ## 7. Đồng bộ bộ nhớ (không tự chạy được, phải gõ tay)
 

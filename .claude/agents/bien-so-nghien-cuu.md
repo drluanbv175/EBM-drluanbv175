@@ -158,6 +158,16 @@ Quy tắc gộp: biến cố ĐẦU TIÊN xảy ra
 ```
 *(SỬA 2026-07-26, vòng lặp kiểm tra-hoàn thiện vòng 26, phát hiện MEDIUM: bảng ví dụ MACE trước đây gắn mã ICD-10 I21–I22 [nhồi máu cơ tim cấp/tái phát] vào hàng "Tử vong tim mạch" — sai vị trí, vì I21–I22 là mã chẩn đoán NMCT chứ không phải mã nguyên nhân tử vong; đã chuyển 2 mã này sang đúng hàng "NMCT không tử vong" và ghi rõ tử vong tim mạch trong thử nghiệm lâm sàng thường là kết cục do HỘI ĐỒNG PHÁN ĐỊNH xác định, không suy ra thẳng từ ICD tử vong.)*
 
+**Biến phái sinh MÁY ĐỌC (F1, 14/11/2026):** mỗi biến tính toán của đề tài ghi vào `exports/<mã>/_bien-phai-sinh.csv`, cột
+`cong_thuc` viết bằng ngôn ngữ công thức (`medical-ebm-automation/docs/BIEN-PHAI-SINH.md` — tập con biểu thức Python + hàm
+`thieu`, `neu`, `trong`, `dem`, `tb_hop_le`, `ckd_epi_2021`…; logic ba trị: ô thiếu lan truyền, mã chữ «Không biết» → thiếu),
+`lap_k` khi lặp theo lần khám, `nhan_gia_tri`. Python, SPSS và R tính từ CÙNG công thức. Agent SOẠN công thức (ngưỡng phải có
+nguồn ở cột `nguon` — không bịa), KHÔNG ghi `nguoi_duyet`: thống kê viên/PI ghi `<VAI>:<tham chiếu>:<YYYY-MM-DD>:<dấu>`; sửa
+công thức ⇒ lần duyệt hết hiệu lực; biến CHƯA DUYỆT không được tính ở G6. Kiểm: `python3
+medical-ebm-automation/tools/bien_phai_sinh.py kiem --study <mã>` hoặc MCP `spss-r-ebm` → `bien_phai_sinh` (lenh=kiem).
+Hiệp biến PHÂN LOẠI (mã nguyên ≥ 0, vd khung giờ khám) khai riêng để G6 mở thành biến giả (`hiep_bien_phan_loai`), không để
+mô hình coi mã số là liên tục.
+
 ---
 
 ### PHẦN 5 — CODEBOOK EDC-READY (REDCap/Castor)

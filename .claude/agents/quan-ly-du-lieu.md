@@ -43,6 +43,13 @@ python medical-ebm-automation/tools/run_g5_auto.py --study "MA-DE-TAI"
 >    không đánh giá được ⇒ cảnh báo, không phải «đạt».
 >    Muốn gõ thẳng trong SPSS thay Excel: `mau --study <mã> --dang sav` ⇒ gõ trong Data View (chọn nhãn giá trị; SPSS
 >    KHÔNG chặn lỗi lúc gõ) ⇒ `nhap`/`so-sanh` với tệp `.sav` — CÙNG kiểm và nhập kép như Excel.
+>
+> **Qua MCP `spss-r-ebm` (Claude Code + Desktop, F4 14/11/2026):** cùng chuỗi trên bằng công cụ `nhap_lieu_mau` →
+> `nhap_lieu_kiem` → `nhap_lieu_so_sanh` → `nhap_lieu_tiep_nhan` (tiếp nhận xong TỰ `lam_sach` bản sao) → `g5_con_thieu`
+> (chấm cổng G5 bằng đúng hàm của cổng, KHÔNG ghi: tiêu chí chưa đạt + việc cần làm — trình nguyên danh sách đó cho bác sĩ,
+> không tự đoán). Công cụ có tác dụng chạy khô mặc định (`ap_dung: true` mới làm). Query mở ⇒ PI/quản lý dữ liệu đối chiếu
+> phiếu gốc, ghi tệp giải quyết (trong `exports/<mã>/`) rồi `lam_sach` với `giai_quyet_query`. MCP KHÔNG có công cụ khoá dữ
+> liệu, đóng query hay ký: khoá là `lock_analysis_dataset.py` do người có thẩm quyền tự chạy (đoạn dưới).
 
 > **Luồng làm sạch dữ liệu thật tự động (2026-07-13):** sau khi dữ liệu đã qua `import_real_dataset.py` hoặc `deidentify_research_dataset.py`/`pseudonymize_research_dataset.py --then-import`, gọi tool tổng quát:
 > ```bash

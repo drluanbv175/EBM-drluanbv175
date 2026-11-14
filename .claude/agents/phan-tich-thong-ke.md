@@ -76,6 +76,24 @@ quả chính khi dữ liệu gom cụm, KTC giả định độc lập chỉ đ�
 kém tin cậy, chép nguyên cảnh báo và để thống kê viên quyết; (4) ICC tính trên điểm số (xấp xỉ tuyến tính), không phải thang tiềm ẩn;
 (5) ngưỡng `--nguong-ty-le` lấy từ SAP, không chọn sau khi nhìn dữ liệu.
 
+**Poisson vững · hiệp biến phân loại · lọc quần thể · chạy trọn SAP (F2/F3, 14/11/2026):** chỉ khi SAP đã khoá khai TƯỜNG MINH.
+```bash
+python medical-ebm-automation/tools/run_stats_analysis.py --data <bản_khoá.csv> --outcome ... --group ... \
+    --covariates tuoi,kg --hiep-bien-phan-loai kg \  # mã nguyên ≥ 0 → biến giả <cột>_<mã>, tham chiếu = mã nhỏ nhất
+    --outcome-type poisson_pr \        # GLM Poisson log + SE vững HC0 (Zou 2004, PMID 15033648) → PR, kết cục nhị phân phổ biến
+    --loc "PhieuHopLe == 1" \          # quần thể phân tích theo SAP (ngôn ngữ công thức biến phái sinh), giữ ca = 1
+    --study "TEN-DE-TAI" --gate G6 --kiem-cheo
+```
+SAP nhiều phân tích ⇒ đặc tả máy đọc `exports/<mã>/G6_DAC_TA_SAP.json` (agent SOẠN từ SAP đã khoá, gắn `sha256_sap`; thống
+kê viên/PI ghi `nguoi_duyet` — agent KHÔNG ghi) rồi `python3 medical-ebm-automation/tools/chay_sap_g6.py kiem|chay|ket-qua
+--study <mã>`: đúng một mục vai `chinh` (gate G6), mục khác gate `G6_<id>` nên không ghi đè nhau; phân tích SAP cam kết mà
+chưa có công cụ (spline RCS, partial PO, Firth…) khai `chua_tu_dong` để thống kê viên làm tay — KHÔNG lặng lẽ bỏ. Luật đọc:
+(1) phơi nhiễm liên tục/nhiều mức ⇒ Python, SPSS, R đều BỎ so thô hai nhóm có chủ đích (ước lượng nằm ở mô hình đa biến);
+(2) biến phái sinh/biểu thức lọc dùng biến CHƯA DUYỆT ⇒ công cụ dừng — không lách; (3) PR là tỷ số tỷ lệ hiện mắc, không viết
+thành OR/RR. Qua MCP `spss-r-ebm`: `phan_tich_g6` (nhận `poisson_pr`, `hiep_bien_phan_loai`, `loc`), `chay_sap_g6`,
+`bien_phai_sinh`, `kiem_cheo_g6`, `phan_tich_ket_qua` — chạy khô mặc định, chỉ trên dữ liệu ĐÃ KHOÁ, không có cờ ghi đè cổng.
+Hướng dẫn: `medical-ebm-automation/docs/CHAY-SAP-G6.md`, `docs/BIEN-PHAI-SINH.md`.
+
 ## 🔁 BƯỚC 0c — KIỂM CHÉO BẰNG SPSS (phần mềm thứ hai — thêm 14/11/2026, bác sĩ giao)
 
 **Một lệnh cho cả SPSS + R (14/11/2026):** `python3 medical-ebm-automation/tools/kiem_cheo_g6.py chay --study <mã>` ⇒
