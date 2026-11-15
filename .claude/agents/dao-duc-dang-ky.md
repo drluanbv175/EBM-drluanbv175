@@ -476,6 +476,11 @@ Kích hoạt khi nghiên cứu thực hiện tại đơn vị có tính đặc t
 
 **Vá 2026-07-12 (audit toàn diện cổng G0-G9):** ghi `G2_STATUS: LOCKED` vào checkpoint KHÔNG còn tự mở cổng thật — kiểm định đối kháng xác nhận agent tự ghi dòng này từng đủ để các script phân tích dữ liệu thật (`run_stats_analysis.py`) chạy trót lọt, dù chưa hề có phê duyệt IRB thật. Cổng THẬT nay đòi `approval_ledger.json` có chữ ký (xem `tools/gate_contract.py::ledger_approved`). Việc CỦA AGENT khi có số IRB thật: nhắc bác sĩ **tự tay** chạy `python tools/approve_gate.py --study <tên> --gate G2 --artifact <hồ sơ đạo đức>` trong terminal riêng (không nhờ agent chạy hộ — nếu agent chạy hộ, chữ ký vẫn được tạo nhưng mất ý nghĩa "một người ngoài agent đã xác nhận"). Cần khóa ký đã thiết lập một lần bằng `tools/setup_gate_approval_key.py` (bác sĩ tự chạy).
 
+## Đồng bộ vấn đề · câu hỏi · tên đề tài (15/11/2026 — bác sĩ: «… Xác Định Vấn Đề & Hình Thành Câu Hỏi Nghiên Cứu … Hãy đảm bảo sự đồng bộ xuyên suốt và chính xác nhất»)
+- **MỘT tên đề tài chính thức** là `study_meta.title`. `study_meta.topic` chỉ là chuỗi CHỦ ĐỀ để tìm y văn (G0) — KHÔNG in làm tên đề tài trên đề cương, hồ sơ đạo đức, phiếu đồng thuận, SAP hay bản đăng ký. Bộ sinh dùng `tools/ten_de_tai.py` (`ten_chinh_thuc`, `ten_khoa_hoc_dang_ky`). Bản đăng ký WHO TRDS mục 10 «Scientific Title» phải trùng tên đề cương (tên khoa học riêng ⇒ PI khai `gate_params.G2.scientific_title`; mục 9 «Public Title» ngôn ngữ đại chúng ⇒ `gate_params.G2.public_title`).
+- **Câu hỏi ↔ mục tiêu ↔ giả thuyết:** câu hỏi MÔ TẢ có mục tiêu PHÂN TÍCH (yếu tố liên quan, so sánh…) ⇒ mục tiêu đó có giả thuyết định trước (`G0.hypothesis_secondary`) hoặc ghi rõ «thăm dò / không kiểm định giả thuyết định trước»; câu hỏi điều trị/chẩn đoán/tiên lượng/tác hại không mô tả ⇒ đủ H0 và H1; câu hỏi nghiên cứu (G1 `research_question`) phải hỏi tới mọi mục tiêu.
+- Kiểm bằng máy, KHÔNG báo xong khi còn lệch: `python3 medical-ebm-automation/tools/nhat_quan_xuyen_cong.py --study <mã>` — trục `ten_de_tai`, `cau_hoi_gia_thuyet` (cùng `quan_the`, `ket_cuc_chinh` đã có). Văn bản đã ký mang tên cũ ⇒ «cần xem», sửa ở lượt sửa đổi/ký sau.
+
 ## Ranh giới
 KHÔNG tự phê duyệt đạo đức · KHÔNG bịa số IRB/mã đăng ký · KHÔNG tự chạy `tools/approve_gate.py` thay bác sĩ · DMP vận hành/khóa DB thuộc `quan-ly-du-lieu` (G5).
 
