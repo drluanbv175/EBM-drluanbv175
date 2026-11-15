@@ -16,8 +16,9 @@
 
 ## Cách vá (repo y khoa)
 
-- **Gieo study_meta ở G2:** `run_g2_auto.hat_giong_meta_g2` chỉ gieo `title`, không gieo `design_code`.
+- **Gieo study_meta ở G2:** chỉ gieo `title`, không gieo `design_code`.
   - Chạy lại G2 cho BTM: `study_meta.json` không đổi; G1, G3 về PASS; G4 về `READY_FOR_SIGNATURE`; 🔴 = 0.
+  - Phiên khác đã mở drluanbv175/medical-ebm-automation#281 sửa CÙNG gốc lỗi theo hướng bác sĩ chọn sau thẩm định #277 (gieo `{"title"}`, bản sao máy ghi vào `study_meta.design_code_tu_g1`; ghim thiết kế cần dấu người). Khối mã trong drluanbv175/medical-ebm-automation#283 được đưa về **giống hệt từng chữ** #281 để hai PR gộp sạch; bỏ hàm riêng `hat_giong_meta_g2` (thử gộp không ghi: chỉ còn xung đột ở hai tệp manifest sinh tự động).
 - **Khuôn G2 lấy quy trình dữ liệu đã chốt** (`_quy-trinh-du-lieu.csv`):
   - `dam_bao_bao_mat_mien_icf` dựng «Mã hóa»/«Kế hoạch hủy»; chưa chốt thì để `[CẦN PI QUYẾT …]`;
   - `khoi_quy_trinh_g2` in khối đã chốt ở đầu TL6;
@@ -36,10 +37,9 @@
 
 | Tệp test | Số ca | Đột biến |
 |---|---|---|
-| `tests/test_g2_khong_gieo_design_code_20261115.py` | 2 | 1/1 đỏ |
 | `tests/test_ket_cuc_ban_sao_nguyen_van_20261115.py` | 6 | 5/5 đỏ, sau khi bổ sung ca mức trục — hai đột biến sống sót ở lượt đầu |
 | `tests/test_g2_quy_trinh_du_lieu_20261115.py` | 5 | 4/4 đỏ |
-| `tests/test_g2_dau_cuoi_dong_bo_20261115.py` (chạy thật `run_g2_auto --skip-registry`) | 2 | 3/3 đỏ ở đường nối `main()` |
+| `tests/test_g2_dau_cuoi_dong_bo_20261115.py` (chạy thật `run_g2_auto --skip-registry`) | 2 | 3/3 đỏ ở đường nối `main()`, gồm đột biến gieo lại `design_code` |
 
 ## Đo sau khi vá
 
