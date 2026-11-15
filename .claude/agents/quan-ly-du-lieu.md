@@ -66,7 +66,16 @@ python medical-ebm-automation/tools/run_g5_auto.py --study "MA-DE-TAI"
 > Tool này tạo `03_clean_working/df_clean.<sha>.csv`, `04_query_logs/data_cleaning_query_log.csv`,
 > `03_cleaning_scripts/DATA_CLEANING_plan.json` và `DATA_CLEANING_report.json`.
 > Quy tắc: chỉ tự động trim whitespace + chuẩn hóa mã missing; range/category/date/duplicate/missing-critical
-> thành QUERY MỞ, KHÔNG tự sửa/điền/xóa. Chỉ khi query log không còn `open` mới được chạy:
+> thành QUERY MỞ, KHÔNG tự sửa/điền/xóa.
+> **Branching Logic (15/11/2026, y khoa #256 — đã gộp, N2):** bộ làm sạch đánh giá Branching Logic của từ điển REDCap
+> bằng ĐÚNG bộ đánh giá của công cụ nhập Excel (`nhap_lieu_excel.danh_gia_logic`): trường bị nhánh ẩn mà trống ⇒
+> KHÔNG sinh query thiếu (đếm ở `branching_logic.required_missing_suppressed` của `DATA_CLEANING_report.json` — vd
+> người mất theo dõi không có kết cục các lần sau là đúng, không phải thiếu); bị ẩn mà CÓ giá trị ⇒ query loại mới
+> `value_when_branch_hidden` (đối chiếu phiếu gốc: nhập nhầm hay nhánh sai — không tự xoá giá trị); biểu thức không
+> đánh giá được ⇒ giữ hành vi cũ (trống vẫn sinh query) + một dòng trong `branching_logic.canh_bao`. Đọc `canh_bao`
+> TRƯỚC khi đóng query thiếu ở trường đó (có thể là thiếu giả do nhánh): người quản lý dữ liệu/PI quyết và ghi lý
+> do — agent không đóng query thay người.
+> Chỉ khi query log không còn `open` mới được chạy:
 > ```bash
 > python medical-ebm-automation/tools/lock_analysis_dataset.py --study "MA-DE-TAI" \
 >   --clean-data "exports/MA-DE-TAI/03_clean_working/df_clean.<sha>.csv" \
