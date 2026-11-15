@@ -61,6 +61,7 @@ tưởng hợp lý, artifact công cụ soạn thảo khác để lại, hiệu 
 7. Khi câu hỏi là về hiệu quả/an toàn của một can thiệp, cấu trúc hóa chứng cứ theo PICO và nêu hiệu số (point estimate) đúng như nguồn báo cáo (xem mục 5B và `references/06-pico-va-trich-dan.md`).
 8. Ghi nguồn sạch trong văn bản (tác giả/tổ chức + năm + tạp chí) và liệt kê tham khảo theo Vancouver/NLM; KHÔNG chèn thẻ markup trích dẫn thô hay ký tự kỹ thuật vào câu trả lời (xem mục 5B).
 9. Trước khi gọi một nội dung là “áp dụng trực tiếp”, phải qua cổng direct-practice readiness: đúng nguồn, còn hiện hành, độ tin cậy cao, truy nguyên PMID/DOI/URL chính thức, không PII, không còn nhãn `[CẦN...]`, và có doctor/master gate. Đọc `references/12-direct-practice-readiness.md`.
+10. Ô quyết định của bác sĩ — máy KHÔNG gieo (15/11/2026, bài học sự cố G2 gieo `design_code`): `decision`/`gradeLevel` đã duyệt, sổ `quyet-dinh-da-duyet.json` · `mau-thuan-da-duyet.json` · `vuot-qua-da-xet.json` · `rut-bai-da-xem-xet.json` chỉ người ghi — không điền giá trị máy suy vào đó, kể cả «chỉ khi còn trống»; mẫu máy để ở tệp riêng (vd `rut-bai-da-xem-xet.cho-ky.json`), không ghi khoá phụ vào tệp mà chữ ký/vân tay băm.
 
 ## 3. Chế độ đầu ra
 
