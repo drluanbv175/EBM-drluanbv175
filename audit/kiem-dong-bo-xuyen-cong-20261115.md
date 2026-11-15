@@ -157,4 +157,14 @@ Pytest đầu–cuối G0→G10 đạt 9/9, cho đủ 8 thiết kế. Canary tr�
 - **Đã nối sau lượt này:** nguồn người duyệt của bộ biến (§6.2 mục 2, bác sĩ chọn (a)). Đề tài mới vẫn phải có PI đọc và duyệt bảng trước G5 — đó là việc của người, máy không làm thay.
 - Các mục N4, K4, G7 Kết quả, trình bày: đã xử lý (§6.2 mục 3–7); thẩm định đối kháng bảng G3 (2 ĐỎ, 4 VÀNG, 3 XÁM) đã sửa trong PR y khoa #274.
 
+### 6.4 Trạng thái đưa vào hệ thống (15/11/2026 tối)
+
+- Lỗi gốc do thẩm định #277 tìm ra: G2 gieo `design_code` máy suy vào ô ghim của PI ⇒ **đã sửa** ở y khoa #281.
+  - Bác sĩ chọn «G2 thôi gieo + ghim cần dấu người».
+  - Thẩm định độc lập #281 tìm 2 ĐỎ / 3 VÀNG / 4 XÁM; đã sửa tất cả trừ `approve_gate` (cố ý, không hồi quy).
+  - Sự cố ghi ở `audit/nhat-ky/2026-11-15-g2-gieo-design-code-vao-o-ghim-pi.md`.
+- #274 (bảng bộ biến G3 cho PI duyệt, MT-12) GỘP VÀO #281 để chấm dứt vòng xung đột manifest agent giữa các PR y khoa.
+  - Ghi ở `audit/nhat-ky/2026-11-15-pr-gop-o-dau-cu-roi-commit-va-xung-dot-manifest.md`.
+- R10 (#277) đã gộp. Dòng dạy agent sau thẩm định #277/#281 bị rơi khi #385/#389 gộp sớm ⇒ đưa lại ở gốc #394.
+
 Cần bác sĩ kiểm chứng.
