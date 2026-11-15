@@ -95,7 +95,7 @@ python tools/gen_research_docx.py --study "<TEN>" --artifact literature
 
 - G0-AUTO-08: truy vấn PubMed VÀ ClinicalTrials.gov phải chứa khái niệm P · I/E · O đã chốt. Chủ đề tiếng Việt: viết `query_en` (MeSH + tiab) phủ đủ khái niệm, hoặc khai `gate_params.G0.khai_niem_tim_kiem = {"P": [...], "I": [...], "O": [...]}`. Bộ dịch từ khoá tự động có thể làm rơi khái niệm chính (đo: «tuân thủ dùng thuốc hạ áp» → `hypertension treatment`, 1/86 bài liên quan).
 - Số PMID nhiều và nhãn «MẠNH» theo bộ lọc KHÔNG chứng minh mức liên quan — đọc tiêu đề đối chiếu PICO trước khi báo nền chứng cứ.
-- K4 (giả lập lần 3, 15/11/2026): PI có HAI cách phủ khái niệm cho truy vấn G0 — viết `query_en`, HOẶC khai `gate_params.G0.khai_niem_tim_kiem = {"P": [...], "I": [...], "O": [...]}` (thuật ngữ tiếng Anh; cụm nhiều từ được đặt ngoặc kép, cú pháp PubMed như `"Hypertension"[mh]` giữ nguyên). Khai khái niệm ⇒ run_g0_auto TỰ dựng truy vấn (OR trong một khái niệm, AND giữa P · I · O) và run_pipeline tự tra lại PubMed; khái niệm PI không khai là lựa chọn của PI (G0-AUTO-08 chỉ ghi chú). Bộ dịch từ điển nay đọc cả population/intervention/exposure/primary_outcome, không chỉ chủ đề — khái niệm ngoài từ điển vẫn rơi ⇒ G0-AUTO-08 REVIEW, nhắc PI khai.
+- K4 (giả lập lần 3, 15/11/2026): PI có HAI cách phủ khái niệm cho truy vấn G0 — viết `query_en`, HOẶC khai `gate_params.G0.khai_niem_tim_kiem = {"P": [...], "I": [...], "O": [...]}` (thuật ngữ tiếng Anh; cụm nhiều từ được đặt ngoặc kép, cú pháp PubMed như `"Hypertension"[mh]` giữ nguyên). Khai khái niệm ⇒ run_g0_auto TỰ dựng truy vấn (OR trong một khái niệm, AND giữa P · I · O) và run_pipeline tự tra lại PubMed; khái niệm PI không khai là lựa chọn của PI (G0-AUTO-08 chỉ ghi chú). Bộ dịch từ điển nay đọc cả population/intervention/exposure/primary_outcome, không chỉ chủ đề — khái niệm ngoài từ điển vẫn rơi ⇒ G0-AUTO-08 REVIEW, nhắc PI khai. Khoá không phân biệt hoa thường, «E» (PECO) tính như I, chuỗi tách theo «;» (không theo dấu phẩy — tiêu đề MeSH có dấu phẩy); thuật ngữ ô mẫu/«N/A»/ngoặc lệch/chữ có dấu bị LOẠI và liệt kê trong G0-AUTO-08 — sửa rồi chạy lại. Đã có query_en thì query_en thắng: muốn dùng khái niệm thì gỡ query_en.
 
 ## Đồng bộ tổng quan tài liệu — TLTK ↔ danh mục ↔ văn bản cổng (15/11/2026)
 
@@ -190,4 +190,10 @@ khuyến cáo điều trị, an toàn thuốc, thống kê y khoa hoặc tài li
 2. Nếu còn lỗi đỏ, thiếu nguồn, nghi sai guideline, thiếu cảnh báo nguy cơ hại, hoặc có PII:
    không phát hành như khuyến cáo; trả về dạng `[CẦN BÁC SĨ PHÁN ĐỊNH]` / `[CẦN KIỂM CHỨNG]`.
 3. Kết thúc mọi đầu ra y khoa bằng: "Cần bác sĩ kiểm chứng."
+4. Ô QUYẾT ĐỊNH CỦA NGƯỜI — máy KHÔNG gieo (15/11/2026, sự cố G2 gieo `design_code` vào ô ghim của PI): ô chỉ
+   người ghi (ghim thiết kế `gate_params.Gx`/`design_code`, xác nhận/duyệt/ký, `decision`/`gradeLevel` của
+   dashboard, sổ `*-da-duyet.json`/`*-da-xet.json`/`rut-bai-da-xem-xet.json`) KHÔNG được ghi giá trị máy suy —
+   kể cả «chỉ điền khi còn trống». Bản sao của máy để ở checkpoint/tệp riêng (vd `.cho-ky.json`); không ghi
+   khoá phụ vào tệp mà biên bản/chữ ký/vân tay băm (đổi byte ⇒ xác nhận mất hiệu lực oan). Chỉ coi một giá trị
+   là quyết định của người khi có dấu người (ô chỉ người ghi, xác nhận tường minh, nhãn nguồn).
 

@@ -43,6 +43,20 @@ NEW_BLOCK_LOP2_LINE = (
 OLD_RUT_BAI = '     khuyến cáo/điều chỉnh thuốc mà thiếu rà tương tác/CCĐ/chỉnh liều (2026-07-07).\n'
 NEW_RUT_BAI = '     khuyến cáo/điều chỉnh thuốc mà thiếu rà tương tác/CCĐ/chỉnh liều (2026-07-07).\n   - RÚT BÀI — PHẢI TRA, KHÔNG ĐƯỢC TỰ NHỚ (2026-08-14): mọi PMID/DOI đưa vào kết luận\n     phải kiểm bằng `python medical-ebm-automation/tools/check_citation_retraction.py\n     --pmid <PMID…>` (chuỗi 3 tầng: Retraction Watch ngoại tuyến → NCBI → Europe PMC).\n     Một vụ rút bài có thể xảy ra SAU ngày cắt kiến thức nên trí nhớ mô hình không biết\n     được; ca thật PMID 30267080 — cả PubMed lẫn Europe PMC đều trả \'ok\', chỉ nền ngoại\n     tuyến bắt được. Không tra được ⇒ ghi "chưa kiểm rút bài", TUYỆT ĐỐI không ghi\n     "chưa bị rút". Bài quá mới thường CHƯA có publication type (MEDLINE gán sau) —\n     đừng loại nó vì lý do đó.\n'
 
+# THÊM 15/11/2026 (sự cố G2 gieo `design_code` vào ô «bác sĩ ghim», thẩm định y khoa #277/#281 — bác sĩ: «cập nhật vào
+# hệ thống nghiên cứu y khoa VÀ hệ thống cập nhật chứng cứ y khoa cho thực hành lâm sàng»). Luật chung cho CẢ đội (lâm
+# sàng + nghiên cứu): máy không gieo vào ô quyết định của người, không ghi khoá phụ vào tệp mà biên bản/chữ ký băm.
+OLD_KET_THUC = '3. Kết thúc mọi đầu ra y khoa bằng: "Cần bác sĩ kiểm chứng."\n'
+NEW_KET_THUC = (
+    '3. Kết thúc mọi đầu ra y khoa bằng: "Cần bác sĩ kiểm chứng."\n'
+    '4. Ô QUYẾT ĐỊNH CỦA NGƯỜI — máy KHÔNG gieo (15/11/2026, sự cố G2 gieo `design_code` vào ô ghim của PI): ô chỉ\n'
+    '   người ghi (ghim thiết kế `gate_params.Gx`/`design_code`, xác nhận/duyệt/ký, `decision`/`gradeLevel` của\n'
+    '   dashboard, sổ `*-da-duyet.json`/`*-da-xet.json`/`rut-bai-da-xem-xet.json`) KHÔNG được ghi giá trị máy suy —\n'
+    '   kể cả «chỉ điền khi còn trống». Bản sao của máy để ở checkpoint/tệp riêng (vd `.cho-ky.json`); không ghi\n'
+    '   khoá phụ vào tệp mà biên bản/chữ ký/vân tay băm (đổi byte ⇒ xác nhận mất hiệu lực oan). Chỉ coi một giá trị\n'
+    '   là quyết định của người khi có dấu người (ô chỉ người ghi, xác nhận tường minh, nhãn nguồn).\n'
+)
+
 BLOCK = f"""
 
 {MARKER}
@@ -58,8 +72,7 @@ khuyến cáo điều trị, an toàn thuốc, thống kê y khoa hoặc tài li
      gắn nhãn `[CẦN...]` khi thiếu dữ liệu, có disclaimer. R14 HARD-RED khi gói CÓ
 {NEW_RUT_BAI}{NEW_BLOCK_LOP2_LINE}2. Nếu còn lỗi đỏ, thiếu nguồn, nghi sai guideline, thiếu cảnh báo nguy cơ hại, hoặc có PII:
    không phát hành như khuyến cáo; trả về dạng `[CẦN BÁC SĨ PHÁN ĐỊNH]` / `[CẦN KIỂM CHỨNG]`.
-3. Kết thúc mọi đầu ra y khoa bằng: "Cần bác sĩ kiểm chứng."
-"""
+{NEW_KET_THUC}"""
 
 
 def is_agent(path: Path) -> bool:
@@ -73,6 +86,7 @@ def is_agent(path: Path) -> bool:
 THAY_THE: list[tuple[str, str]] = [
     (OLD_BLOCK_LOP2_LINE, NEW_BLOCK_LOP2_LINE),
     (OLD_RUT_BAI, NEW_RUT_BAI),
+    (OLD_KET_THUC, NEW_KET_THUC),
 ]
 
 
