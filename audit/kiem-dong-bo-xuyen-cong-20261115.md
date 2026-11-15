@@ -145,18 +145,16 @@ Pytest đầu–cuối G0→G10 đạt 9/9, cho đủ 8 thiết kế. Canary tr�
      - Bảng máy soạn **chỉ** là nguồn người duyệt khi PI ghi `gate_params.G3.bo_bien_so_duyet` gắn dấu nội dung (cùng cơ chế G3-HUMAN-06). Bản nháp chưa duyệt bị loại, vì máy so với bảng do chính nó soạn thì luôn ra «đồng bộ» giả (đo được trước khi sửa). Sửa bảng sau khi duyệt ⇒ xác nhận mất hiệu lực. Bảng người soạn (không dấu máy, như bảng btm 28/10) vẫn tính như #266.
      - MT-11 (chỉ cảnh báo) báo sớm ở G3. Bảng được thêm vào đầu ra G3-T2 của danh mục hội đồng; canary giả lập có bước soạn bảng + PI duyệt.
      - Dạy `bien-so-nghien-cuu`, `dieu-phoi-g3`, `quan-ly-du-lieu`, `dieu-phoi-g5`.
-3. **N4 — pipeline không tự chạy lại G1** sau khi PI điền (mỗi kịch bản 1 lần can thiệp). Có từ trước; thuộc R10.
-4. **K4 — bộ dịch chủ đề VI→EN của G0** vẫn làm rơi khái niệm chính. G0-AUTO-08 nay chặn được, nhưng PI vẫn phải tự viết `query_en`.
-5. **G7 chưa dựng Kết quả từ G6**: còn 51 ô «[CẦN KẾT QUẢ THẬT]» dù đã có `G6_analysis_summary.json`. Đây là mục tiêu của R10.
-6. **Lỗi trình bày có sẵn:**
-   - `G1_A13b_RISK_REGISTER` dùng cỡ thân bài 11pt (chuẩn 13pt) — máy sửa được;
-   - ký tự 🟠 không có trong font của docx G7.
-7. **Khuôn `03_analysis.R`** do test «hoàn thiện» báo `object 'fit_rr' not found`. Kịch bản R theo SAP (`04`) chạy đúng. Cần soi xem lỗi nằm ở khuôn hay ở bước điền của test.
+3. **N4 — pipeline không tự chạy lại G1** sau khi PI điền. ⇒ **Đã sửa** (PR y khoa R10): pipeline so dấu `dau_gate_params_g1` (run_g1_auto vốn ghi) với study_meta hiện tại; lệch ⇒ G1 chạy lại, dây chuyền sau G1 «cũ», cổng đã ký giữ nguyên; chỉ xác nhận thì không chạy lại. Hội tụ đo với run_g1_auto THẬT.
+4. **K4 — bộ dịch chủ đề VI→EN của G0.** Gốc của khiếm khuyết: G0-AUTO-08 cho PI chọn «viết query_en HOẶC khai `khai_niem_tim_kiem`», nhưng bộ dựng truy vấn bỏ qua `khai_niem_tim_kiem` ⇒ khai xong vẫn REVIEW. ⇒ **Đã sửa**: G0 tự dựng truy vấn từ khái niệm PI khai (OR trong khái niệm, AND giữa P·I·O), từ điển đọc cả trường PICO, pipeline tự tra lại khi khai báo đổi. Khái niệm ngoài từ điển vẫn cần PI khai — đó là việc của người (PRISMA-S), không tự dịch máy.
+5. **G7 «chưa dựng Kết quả từ G6» — nhận định cũ KHÔNG chính xác.** Đối chiếu lại bản thảo giả lập: N16 đã chép số chính (11 dòng mang nhãn đối chiếu); 41 ô còn trống là phần tóm tắt G6 không mang. Phần sửa được đã sửa (PR y khoa R10): G6 ghi Bảng 1 có cấu trúc vào tóm tắt; G7 chép nguyên văn Bảng 1 (biến kết cục không còn lọt vào «đặc điểm nền») và §4 kết cục phụ từ chỉ mục `chay_sap_g6`. Còn trống có chủ ý: sàng lọc/sơ đồ luồng (không có trong G6), Tóm tắt/Kết luận (người viết).
+6. **Lỗi trình bày** ⇒ **Đã sửa**: ghi chú (blockquote) theo cỡ thân bài 13pt (A13b đo lại: thân 13, bảng 11); 🟠 → «[Cảnh báo]».
+7. **Khuôn R `03_analysis.R` / `fit_rr`** ⇒ **không phải lỗi khuôn**: khuôn sinh đủ dòng (hiệp biến theo ma trận/SAP); bộ điền của phép thử tạm chờ dạng cũ nên bỏ sót dòng `fit_rr` mà vẫn bật `coeftest`. Không sửa mã.
 
 ### 6.3 Kết luận trung thực
 
 - **Đã nối được:** mục tiêu ↔ biến ↔ công cụ ↔ từ điển ↔ SAP ↔ SPSS/R, và **khai báo biến ở SPSS/R đủ, đúng, đồng bộ** (đo bằng phần mềm thật).
 - **Đã nối sau lượt này:** nguồn người duyệt của bộ biến (§6.2 mục 2, bác sĩ chọn (a)). Đề tài mới vẫn phải có PI đọc và duyệt bảng trước G5 — đó là việc của người, máy không làm thay.
-- Các mục còn lại (N4, K4, G7 Kết quả) là khiếm khuyết sẵn có thuộc lộ trình R10.
+- Các mục N4, K4, G7 Kết quả, trình bày: đã xử lý (§6.2 mục 3–7); thẩm định đối kháng bảng G3 (2 ĐỎ, 4 VÀNG, 3 XÁM) đã sửa trong PR y khoa #274.
 
 Cần bác sĩ kiểm chứng.
