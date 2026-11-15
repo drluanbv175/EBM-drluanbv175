@@ -136,9 +136,15 @@ Pytest đầu–cuối G0→G10 đạt 9/9, cho đủ 8 thiết kế. Canary tr�
    - Không agent hay công cụ G3 nào sinh hoặc dạy tệp này; G3-T2 chỉ xuất `_bo-bien-rieng.csv` + ma trận.
    - Đề tài mới đi đúng quy trình hiện hành sẽ **kẹt ở G5** (không ký được ⇒ G6 bị chặn). C1a không kẹt nhờ đề cương nộp làm tay.
    - Giả lập đi tiếp được khi PI giả lập tự soạn bảng biến số G3.
-   - **Chờ bác sĩ chọn:**
+   - Hai phương án đã trình:
      - (a) G3-T2 thêm sản phẩm `G3_BO_BIEN_SO_<mã>.md` dạng người đọc, PI duyệt; dạy agent và thêm vào danh mục hội đồng;
      - (b) G5-AUTO-11 nhận bộ biến + ma trận đã qua G3 (dấu vân tay PI) làm nguồn người duyệt.
+
+   ⇒ **Bác sĩ chọn (a) — đã làm** (PR y khoa nhánh `claude/thuoc-tinh-bien-dinh-nghia-20261115`):
+     - `tools/bang_bien_g3.py` soạn bảng từ bộ biến máy, theo đúng khuôn bộ đọc của G5-AUTO-11. Bảng gồm: bảng trường «Tên biến | Nhãn | Loại | Giá trị hợp lệ …», biến phái sinh có định nghĩa đặt cạnh công thức, ma trận và mã thiếu. Mục «Điểm PI cần xem tay» do máy tự dò.
+     - Bảng máy soạn **chỉ** là nguồn người duyệt khi PI ghi `gate_params.G3.bo_bien_so_duyet` gắn dấu nội dung (cùng cơ chế G3-HUMAN-06). Bản nháp chưa duyệt bị loại, vì máy so với bảng do chính nó soạn thì luôn ra «đồng bộ» giả (đo được trước khi sửa). Sửa bảng sau khi duyệt ⇒ xác nhận mất hiệu lực. Bảng người soạn (không dấu máy, như bảng btm 28/10) vẫn tính như #266.
+     - MT-11 (chỉ cảnh báo) báo sớm ở G3. Bảng được thêm vào đầu ra G3-T2 của danh mục hội đồng; canary giả lập có bước soạn bảng + PI duyệt.
+     - Dạy `bien-so-nghien-cuu`, `dieu-phoi-g3`, `quan-ly-du-lieu`, `dieu-phoi-g5`.
 3. **N4 — pipeline không tự chạy lại G1** sau khi PI điền (mỗi kịch bản 1 lần can thiệp). Có từ trước; thuộc R10.
 4. **K4 — bộ dịch chủ đề VI→EN của G0** vẫn làm rơi khái niệm chính. G0-AUTO-08 nay chặn được, nhưng PI vẫn phải tự viết `query_en`.
 5. **G7 chưa dựng Kết quả từ G6**: còn 51 ô «[CẦN KẾT QUẢ THẬT]» dù đã có `G6_analysis_summary.json`. Đây là mục tiêu của R10.
@@ -150,7 +156,7 @@ Pytest đầu–cuối G0→G10 đạt 9/9, cho đủ 8 thiết kế. Canary tr�
 ### 6.3 Kết luận trung thực
 
 - **Đã nối được:** mục tiêu ↔ biến ↔ công cụ ↔ từ điển ↔ SAP ↔ SPSS/R, và **khai báo biến ở SPSS/R đủ, đúng, đồng bộ** (đo bằng phần mềm thật).
-- **Chưa nối:** nguồn người duyệt của bộ biến (§6.2 mục 2) — đây là điểm chặn quy trình duy nhất còn lại cho một đề tài mới đi từ G0 tới G6.
+- **Đã nối sau lượt này:** nguồn người duyệt của bộ biến (§6.2 mục 2, bác sĩ chọn (a)). Đề tài mới vẫn phải có PI đọc và duyệt bảng trước G5 — đó là việc của người, máy không làm thay.
 - Các mục còn lại (N4, K4, G7 Kết quả) là khiếm khuyết sẵn có thuộc lộ trình R10.
 
 Cần bác sĩ kiểm chứng.
