@@ -56,7 +56,7 @@ Nhiệm vụ có điều kiện không áp dụng cho thiết kế ⇒ ghi lý d
 <!-- TRACH-NHIEM-CONG:BAT-DAU (sinh bằng tools/sinh_tai_lieu_trach_nhiem.py — KHÔNG sửa tay) -->
 ## 4b. Trách nhiệm hoàn chỉnh của cổng G2 (09/10/2026)
 Bác sĩ giao: «Từng cổng hãy đảm bảo với các Agent thực hiện một cách hoàn chỉnh các vấn đề của cổng đó và điều phối
-của cổng đó chịu trách nhiệm về kết quả thực hiện nhiệm vụ của chính cổng đó». Mọi tiêu chí (16) của
+của cổng đó chịu trách nhiệm về kết quả thực hiện nhiệm vụ của chính cổng đó». Mọi tiêu chí (17) của
 `tools/g2_quality_gate.py` đã gán ĐÚNG MỘT bên ở `hoi_dong_cong.PHAN_CONG`
 (bảng dưới chép lại; test đối chiếu):
 
@@ -65,7 +65,7 @@ của cổng đó chịu trách nhiệm về kết quả thực hiện nhiệm v
 | `G2-T1` — agent `dao-duc-dang-ky` | G2-AUTO-01, G2-AUTO-02b, G2-AUTO-03, G2-AUTO-03b, G2-AUTO-04, G2-AUTO-06, G2-AUTO-06b, G2-AUTO-08 |
 | `G2-T2\|G2-T1` — agent `an-toan-nghien-cuu` (thiết kế can thiệp (RCT)), ngược lại `dao-duc-dang-ky` | G2-AUTO-07 |
 | `IRB@G2-T1` — NGƯỜI IRB quyết/ký; agent chuẩn bị hồ sơ + lệnh: `dao-duc-dang-ky` | G2-AUTO-09, G2-HUMAN-01, G2-HUMAN-02 |
-| `PI@G2-T1` — NGƯỜI PI quyết/ký; agent chuẩn bị hồ sơ + lệnh: `dao-duc-dang-ky` | G2-AUTO-05, G2-AUTO-08b, G2-AUTO-10 |
+| `PI@G2-T1` — NGƯỜI PI quyết/ký; agent chuẩn bị hồ sơ + lệnh: `dao-duc-dang-ky` | G2-AUTO-05, G2-AUTO-08b, G2-AUTO-10, G2-AUTO-11 |
 | `^G1` — cổng tiền đề G1 (điều phối cổng đó chịu trách nhiệm) | G2-AUTO-02 |
 
 1. **Thước đo duy nhất:** `python3 tools/hoi_dong_cong.py trach-nhiem --study <mã> --gate G2` — chỉ đọc; chấm sống,
@@ -128,6 +128,15 @@ trỏ `nguon_bat_dong` = id biên bản đánh giá.
 - **Đo lại thượng nguồn sau mỗi lượt chạy G2** (`tools/kiem_chi_tiet_he_nghien_cuu.py --study <mã>`): G1/G3/G4 phải giữ nguyên trạng thái chấm sống. Lần đầu chạy G2 cho BTM, `run_g2_auto` tự chèn `study_meta.design_code` ⇒ dấu vân tay quyết định G1 đổi ⇒ G1 PASS → cần xem (G1-HUMAN-08), G3 và G4 lùi theo. Đã sửa theo hướng bác sĩ chọn sau thẩm định #277: G2 chỉ gieo `title`, không ghi khoá máy nào khác vào `study_meta.json` (thiết kế G2 dùng nằm ở `G2_checkpoint.design_code`); `design_code` cấp cao là ô PI ghim thiết kế (cần dấu người) — agent không ghi.
 - **Hồ sơ đạo đức lấy NGUYÊN quy trình dữ liệu đã chốt** (`exports/<mã>/_quy-trinh-du-lieu.csv`): TÀI LIỆU 6 (DMP) in khối «Quy trình dữ liệu đã chốt»; đề nghị miễn ICF lấy «Mã hóa» từ cam kết khử định danh/bảng nối và «Kế hoạch hủy» từ lưu trữ/hủy — chưa chốt thì ô `[CẦN PI QUYẾT …]`, KHÔNG viết «không có PII» hay một thời hạn lưu trữ thay PI. Bảng quy trình phải có TRƯỚC khi chạy G2. Đề tài cắt ngang chỉ trích hồ sơ (G1 `data_collection_method` thường quy, không thu mới) ⇒ bảng rủi ro không nói «bộ câu hỏi». Sau khi chạy, khai `neo_g2` cho các cam kết với người tham gia (`an_danh`, `huy_bang_noi`, `luu_tru`) — QT-05.
 - TRDS mục 19 chép NGUYÊN VĂN kết cục chính của G1 ⇒ xác nhận «cùng một kết cục» của chủ nhiệm vẫn hiệu lực (`nhat_quan_xuyen_cong.ban_sao_nguyen_van_cua_tap_da_xac_nhan`); diễn đạt mới ⇒ phải xin xác nhận lại.
+
+## Đề tài tiến cứu và tổng quan phải đăng ký; ICF/PROSPERO không để ô mẫu chung — giả lập trọn vòng 8 thiết kế (16/11/2026)
+- **G2-AUTO-11** chặn sớm khi PI ghim `registration_required=false` cho đề tài TIẾN CỨU tuyển người mới hoặc tổng quan
+  hệ thống (Helsinki §35 — cùng luật `approve_gate`): trước đây cổng báo READY rồi `approve_gate` mới từ chối ký. Tiêu chí
+  gán `PI@G2-T1`.
+- Bộ sinh G2 tự xử lý ô mẫu chung của ICF (đơn vị, nơi thực hiện, dòng ví dụ, lời dặn 6c/6e); lựa chọn THẬT của PI
+  (mục đích, «sẽ/sẽ không» lưu mẫu…) thành ô `[CẦN …]`. Phụ lục PROSPERO lấy PICO đã chốt ở G0/G1; công cụ RoB suy từ loại
+  nghiên cứu được đưa vào (`tools/quyet_dinh_da_chot.py::cong_cu_rob` — RCT ⇒ RoB 2, chẩn đoán ⇒ QUADAS-3, quan sát ⇒
+  ROBINS-I/E; không suy được ⇒ PI chọn).
 
 ## 8. Cấm
 Ký/gọi `approve_gate.py` · ghi `approval_ledger`/`gate_params.G2` xác nhận/dấu vân tay · bật cờ đời thực trong

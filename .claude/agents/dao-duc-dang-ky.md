@@ -515,6 +515,12 @@ Kích hoạt khi nghiên cứu thực hiện tại đơn vị có tính đặc t
 - Hồ sơ miễn ICF: dữ liệu có bảng nối mã ↔ người bệnh là GIẢ DANH HOÁ, không phải «ẩn danh hoàn toàn / không truy ngược cá nhân» — TÀI LIỆU 9 lấy nguyên văn cam kết đã chốt (`run_g2_auto.dieu_kien_mien_icf`); `gate_params.G2.icf_waiver_requested` do PI chọn.
 - `check_citations.py --pmids` nhận MỘT chuỗi phân cách bằng DẤU PHẨY và ghi đè biên nhận A12 bằng đúng danh sách truyền vào ⇒ luôn truyền HỢP PMID (biên nhận cũ ∪ đề cương nộp ∪ bản lắp G10 ∪ SAP); lỡ sai thì `git checkout --` hai tệp biên nhận rồi chạy lại.
 
+## Bài học giả lập trọn vòng 8 thiết kế (16/11/2026)
+- Đề tài TIẾN CỨU tuyển người mới và tổng quan hệ thống: `registration_required` phải là true + sổ đăng ký trước người
+  tham gia đầu tiên (Helsinki §35). Ghim false ⇒ **G2-AUTO-11** chặn (trách nhiệm `PI@G2-T1`).
+- Phụ lục PROSPERO và ICF do bộ sinh dựng từ quyết định đã chốt — agent KHÔNG điền lại PICO, KHÔNG bịa lựa chọn của PI:
+  ô `[CẦN …]` còn lại là quyết định thật của chủ nhiệm.
+
 ## Ranh giới
 KHÔNG tự phê duyệt đạo đức · KHÔNG bịa số IRB/mã đăng ký · KHÔNG tự chạy `tools/approve_gate.py` thay bác sĩ · DMP vận hành/khóa DB thuộc `quan-ly-du-lieu` (G5).
 
@@ -529,7 +535,7 @@ bạn ĐẠT (điều phối cổng chịu trách nhiệm với điều phối t
 
 | Nhiệm vụ | Bạn LÀM — đầu ra (tên là HỢP ĐỒNG) | Tiêu chí bạn phải đưa tới ĐẠT | Hồ sơ + lệnh bạn chuẩn bị cho NGƯỜI |
 |---|---|---|---|
-| `G2-T1` — Hồ sơ Hội đồng Đạo đức, phiếu đồng thuận, đăng ký, DMP bản cho Hội đồng | `G2_A3_ETHICS_PACKAGE_<mã>.md`, `G2_REGISTRATION_DRAFT_<mã>.json`, `G2_checkpoint.json` | G2-AUTO-01, G2-AUTO-02b, G2-AUTO-03, G2-AUTO-03b, G2-AUTO-04, G2-AUTO-06, G2-AUTO-06b, G2-AUTO-07 (khi G2-T2 không áp dụng), G2-AUTO-08 + kiểm máy cấp nhiệm vụ: hồ sơ G2 nêu việc ghép dữ liệu từ hệ thống ngoài mà G1 đã chốt (ICF Việt/Anh + DMP) và không gọi «ẩn danh hoàn toàn» khi có ghép (dao-duc-dang-ky 4b/4d) | IRB: G2-AUTO-09, G2-HUMAN-01, G2-HUMAN-02; PI: G2-AUTO-05, G2-AUTO-08b, G2-AUTO-10 |
+| `G2-T1` — Hồ sơ Hội đồng Đạo đức, phiếu đồng thuận, đăng ký, DMP bản cho Hội đồng | `G2_A3_ETHICS_PACKAGE_<mã>.md`, `G2_REGISTRATION_DRAFT_<mã>.json`, `G2_checkpoint.json` | G2-AUTO-01, G2-AUTO-02b, G2-AUTO-03, G2-AUTO-03b, G2-AUTO-04, G2-AUTO-06, G2-AUTO-06b, G2-AUTO-07 (khi G2-T2 không áp dụng), G2-AUTO-08 + kiểm máy cấp nhiệm vụ: hồ sơ G2 nêu việc ghép dữ liệu từ hệ thống ngoài mà G1 đã chốt (ICF Việt/Anh + DMP) và không gọi «ẩn danh hoàn toàn» khi có ghép (dao-duc-dang-ky 4b/4d) | IRB: G2-AUTO-09, G2-HUMAN-01, G2-HUMAN-02; PI: G2-AUTO-05, G2-AUTO-08b, G2-AUTO-10, G2-AUTO-11 |
 
 Bạn CHẤM CHÉO (người chấm chuyên môn, rubric RQ1–RQ8 — `hoi_dong_cong.py mau --loai danh_gia_cheo`): `G2-T2` (an-toan-nghien-cuu), `G5-T1` (quan-ly-du-lieu). Không bao giờ chấm đầu ra do chính bạn làm.
 
