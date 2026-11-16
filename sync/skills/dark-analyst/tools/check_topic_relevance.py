@@ -103,12 +103,42 @@ def build_prompt(dashboard_topic: str, items: List[Dict[str, str]]) -> str:
     return "\n".join(lines)
 
 
+# Kho bí mật của bác sĩ nằm NGOÀI OneDrive (doctrine §5). Để thành hằng số để bộ kiểm trỏ sang
+# tệp giả, không bao giờ đụng kho thật.
+KHO_BI_MAT = os.path.join(os.path.expanduser("~"), ".ebm-secrets", "medical-ebm-automation.env")
+
+
+def _khoa_tu_kho(ten: str = "ANTHROPIC_API_KEY", kho: Optional[str] = None) -> str:
+    """Đọc MỘT khoá từ kho bí mật khi biến môi trường vắng mặt.
+
+    VÌ SAO (17/11/2026): tool này trước chỉ đọc `os.getenv`, nên khoá cất trong kho KHÔNG tới được
+    nó — lượt lịch, hook và mọi lượt chạy không qua shell có `export` sẽ lặng lẽ bỏ qua kiểm chủ đề,
+    đúng kiểu âm tính giả mà doctrine cấm. Thứ tự lấy khoá theo §5: biến môi trường OS → kho secrets.
+    Không dùng python-dotenv để khỏi thêm phụ thuộc cho một tool skill đi kèm bản phát hành.
+    Mọi lỗi đọc đều nuốt: thiếu khoá là «bỏ qua êm», không bao giờ làm hỏng dây chuyền xuất gói.
+    KHÔNG BAO GIỜ in giá trị khoá ra đâu cả."""
+    duong = kho or KHO_BI_MAT
+    try:
+        with open(duong, "r", encoding="utf-8", errors="replace") as fh:
+            for dong in fh:
+                dong = dong.strip()
+                if not dong or dong.startswith("#") or "=" not in dong:
+                    continue
+                k, _, v = dong.partition("=")
+                if k.strip() == ten:
+                    return v.strip().strip("'\"")
+    except OSError:
+        pass
+    return ""
+
+
 def call_claude(prompt: str, *, model: Optional[str] = None, max_tokens: int = 2000) -> str:
     """Gọi Claude API. Đúng khuôn mẫu claude_llm() trong app/integrations/ambient_scribe.py."""
-    key = os.getenv("ANTHROPIC_API_KEY", "")
+    key = os.getenv("ANTHROPIC_API_KEY", "") or _khoa_tu_kho()
     if not key:
         raise TopicCheckError(
-            "Thiếu ANTHROPIC_API_KEY — đặt trong .env (ngoài OneDrive) để bật kiểm chủ đề."
+            "Thiếu ANTHROPIC_API_KEY — đặt trong biến môi trường hoặc kho bí mật ngoài OneDrive "
+            "để bật kiểm chủ đề."
         )
     try:
         import anthropic  # type: ignore

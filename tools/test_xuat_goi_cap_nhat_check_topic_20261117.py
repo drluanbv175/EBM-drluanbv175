@@ -106,15 +106,101 @@ class ThieuKhoaThiBoQuaEm(unittest.TestCase):
             if cu is not None:
                 os.environ["ANTHROPIC_API_KEY"] = cu
 
-    def test_model_mac_dinh_khong_lac_hau(self):
-        """Model mặc định phải thuộc thế hệ hiện hành — bản cũ trỏ `claude-sonnet-4-6`, chậm một thế hệ."""
-        ctr_path = HERE.parent / "sync" / "skills" / "cap-nhat-chung-cu-y-khoa" / "tools" / "check_topic_relevance.py"
-        if not ctr_path.exists():
-            self.skipTest("⚪ không có check_topic_relevance.py ở cây này")
-        nguon = ctr_path.read_text(encoding="utf-8")
-        self.assertNotIn("claude-sonnet-4-6", nguon)
-        self.assertIn("claude-sonnet-5-5", nguon)
 
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class KhoaPhaiToiDuocCongCu(unittest.TestCase):
+    """★ Bẫy 17/11/2026: tool chỉ đọc `os.getenv`, nên khoá cất trong kho bí mật KHÔNG tới được nó.
+
+    Lượt lịch / hook / mọi lượt chạy không qua shell có `export` sẽ lặng lẽ bỏ qua kiểm chủ đề —
+    âm tính giả đúng kiểu doctrine cấm. Thứ tự đúng (§5): biến môi trường OS → kho secrets."""
+
+    def setUp(self):
+        ctr_path = HERE.parent / "sync" / "skills" / "cap-nhat-chung-cu-y-khoa" / "tools" / "check_topic_relevance.py"
+        if not ctr_path.exists():
+            self.skipTest("⚪ không có check_topic_relevance.py ở cây này")
+        self.ctr = _nap_module("_ctr_kho", ctr_path)
+        self.cu = os.environ.pop("ANTHROPIC_API_KEY", None)
+
+    def tearDown(self):
+        if self.cu is not None:
+            os.environ["ANTHROPIC_API_KEY"] = self.cu
+
+    def _kho_gia(self, noi_dung: str) -> str:
+        import tempfile
+        with tempfile.NamedTemporaryFile("w", suffix=".env", delete=False, encoding="utf-8") as f:
+            f.write(noi_dung)
+            return f.name
+
+    def test_doc_duoc_khoa_tu_kho_khi_vang_bien_moi_truong(self):
+        kho = self._kho_gia("# ghi chú\nNCBI_EMAIL=a@b.vn\nANTHROPIC_API_KEY=gia-tri-gia\n")
+        self.assertEqual(self.ctr._khoa_tu_kho(kho=kho), "gia-tri-gia")
+
+    def test_bien_moi_truong_thang_kho(self):
+        """Thứ tự §5: biến môi trường OS đứng TRƯỚC kho secrets."""
+        kho = self._kho_gia("ANTHROPIC_API_KEY=trong-kho\n")
+        os.environ["ANTHROPIC_API_KEY"] = "tu-moi-truong"
+        try:
+            self.ctr.KHO_BI_MAT = kho
+            # call_claude lấy env trước; không gọi mạng nên dừng ở bước chọn khoá
+            self.assertEqual(os.getenv("ANTHROPIC_API_KEY", "") or self.ctr._khoa_tu_kho(kho=kho), "tu-moi-truong")
+        finally:
+            os.environ.pop("ANTHROPIC_API_KEY", None)
+
+    def test_kho_vang_hoac_hong_khong_bao_gio_nem_loi(self):
+        self.assertEqual(self.ctr._khoa_tu_kho(kho="/khong/ton/tai/abc.env"), "")
+        hong = self._kho_gia("dòng rác không có dấu bằng\n\n#chỉ chú thích\n")
+        self.assertEqual(self.ctr._khoa_tu_kho(kho=hong), "")
+
+    def test_bo_nhay_quanh_gia_tri(self):
+        kho = self._kho_gia("ANTHROPIC_API_KEY='co-nhay'\n")
+        self.assertEqual(self.ctr._khoa_tu_kho(kho=kho), "co-nhay")
+
+
+class GoiAPIDungKhoaVaDungModel(unittest.TestCase):
+    """★ Chốt HÀNH VI (không grep mã nguồn): `call_claude` phải lấy khoá từ KHO khi biến môi trường
+    vắng, và gọi đúng model thế hệ hiện hành. Tiêm SDK giả nên không chạm mạng, không tốn tiền."""
+
+    def setUp(self):
+        ctr_path = HERE.parent / "sync" / "skills" / "cap-nhat-chung-cu-y-khoa" / "tools" / "check_topic_relevance.py"
+        if not ctr_path.exists():
+            self.skipTest("⚪ không có check_topic_relevance.py ở cây này")
+        self.ctr = _nap_module("_ctr_goi", ctr_path)
+        self.cu_env = os.environ.pop("ANTHROPIC_API_KEY", None)
+        self.cu_kho = self.ctr.KHO_BI_MAT
+
+    def tearDown(self):
+        self.ctr.KHO_BI_MAT = self.cu_kho
+        sys.modules.pop("anthropic", None)
+        if self.cu_env is not None:
+            os.environ["ANTHROPIC_API_KEY"] = self.cu_env
+
+    def test_lay_khoa_tu_kho_va_dung_model_hien_hanh(self):
+        import tempfile
+        import types
+        with tempfile.NamedTemporaryFile("w", suffix=".env", delete=False, encoding="utf-8") as f:
+            f.write("ANTHROPIC_API_KEY=khoa-gia-cho-kiem-thu\n")
+            self.ctr.KHO_BI_MAT = f.name
+
+        ghi: dict = {}
+
+        class _Msgs:
+            def create(self, **kw):
+                ghi.update(kw)
+                return types.SimpleNamespace(content=[types.SimpleNamespace(text="OK")])
+
+        class _Cli:
+            def __init__(self, api_key=None):
+                ghi["api_key"] = api_key
+                self.messages = _Msgs()
+
+        gia = types.ModuleType("anthropic")
+        gia.Anthropic = _Cli
+        sys.modules["anthropic"] = gia
+
+        self.assertEqual(self.ctr.call_claude("hỏi thử"), "OK")
+        self.assertEqual(ghi["api_key"], "khoa-gia-cho-kiem-thu")   # ★ khoá đến từ KHO
+        self.assertEqual(ghi["model"], "claude-sonnet-5-5")          # ★ model thế hệ hiện hành
