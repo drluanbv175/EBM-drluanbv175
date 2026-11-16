@@ -565,7 +565,7 @@ Sau khi dựng dashboard, dùng bộ công cụ trong `tools/` để bảo đả
 **(a) Cổng kiểm liêm chính — `tools/verify_dashboard.py`** (chạy TRƯỚC khi giao):
 `python3 tools/verify_dashboard.py <dashboard>.html --online --strict-sources`
 Kiểm: mỗi item có PMID/DOI/URL truy nguyên · `gradeLevel` & `decision` hợp lệ · có disclaimer · quét PII · **tự xác minh mỗi PMID phân giải đúng trên PubMed và DOI qua Crossref** · **mục ghi CẢ `pmid` lẫn `doi` thì hai định danh phải trỏ CÙNG một bài** (DOI mà PubMed ghi cho PMID = DOI của mục; lệch ⇒ `--strict-sources` chặn) · kiểm `DATA.standards`, ngày tìm kiếm còn mới, ≥2 nguồn tìm kiếm, references[], và chặn `apply` nếu chứng cứ yếu/không phân hạng/chỉ dựa đồng thuận. FAIL → sửa trước khi giao.
-Cờ **opt-in `--check-topic`** (thêm sau `--online`): gọi LLM chấm mỗi item có LẠC CHỦ ĐỀ/chuyên khoa của dashboard không (`tools/check_topic_relevance.py` — lấp khoảng trống cổng kỹ thuật không bắt được item lạc chủ đề, vd bài sản/nhi lọt vào dashboard Tim mạch). Chỉ CẢNH BÁO, không chặn cứng; thiếu `ANTHROPIC_API_KEY` → bỏ qua êm.
+Cờ **`--check-topic`** — từ 17/11/2026 `xuat_goi_cap_nhat.py` TỰ truyền cùng `--online` (trước đó để «opt-in» nên dây chuyền hằng ngày không bao giờ gọi, doctrine §6.4): gọi LLM chấm mỗi item có LẠC CHỦ ĐỀ/chuyên khoa của dashboard không (`tools/check_topic_relevance.py` — lấp khoảng trống cổng kỹ thuật không bắt được item lạc chủ đề, vd bài sản/nhi lọt vào dashboard Tim mạch). Chỉ CẢNH BÁO, không chặn cứng; thiếu `ANTHROPIC_API_KEY` → bỏ qua êm.
 
 🔴 **CẶP PMID–DOI PHẢI CÙNG MỘT BÀI (thêm 04/10/2026).** Đo 04/10: 10/1164 cặp trong kho trỏ HAI bài khác nhau (3 mục
 `apply`) — phần lớn là DOI của một bài nằm trong DANH MỤC THAM KHẢO của chính bài mang PMID (bộ rút XML duyệt `.//ArticleId`).
@@ -1253,8 +1253,8 @@ Không mặc định coi Web Dashboard theo vấn đề cụ thể là bản ghi
 - `references/08-xuat-san-pham-phai-sinh.md`
 - `templates/phai-sinh-to-dan-nguoi-benh.md`
 - `templates/phai-sinh-kich-ban-tiktok.md`
-- `tools/verify_dashboard.py` (cổng kiểm liêm chính + xác minh PMID/DOI + `--strict-sources`; cờ opt-in `--check-topic`)
-- `tools/check_topic_relevance.py` (opt-in: LLM chấm item lạc chủ đề — chỉ cảnh báo, cần `ANTHROPIC_API_KEY`)
+- `tools/verify_dashboard.py` (cổng kiểm liêm chính + xác minh PMID/DOI + `--strict-sources`; `--check-topic` đi kèm `--online`)
+- `tools/check_topic_relevance.py` (LLM chấm item lạc chủ đề — chạy cùng `--online`, chỉ CẢNH BÁO, không đổi mã thoát; thiếu `ANTHROPIC_API_KEY` ⇒ in rõ «BỎ QUA», không im lặng)
 - `tools/build_library.py` (thư viện chỉ mục cập nhật → evidence-library.html)
 - `tools/make_derivatives.py` (tự sinh tờ dặn người bệnh / dàn ý slide / kịch bản TikTok → derivatives/)
 - `references/09-an-toan-thuoc-overlay.md` · `tools/drug_safety_scan.py` · `data/drug_flags.json` (lớp phủ Beers/STOPP)

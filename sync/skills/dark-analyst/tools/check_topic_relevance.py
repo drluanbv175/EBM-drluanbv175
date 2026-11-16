@@ -114,7 +114,7 @@ def call_claude(prompt: str, *, model: Optional[str] = None, max_tokens: int = 2
         import anthropic  # type: ignore
     except ImportError as exc:  # pragma: no cover - phụ thuộc môi trường
         raise TopicCheckError("Chưa cài SDK: `pip install anthropic`.") from exc
-    mdl = model or os.getenv("TOPIC_CHECK_MODEL", "claude-sonnet-4-6")
+    mdl = model or os.getenv("TOPIC_CHECK_MODEL", "claude-sonnet-5-5")
     client = anthropic.Anthropic(api_key=key)
     resp = client.messages.create(  # pragma: no cover - cần mạng + key
         model=mdl, max_tokens=max_tokens,
