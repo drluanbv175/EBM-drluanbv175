@@ -127,7 +127,7 @@ cổng G1-AUTO-02e chặn khi thiếu mục). Bảng khoá (theo GRAMMS — O'Ca
 | `thiet_ke` | `hoi_tu` · `giai_thich_tuan_tu` · `kham_pha_tuan_tu` (Creswell & Plano Clark) | 2 |
 | `ly_do` | vì sao cần cả hai cấu phần | 1 |
 | `uu_tien` | `ngang_nhau` · `dinh_luong` · `dinh_tinh` | 2 |
-| `cau_phan_dinh_tinh` | `central_phenomenon`, `qualitative_approach`, `chon_mau`, `co_mau_du_kien`, `data_collection_method` (ghi thời lượng «30–45 phút»), `saturation_criterion`, `phan_tich`, `interview_guide` [{chu_de, cau_hoi, goi_mo[]}] | 3 |
+| `cau_phan_dinh_tinh` | `muc_tieu` (số thứ tự mục tiêu G1 do cấu phần định tính trả lời, vd `[2]` — ma trận mục tiêu–biến không đòi biến định lượng cho mục tiêu đó; SAP §11 dựng bảng chủ đề), `central_phenomenon`, `qualitative_approach`, `chon_mau`, `co_mau_du_kien`, `data_collection_method` (ghi thời lượng «30–45 phút»), `saturation_criterion`, `phan_tich`, `interview_guide` [{chu_de, cau_hoi, goi_mo[]}] | 3 |
 | `tich_hop` | `thoi_diem`, `cach`, `nguoi`, `chu_de` [{chu_de, dinh_luong, dinh_tinh}] — dòng của bảng tích hợp | 4 |
 
 Hệ tự lan khối này: SAP §17 (G4), bước phỏng vấn trong phiếu đồng ý VI/EN (G2), câu thiết kế + GRAMMS/COREQ kèm PMID ở
