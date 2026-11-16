@@ -50,3 +50,10 @@ Doctrine từ 15/10: bản lắp G10 là hồ sơ truy xuất nội bộ; bản 
 - Bản máy là BẢN THẢO: văn phong bám câu chữ đã chốt ở các cổng (đặt vấn đề/tổng quan ngắn khi G1 ghi ngắn); chủ nhiệm
   biên tập trước khi nộp. Chưa có bản dịch phiếu đồng ý tiếng Anh tự động; nội dung hướng dẫn phỏng vấn định tính chưa
   có nguồn dữ liệu riêng (phụ lục C chỉ có phần thông tin người tham gia từ từ điển).
+
+## Phát hiện thêm khi chạy lại qua nửa đêm (17/11/2026)
+- **`approve_gate` so «ngày không được ở tương lai» với ngày UTC**: lượt giả lập chạy qua 00:00 giờ Việt Nam ghi ngày
+  phê duyệt/đăng ký G2 = 17/11 (giờ máy) trong khi ngày UTC còn 16/11 ⇒ từ chối ký G2 ⇒ G5 không khoá được ⇒ G6.5 sập.
+  Chủ nhiệm thật ký trong khoảng 00:00–07:00 sẽ gặp đúng lỗi này. Nay so với ngày muộn hơn giữa giờ UTC và giờ máy
+  (`_hom_nay_muon_nhat`); phép so hết hạn vẫn theo UTC (chiều dễ dãi). Phép thử: đồng hồ giả 23:30 UTC / 06:30 UTC+7.
+- Phép thử trọn vòng trước đây vẫn «passed» khi một bước nội bộ sập (sập chỉ ghi trong báo cáo) — nay đỏ.
