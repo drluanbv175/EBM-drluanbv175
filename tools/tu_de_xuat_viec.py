@@ -1376,14 +1376,28 @@ def giac_quan_api_claude(tep: Path | None = None) -> list[tuple[int, str, str, s
     tt = str(d.get("trang_thai") or "")
     luc = str(d.get("luc") or "")[:16].replace("T", " ")
     ly_do = str(d.get("ly_do") or "")
+    # 17/11/2026 (kết nối API cho hệ nghiên cứu): ba công cụ của repo y khoa cũng ghi tệp này, kèm khoá «nguon». Lượt
+    # gần nhất là của công cụ nào thì báo đúng công cụ đó — không đổ cho cổng kiểm lạc chủ đề. Vắng «nguon» = cổng cũ.
+    viec, lenh = _VIEC_API.get(str(d.get("nguon") or ""), _VIEC_API[""])
     if tt == "error":
-        return [(1, "👤", f"Lượt gọi API Claude gần nhất THẤT BẠI ({luc}): {ly_do[:110]} — kiểm khoá và tín dụng ở "
-                          "console.anthropic.com; trong lúc đó luật kiểm LẠC CHỦ ĐỀ của cổng không chạy",
-                 "python3 tools/xuat_goi_cap_nhat.py <dashboard>.html --online")]
+        return [(1, "👤", f"Lượt gọi API Claude gần nhất THẤT BẠI ({luc}, {viec}): {ly_do[:110]} — kiểm khoá và tín dụng "
+                          "ở console.anthropic.com; trong lúc đó MỌI việc dùng API (kiểm lạc chủ đề, kiểm nội dung trích "
+                          "dẫn, phản biện máy, hội đồng Batch) không chạy", lenh)]
     if tt == "skipped" and "ANTHROPIC_API_KEY" in ly_do:
-        return [(2, "👤", f"Kiểm LẠC CHỦ ĐỀ đang TẮT vì chưa có khoá API ({luc}) — cổng liêm chính vẫn chạy, chỉ thiếu luật này",
-                 "python3 tools/xuat_goi_cap_nhat.py <dashboard>.html --online")]
+        return [(2, "👤", f"Việc dùng API Claude đang TẮT vì chưa có khoá ({luc}, {viec}) — cổng liêm chính vẫn chạy, "
+                          "chỉ thiếu các luật/công cụ tư vấn dùng API", lenh)]
     return []
+
+
+_VIEC_API = {
+    "": ("kiểm lạc chủ đề", "python3 tools/xuat_goi_cap_nhat.py <dashboard>.html --online"),
+    "kiem_noi_dung_trich_dan": ("kiểm nội dung trích dẫn A12",
+                                "python3 medical-ebm-automation/tools/kiem_noi_dung_trich_dan.py --study <mã>"),
+    "phan_bien_may_de_cuong": ("phản biện máy đề cương",
+                               "python3 medical-ebm-automation/tools/phan_bien_may_de_cuong.py --study <mã>"),
+    "hoi_dong_cong_batch": ("hội đồng cổng qua Batch API",
+                            "python3 medical-ebm-automation/tools/hoi_dong_cong_batch.py trang-thai --study <mã> --gate GN"),
+}
 
 
 def giac_quan_cafes_agent_an_toan(goc: Path | None = None) -> list[tuple[int, str, str, str]]:

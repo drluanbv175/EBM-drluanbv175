@@ -117,3 +117,12 @@ def test_nhat_ky_hong_khong_doc_thanh_tot(tmp_path, tdx):
     truoc = len(tdx._GIAC_QUAN_CHET)
     assert tdx.giac_quan_api_claude(tep) == []
     assert len(tdx._GIAC_QUAN_CHET) == truoc + 1      # hỏng cũng phải thành ⚪, không im
+
+
+def test_luot_loi_cua_cong_cu_nghien_cuu_bao_dung_cong_cu(tmp_path, tdx):
+    """17/11: công cụ repo y khoa ghi «nguon» ⇒ thông báo + lệnh trỏ đúng công cụ, không đổ cho kiểm lạc chủ đề."""
+    tep = _ghi(tmp_path, trang_thai="error", ly_do="Gọi API thất bại: RateLimitError: 429", nguon="hoi_dong_cong_batch")
+    uu, ai, dong, lenh = tdx.giac_quan_api_claude(tep)[0]
+    assert uu == 1 and "hội đồng cổng qua Batch API" in dong and "hoi_dong_cong_batch.py" in lenh
+    tep = _ghi(tmp_path, trang_thai="error", ly_do="401")
+    assert "kiểm lạc chủ đề" in tdx.giac_quan_api_claude(tep)[0][2]
