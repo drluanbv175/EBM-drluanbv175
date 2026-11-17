@@ -1568,6 +1568,51 @@ def giac_quan_cafes_agent_an_toan(goc: Path | None = None) -> list[tuple[int, st
     return viec
 
 
+def giac_quan_kiem_may_api(goc_mea: Path | None = None) -> list[tuple[int, str, str, str]]:
+    """KIỂM MÁY BẰNG CLAUDE API — BÁO CÁO CŨ · CHƯA DUYỆT (18/11/2026, bác sĩ chọn «báo cáo cũ + đo độ đúng»).
+
+    Đo BTM 17/11: lượt kiểm A12 + phản biện máy chạy 17:59, đề cương sinh lại 20:14 ⇒ cả hai báo cáo đã CŨ mà không ai biết;
+    24 + 9 phát hiện chưa ai duyệt ⇒ không biết máy đúng bao nhiêu phần. Giác quan nạp `medical-ebm-automation/tools/
+    duyet_kiem_may_api.py` (chỉ thư viện chuẩn, chỉ ĐỌC báo cáo — không gọi API, chi phí bằng 0):
+      • báo cáo CŨ (đề cương đổi sau lượt kiểm) ⇒ 👤 ưu tiên 2 — chạy lại tốn tiền nên là quyết định của bác sĩ (lệnh in ra
+        chạy KHÔ, chỉ ước chi phí);
+      • báo cáo hỏng ⇒ 👤 ưu tiên 2;
+      • báo cáo còn hiệu lực mà còn mục chưa duyệt ⇒ 👤 ưu tiên 3 — tỷ lệ đúng của máy chưa đo (máy không tự gắn nhãn).
+    Đề tài giả lập ZZCANARY bị bỏ. Công cụ vắng/lỗi ⇒ giác quan chết (⚪), không bao giờ là «kiểm máy ổn»."""
+    _SO_GIAC_QUAN["chay"] += 1
+    nhan = ["", "kiểm máy Claude API"]
+    goc_mea = goc_mea or _GOC_MEA
+    duong = goc_mea / "tools" / "duyet_kiem_may_api.py"
+    if not duong.is_file():
+        _ghi_chet(nhan, "repo y khoa chưa có duyet_kiem_may_api.py")
+        return []
+    try:
+        sp = _ilu_mea.spec_from_file_location("_dkm_tdxv", duong)
+        dkm = _ilu_mea.module_from_spec(sp)
+        sp.loader.exec_module(dkm)
+        tt = dkm.tinh_trang_tat_ca(goc_mea)
+    except Exception as exc:  # noqa: BLE001 — cảm biến hỏng phải hiện ra
+        _ghi_chet(nhan, f"lỗi {type(exc).__name__}")
+        return []
+    lenh_kiem = {"A12": "kiem_noi_dung_trich_dan.py", "PHAN_BIEN": "phan_bien_may_de_cuong.py"}
+    viec: list[tuple[int, str, str, str]] = []
+    for t in tt:
+        s = t["study"]
+        for b in t["bao_cao"]:
+            if b.get("hong"):
+                viec.append((2, "👤", f"Kiểm máy API {s}: báo cáo {b['tep_bao_cao']} hỏng — không đọc được",
+                             f"cd medical-ebm-automation && python3 tools/duyet_kiem_may_api.py tinh-trang --study {s}"))
+            elif b.get("cu"):
+                viec.append((2, "👤", f"Kiểm máy API {s}: báo cáo {b['ten']} đã CŨ ({b['ly_do']}) — {b['chua_duyet']} mục "
+                                      "của bản cũ không còn nói về đề cương hiện hành; ước chi phí rồi quyết có chạy lại",
+                             f"cd medical-ebm-automation && python3 tools/{lenh_kiem[b['loai']]} --study {s}  # chạy khô"))
+            elif b.get("chua_duyet"):
+                viec.append((3, "👤", f"Kiểm máy API {s}: {b['chua_duyet']}/{b['can_duyet']} phát hiện {b['ten']} chưa duyệt — "
+                                      "tỷ lệ đúng của máy chưa đo",
+                             f"cd medical-ebm-automation && python3 tools/duyet_kiem_may_api.py phieu --study {s}"))
+    return viec
+
+
 def giac_quan_agent_lech(goc_agents: Path, mea_agents: Path) -> list[tuple[int, str, str]]:
     """Agent `.claude/agents/*.md` của repo GỐC phải trùng từng byte bản ở repo Y KHOA (PM-15, kiểm toàn diện 02/10/2026).
 
@@ -2363,6 +2408,9 @@ def main() -> int:
 
     # ⑦s CAFÉ-S AGENT AN TOÀN (17/11/2026): lượt đo thật trượt critical, hoặc agent đã đổi so với vân tay lúc đo — xem docstring.
     de_xuat += giac_quan_cafes_agent_an_toan()  # đúng khuôn (ưu tiên, nhãn 👤, mô tả, lệnh)
+
+    # ⑦t KIỂM MÁY CLAUDE API (18/11/2026): báo cáo A12/phản biện máy CŨ so với đề cương, hoặc phát hiện chưa duyệt — xem docstring.
+    de_xuat += giac_quan_kiem_may_api()  # đúng khuôn (ưu tiên, nhãn 👤, mô tả, lệnh)
 
     # ⑦j CHỦ ĐỀ 0 ỨNG VIÊN NHIỀU LƯỢT LIỀN (03/10/2026): «0 ứng viên ≠ không có chứng cứ mới» — xem docstring.
     _viec_0, _tt_0 = giac_quan_chu_de_0_lien(DASH, SAN_LUONG_GIAM_SAT)
