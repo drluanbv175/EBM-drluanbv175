@@ -126,3 +126,60 @@ def test_luot_loi_cua_cong_cu_nghien_cuu_bao_dung_cong_cu(tmp_path, tdx):
     assert uu == 1 and "hội đồng cổng qua Batch API" in dong and "hoi_dong_cong_batch.py" in lenh
     tep = _ghi(tmp_path, trang_thai="error", ly_do="401")
     assert "kiểm lạc chủ đề" in tdx.giac_quan_api_claude(tep)[0][2]
+
+
+# ─────────────────── tuổi lượt gọi (17/11/2026, bác sĩ duyệt «mục 2») ───────────────────
+
+_BAY_GIO = __import__("datetime").datetime(2026, 12, 6, 9, 0, 0)
+
+
+def _chet_moi(tdx, truoc: int) -> list[str]:
+    return tdx._GIAC_QUAN_CHET[truoc:]
+
+
+def test_luot_ok_cu_qua_nguong_la_chua_do_duoc_khong_phai_tot(tmp_path, tdx):
+    """★ «ok» 19 ngày trước chỉ nói khoá sống LÚC ĐÓ — tín dụng có thể đã cạn. Phải thành ⚪, không im như xanh."""
+    tep = _ghi(tmp_path, luc="2026-11-17T08:30:00")
+    truoc = len(tdx._GIAC_QUAN_CHET)
+    assert tdx.giac_quan_api_claude(tep, bay_gio=_BAY_GIO) == []      # không 👤: không báo đỏ giả
+    moi = _chet_moi(tdx, truoc)
+    assert len(moi) == 1 and "19 ngày" in moi[0] and "sức khoẻ API Claude" in moi[0]
+
+
+def test_luot_ok_con_moi_thi_im_va_khong_ghi_chet(tmp_path, tdx):
+    tep = _ghi(tmp_path, luc="2026-12-01T10:00:00")
+    truoc = len(tdx._GIAC_QUAN_CHET)
+    assert tdx.giac_quan_api_claude(tep, bay_gio=_BAY_GIO) == []
+    assert _chet_moi(tdx, truoc) == []
+
+
+def test_dung_nguong_van_tinh_la_moi(tmp_path, tdx):
+    """Biên: đúng NGAY_API_CU ngày vẫn im; quá một ngày mới ⚪."""
+    moc = _BAY_GIO - __import__("datetime").timedelta(days=tdx.NGAY_API_CU)
+    truoc = len(tdx._GIAC_QUAN_CHET)
+    tdx.giac_quan_api_claude(_ghi(tmp_path, luc=moc.isoformat(timespec="seconds")), bay_gio=_BAY_GIO)
+    assert _chet_moi(tdx, truoc) == []
+    moc = moc - __import__("datetime").timedelta(days=1)
+    tdx.giac_quan_api_claude(_ghi(tmp_path, luc=moc.isoformat(timespec="seconds")), bay_gio=_BAY_GIO)
+    assert len(_chet_moi(tdx, truoc)) == 1
+
+
+def test_luot_loi_cu_van_bao_uu_tien_1(tmp_path, tdx):
+    """Lượt LỖI là trạng thái cuối đã biết — cũ mấy cũng phải báo, không được hạ thành ⚪."""
+    tep = _ghi(tmp_path, luc="2026-09-01T08:00:00", trang_thai="error", ly_do="401 authentication_error")
+    viec = tdx.giac_quan_api_claude(tep, bay_gio=_BAY_GIO)
+    assert len(viec) == 1 and viec[0][0] == 1 and viec[0][1] == "👤"
+
+
+def test_moc_thoi_gian_hong_la_chua_do_duoc(tmp_path, tdx):
+    truoc = len(tdx._GIAC_QUAN_CHET)
+    assert tdx.giac_quan_api_claude(_ghi(tmp_path, luc="hôm qua"), bay_gio=_BAY_GIO) == []
+    assert len(_chet_moi(tdx, truoc)) == 1
+
+
+@pytest.mark.parametrize("nguon, nhan", [("ambient_scribe", "ambient scribe"), ("image_reading", "đọc ảnh ECG")])
+def test_hai_tich_hop_app_y_khoa_bao_dung_cong_cu(tmp_path, tdx, nguon, nhan):
+    """17/11: ambient scribe và đọc ảnh nay ghi nhật ký qua cầu nối chung ⇒ lỗi phải trỏ đúng tích hợp."""
+    tep = _ghi(tmp_path, trang_thai="error", ly_do="Gọi API thất bại: RateLimitError: 429", nguon=nguon)
+    uu, _ai, dong, lenh = tdx.giac_quan_api_claude(tep, bay_gio=_BAY_GIO)[0]
+    assert uu == 1 and nhan in dong and "app.integrations.cli" in lenh

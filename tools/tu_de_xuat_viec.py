@@ -1353,13 +1353,18 @@ def giac_quan_worktree_tich_tu() -> list[tuple[int, str, str, str]]:
     return viec
 
 
-def giac_quan_api_claude(tep: Path | None = None) -> list[tuple[int, str, str, str]]:
+def giac_quan_api_claude(tep: Path | None = None, bay_gio: dt.datetime | None = None) -> list[tuple[int, str, str, str]]:
     """SỨC KHOẺ API CLAUDE (17/11/2026, bác sĩ: «khi API hết hạn báo lại tôi»).
 
     Khoá Anthropic KHÔNG hết hạn theo ngày — nó chết vì hết TÍN DỤNG, bị THU HỒI (401) hoặc vượt HẠN MỨC (429), và chỉ lộ đúng lúc
     gọi. Thăm dò định kỳ thì tốn tiền vô ích, nên `check_topic_relevance.ghi_nhat_ky_api` ghi lại kết quả của những lượt gọi mà dây
     chuyền VỐN ĐÃ thực hiện (chi phí thêm bằng 0) và giác quan này chỉ ĐỌC. Lượt gần nhất lỗi ⇒ 👤 ưu tiên 1 (khoá/tín dụng là việc
-    của bác sĩ); thiếu khoá ⇒ 👤 ưu tiên 2 nhắc luật đang tắt. Chưa có lượt nào ⇒ giác quan chết (⚪), KHÔNG phải «API vẫn tốt»."""
+    của bác sĩ); thiếu khoá ⇒ 👤 ưu tiên 2 nhắc luật đang tắt. Chưa có lượt nào ⇒ giác quan chết (⚪), KHÔNG phải «API vẫn tốt».
+
+    TUỔI LƯỢT GỌI (17/11/2026, bác sĩ duyệt «mục 2»): một lượt «ok» chỉ nói khoá sống LÚC ĐÓ. Vài tuần không xuất gói nào
+    thì nhật ký vẫn «ok» trong khi tín dụng có thể đã cạn — trước đây giác quan im như xanh. Nay lượt không lỗi cũ hơn
+    NGAY_API_CU ngày (hoặc không đọc được mốc) ⇒ ⚪ «chưa đo được», không 👤 (không báo đỏ giả), và vẫn KHÔNG gọi thử API.
+    Lượt LỖI thì báo bất kể tuổi — đó vẫn là trạng thái cuối cùng đã biết."""
     _SO_GIAC_QUAN["chay"] += 1
     nhan = ["", "sức khoẻ API Claude"]
     tep = tep or (Path.home() / ".ebm-api-claude.json")
@@ -1386,8 +1391,19 @@ def giac_quan_api_claude(tep: Path | None = None) -> list[tuple[int, str, str, s
     if tt == "skipped" and "ANTHROPIC_API_KEY" in ly_do:
         return [(2, "👤", f"Việc dùng API Claude đang TẮT vì chưa có khoá ({luc}, {viec}) — cổng liêm chính vẫn chạy, "
                           "chỉ thiếu các luật/công cụ tư vấn dùng API", lenh)]
+    try:
+        moc = dt.datetime.fromisoformat(str(d.get("luc") or "")[:19])
+    except ValueError:
+        _ghi_chet(nhan, "nhật ký lượt gọi API không có mốc thời gian đọc được")
+        return []
+    tuoi = ((bay_gio or dt.datetime.now()) - moc).days
+    if tuoi > NGAY_API_CU:
+        _ghi_chet(nhan, f"lượt gọi API gần nhất cách {tuoi} ngày ({luc}) — chưa biết khoá còn sống/còn tín dụng")
     return []
 
+
+# Lượt gọi API không lỗi cũ hơn số ngày này ⇒ ⚪ «chưa đo được» (không gọi thử: thăm dò định kỳ là tốn tiền vô ích).
+NGAY_API_CU = 14
 
 _VIEC_API = {
     "": ("kiểm lạc chủ đề", "python3 tools/xuat_goi_cap_nhat.py <dashboard>.html --online"),
@@ -1397,6 +1413,11 @@ _VIEC_API = {
                                "python3 medical-ebm-automation/tools/phan_bien_may_de_cuong.py --study <mã>"),
     "hoi_dong_cong_batch": ("hội đồng cổng qua Batch API",
                             "python3 medical-ebm-automation/tools/hoi_dong_cong_batch.py trang-thai --study <mã> --gate GN"),
+    # 17/11/2026: hai tích hợp app y khoa nay đi qua cầu nối chung và ghi nhật ký này.
+    "ambient_scribe": ("ambient scribe → nháp SOAP",
+                       "cd medical-ebm-automation && python -m app.integrations.cli soap --transcript <tệp.txt>"),
+    "image_reading": ("đọc ảnh ECG/X-quang",
+                      "cd medical-ebm-automation && python -m app.integrations.cli image <ảnh> --modality ecg --consent"),
 }
 
 
