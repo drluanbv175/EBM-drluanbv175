@@ -136,7 +136,10 @@ VIEC_MAY = [
     # dây chuyền hằng ngày cơ chế đó không tồn tại (BH41). Chốt phát hiện (ESD02)
     # đã có; đây là mảnh tự-vá, theo luật nội-dung 21/08: nguồn bao trùm mới chép,
     # bản đích có dòng riêng thì giữ lại chờ bác sĩ.
-    ("Bộ ba scanner giám sát lệch hash (ESD02 chặn commit)",
+    # MỞ RỘNG 17/11/2026 (BH179) — từ riêng surveillance_scan sang MỌI tool của nguồn chuẩn:
+    # PR #402 vá check_topic_relevance.py ở nguồn, gộp xong, nhưng dây chuyền máy thật nạp bản
+    # EBM-Dashboards/tools/ còn cũ ⇒ cổng kiểm lạc chủ đề trơ. BH11 đỏ mà không có đường tự vá.
+    ("Công cụ dây chuyền: bản chạy tụt hậu nguồn chuẩn (BH11 phát hiện · ESD02 chặn commit)",
      [PY, "tools/dong_bo_scanner_giam_sat.py", "--im-khi-on"],
      [PY, "tools/dong_bo_scanner_giam_sat.py", "--ap-dung"], False),
     # Thêm 18/10/2026 — cầu nạp sổ cái hub (EBM_MASTER/tools/ingest_dashboard.py) nay có nguồn chuẩn

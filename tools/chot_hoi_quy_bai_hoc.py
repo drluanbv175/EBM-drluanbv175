@@ -11937,6 +11937,79 @@ def _bh174_dong_bo():
     return True, "53 chủ đề qua · --topic không dính trần · nhịp khoá nối vào main · đồng bộ qua được bản cũ"
 
 
+def bh179_va_nguon_toi_ban_chay_moi_tool_day_chuyen():
+    """17/11 — PR #402 vá `check_topic_relevance.py` ở nguồn chuẩn và ĐÃ GỘP, nhưng dây chuyền máy thật nạp bản
+    `EBM-Dashboards/tools/` (`ban_sao_tran.duong_cong_cu_pipeline` ưu tiên bản đó; `verify_dashboard.py` chèn thư mục
+    của chính nó vào đầu sys.path trước khi import) — bản đó còn cũ, chỉ đọc khoá từ môi trường shell ⇒ chạy thật in
+    «BỎ QUA — Thiếu ANTHROPIC_API_KEY»: cổng kiểm lạc chủ đề trơ dù PR đã gộp; `~/.ebm-api-claude.json` (chỉ bản mới
+    ghi) chưa hề tồn tại. BH11 PHÁT HIỆN lệch (đỏ 12:49 cùng ngày) nhưng chỉ `surveillance_scan.py` có đường TỰ VÁ.
+    Chốt này khoá ĐƯỜNG TỰ VÁ (phần phát hiện vẫn là của BH11). Ngoại tuyến, chạy CLI thật của
+    `tools/dong_bo_scanner_giam_sat.py` qua `--goc` trên kho git tạm dựng lại đúng ca #402: tool KHÔNG phải
+    surveillance_scan, một dòng có sẵn bị SỬA ⇒ chỉ vá được nhờ luật (c) hỏi git theo ĐÚNG tệp nguồn; bản chạy có
+    dòng riêng thật vẫn được giữ; phạm vi bản chạy của công cụ vá trùng phạm vi BH11 canh (AST, không khớp chuỗi);
+    tu_sua_chua gọi công cụ với --ap-dung mỗi phiên (BH41)."""
+    import ast as _ast
+    import subprocess
+    import tempfile as _tf
+    cong_cu = REPO / "tools" / "dong_bo_scanner_giam_sat.py"
+    m = _nap(cong_cu, "_bh179_dbsgs")
+    nguon_rel = "sync/skills/cap-nhat-chung-cu-y-khoa/tools/check_topic_relevance.py"
+    ban_cu = 'import os\nkey = os.getenv("ANTHROPIC_API_KEY", "")\n'
+    ban_moi = 'import os\nkey = os.getenv("ANTHROPIC_API_KEY", "") or _khoa_tu_kho()\n'
+    with _tf.TemporaryDirectory() as d:
+        g = Path(d)
+
+        def _git(*tham_so):
+            subprocess.run(["git", "-C", str(g), "-c", "user.name=t", "-c", "user.email=t@t", "-c", "commit.gpgsign=false",
+                            *tham_so], capture_output=True, check=True, timeout=30)
+
+        nguon = g / nguon_rel
+        nguon.parent.mkdir(parents=True)
+        _git("init", "-q")
+        nguon.write_text(ban_cu, encoding="utf-8", newline="\n")
+        _git("add", "-A")
+        _git("commit", "-qm", "ban cu")
+        nguon.write_text(ban_moi, encoding="utf-8", newline="\n")
+        _git("add", "-A")
+        _git("commit", "-qm", "PR 402 sua dong lay khoa")
+        dich = [g / t / "check_topic_relevance.py" for t in m.THU_MUC_CHAY]
+        for p in dich:
+            p.parent.mkdir(parents=True)
+            p.write_text(ban_cu, encoding="utf-8", newline="\n")
+        lenh = [sys.executable, "-B", str(cong_cu), "--goc", str(g), "--ap-dung"]
+        kq = subprocess.run(lenh, capture_output=True, text=True, encoding="utf-8", timeout=60, check=False)
+        if kq.returncode != 0 or any(p.read_text(encoding="utf-8") != ban_moi for p in dich):
+            return False, (f"bản chạy tụt hậu của check_topic_relevance KHÔNG được tự vá (mã {kq.returncode}) — "
+                           "PR gộp mà dây chuyền vẫn chạy bản cũ")
+        ban_va = ban_cu + "# ban va chua hoi nguon\n"
+        dich[0].write_text(ban_va, encoding="utf-8", newline="\n")
+        kq = subprocess.run(lenh, capture_output=True, text=True, encoding="utf-8", timeout=60, check=False)
+        if kq.returncode != 1 or dich[0].read_text(encoding="utf-8") != ban_va:
+            return False, f"bản chạy có dòng riêng THẬT bị chép đè (mã {kq.returncode}) — mất bản vá chưa hồi nguồn"
+
+    def _chuoi(nut):
+        return [p.value for p in getattr(nut, "elts", []) if isinstance(p, _ast.Constant) and isinstance(p.value, str)]
+
+    cay = _ast.parse((REPO / "tools" / "chot_hoi_quy_bai_hoc.py").read_text(encoding="utf-8"))
+    ham = next((n for n in cay.body if isinstance(n, _ast.FunctionDef) and n.name.startswith("bh11_")), None)
+    gan_noi = next((n for n in _ast.walk(ham) if isinstance(n, _ast.Assign)
+                    and any(isinstance(t, _ast.Name) and t.id == "NOI" for t in n.targets)), None) if ham else None
+    if gan_noi is None:
+        return False, "không đọc được danh sách NOI của BH11 — không đối chiếu được phạm vi phát hiện ↔ tự vá"
+    noi_bh11 = {s.rsplit("/", 1)[0] for s in _chuoi(gan_noi.value)} - {m.THU_MUC_NGUON.as_posix()}
+    noi_va = {p.as_posix() for p in m.THU_MUC_CHAY}
+    if noi_bh11 != noi_va:
+        return False, f"phạm vi lệch: BH11 canh {sorted(noi_bh11)} nhưng công cụ vá {sorted(noi_va)}"
+    cay = _ast.parse((REPO / "tools" / "tu_sua_chua.py").read_text(encoding="utf-8"))
+    gan = next((n for n in cay.body if isinstance(n, _ast.Assign)
+                and any(isinstance(t, _ast.Name) and t.id == "VIEC_MAY" for t in n.targets)), None)
+    lenh_sua = [_chuoi(muc.elts[2]) for muc in (gan.value.elts if gan else [])
+                if isinstance(muc, _ast.Tuple) and len(muc.elts) >= 3]
+    if not any("tools/dong_bo_scanner_giam_sat.py" in x and "--ap-dung" in x for x in lenh_sua):
+        return False, "tu_sua_chua không gọi dong_bo_scanner_giam_sat.py --ap-dung — công cụ vá không ai chạy (BH41)"
+    return True, "bản chạy tụt hậu được tự vá (luật c theo đúng tệp) · dòng riêng được giữ · phạm vi trùng BH11 · tu_sua_chua gọi mỗi phiên"
+
+
 BAI_HOC = [
     ("BH01", "12/08", "Cổng không được `return` sớm che luật item", bh01_khong_return_som),
     ("BH02", "12/08", "Parser giữ nguyên giá trị có nháy kép", bh02_parser_giu_nguyen_nhay_kep),
@@ -12103,6 +12176,7 @@ BAI_HOC = [
     ("BH173", "28/10", "Quyền lượt lịch khai ĐÚNG LỆNH (gói tuần W44 mất vì lượt lịch không ai bấm «cho phép» bị cắt mà vẫn «succeeded»): mọi lệnh SKILL.md tác vụ lịch phải có trong sync/quyen-lich-nen.json, không khai lệnh ghi quyết định, --ap-dung chỉ thêm + sao lưu, giác quan báo trước kỳ", bh173_quyen_luot_lich_khai_dung_lenh),
     ("BH174", "30/10", "Trần watchlist không giết lượt quét (53 chủ đề từng vượt trần 50 ⇒ gói tuần chết, 0 alert, `--topic` chết theo, orchestrator chẩn đoán sai): watchlist thật qua được bộ quét, trần chỉ áp lượt toàn danh sách, vượt trần có alert, nhịp khoá cho lượt quá 30 phút, công cụ đồng bộ qua được bản đích tụt hậu", bh174_tran_watchlist_khong_giet_luot_quet),
     ("BH178", "03/11", "Bộ lọc loại thiết kế của bộ quét nhận «Consensus Statement» (DESIGN thiếu loại đồng thuận hiện hành của PubMed ⇒ 792 bản ghi/36 tháng trên 58 chủ đề bị tầng guideline loại im lặng; đường dự phòng Europe PMC cùng lỗ)", bh178_design_nhan_consensus_statement),
+    ("BH179", "17/11", "Vá ở nguồn tới được bản CHẠY của MỌI tool dây chuyền (PR #402 gộp mà `EBM-Dashboards/tools/check_topic_relevance.py` kẹt bản cũ ⇒ cổng kiểm lạc chủ đề trơ; BH11 đỏ mà chỉ surveillance_scan có đường tự vá): công cụ đồng bộ tự dò mọi tool, luật (c) theo đúng tệp, giữ dòng riêng, phạm vi trùng BH11, tu_sua_chua gọi --ap-dung", bh179_va_nguon_toi_ban_chay_moi_tool_day_chuyen),
     ("BH122", "27/09", "Chu trình chứng cứ không kéo 🔴 «rút bỏ hẳn» cho ca đính-chính-bị-rút bác sĩ đã ký", bh122_chu_trinh_khong_ra_do_gia_cho_dinh_chinh_da_ky),
     ("BH150", "02/10", "Làn trình duyệt có người: FDA 401 là mã chặn bot; máy mở trang, bác sĩ tự xác nhận, máy ghi bằng chứng; lô không dừng vì chặn bot; Scopus/WoS/DynaMed chỉ thành ứng viên khi xác minh được", bh150_lan_trinh_duyet_co_nguoi_chan_bot_va_tai_khoan_bac_si),
     ("BH123", "27/09", "Sổ xác minh nhận bằng chứng trình duyệt thật cho miền chặn kiểm tự động, đúng như cổng", bh123_so_xac_minh_nhan_bang_chung_trinh_duyet_nhu_cong),
