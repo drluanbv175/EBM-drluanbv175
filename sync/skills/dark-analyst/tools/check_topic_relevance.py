@@ -183,7 +183,7 @@ def parse_verdicts(raw_response: str) -> Dict[str, Dict[str, str]]:
     return parsed
 
 
-def check_dashboard_topic_relevance(html_path: str) -> Dict:
+def _cham_chu_de(html_path: str) -> Dict:
     """Điểm vào chính: đọc dashboard, gọi Claude chấm chủ đề, trả kết quả có cấu trúc.
 
     Trả về dict {"status": "ok"|"skipped"|"error", ...}. KHÔNG BAO GIỜ raise ra ngoài —
@@ -232,6 +232,42 @@ def check_dashboard_topic_relevance(html_path: str) -> Dict:
         "uncertain": uncertain,
         "verdicts": verdicts,
     }
+
+
+# Nhật ký SỨC KHOẺ lượt gọi API — nằm ngoài repo, ngoài OneDrive. KHÔNG BAO GIỜ chứa khoá, chỉ
+# chứa thời điểm, trạng thái và lý do đã cắt ngắn.
+NHAT_KY_API = os.path.join(os.path.expanduser("~"), ".ebm-api-claude.json")
+
+
+def ghi_nhat_ky_api(kq: Dict, tep: Optional[str] = None) -> None:
+    """Ghi kết quả lượt gọi gần nhất để hòm việc biết API còn sống hay đã chết.
+
+    VÌ SAO (17/11/2026, bác sĩ: «khi API hết hạn báo lại tôi»): khoá Anthropic không hết hạn theo
+    ngày — nó chết vì HẾT TÍN DỤNG, BỊ THU HỒI (401) hay VƯỢT HẠN MỨC (429), và chỉ lộ ra đúng lúc
+    gọi. Thăm dò định kỳ thì tốn tiền vô ích, nên ta ghi lại kết quả của những lượt gọi mà dây
+    chuyền VỐN ĐÃ thực hiện — chi phí thêm bằng 0. Giác quan `giac_quan_api_claude` đọc tệp này.
+    Lỗi ghi đều nuốt: nhật ký hỏng không bao giờ được làm hỏng lượt xuất gói của bác sĩ."""
+    try:
+        import datetime as _dt
+        with open(tep or NHAT_KY_API, "w", encoding="utf-8", newline="\n") as fh:
+            json.dump({
+                "luc": _dt.datetime.now().isoformat(timespec="seconds"),
+                "trang_thai": str(kq.get("status") or "?"),
+                "ly_do": str(kq.get("message") or "")[:200],
+                "so_muc": int(kq.get("total_items") or 0),
+            }, fh, ensure_ascii=False, indent=1)
+    except (OSError, TypeError, ValueError):
+        pass
+
+
+def check_dashboard_topic_relevance(html_path: str) -> Dict:
+    """Vỏ bọc của `_cham_chu_de`: chấm xong thì GHI LẠI sức khoẻ lượt gọi rồi mới trả kết quả.
+
+    Tách vỏ thay vì sửa sáu chỗ `return` bên trong — mọi nhánh (ok/skipped/error) đều được ghi,
+    không nhánh nào lọt. Hành vi trả về không đổi một ly."""
+    kq = _cham_chu_de(html_path)
+    ghi_nhat_ky_api(kq)
+    return kq
 
 
 def main() -> int:

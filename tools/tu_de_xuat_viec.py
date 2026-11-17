@@ -1353,6 +1353,39 @@ def giac_quan_worktree_tich_tu() -> list[tuple[int, str, str, str]]:
     return viec
 
 
+def giac_quan_api_claude(tep: Path | None = None) -> list[tuple[int, str, str, str]]:
+    """SỨC KHOẺ API CLAUDE (17/11/2026, bác sĩ: «khi API hết hạn báo lại tôi»).
+
+    Khoá Anthropic KHÔNG hết hạn theo ngày — nó chết vì hết TÍN DỤNG, bị THU HỒI (401) hoặc vượt HẠN MỨC (429), và chỉ lộ đúng lúc
+    gọi. Thăm dò định kỳ thì tốn tiền vô ích, nên `check_topic_relevance.ghi_nhat_ky_api` ghi lại kết quả của những lượt gọi mà dây
+    chuyền VỐN ĐÃ thực hiện (chi phí thêm bằng 0) và giác quan này chỉ ĐỌC. Lượt gần nhất lỗi ⇒ 👤 ưu tiên 1 (khoá/tín dụng là việc
+    của bác sĩ); thiếu khoá ⇒ 👤 ưu tiên 2 nhắc luật đang tắt. Chưa có lượt nào ⇒ giác quan chết (⚪), KHÔNG phải «API vẫn tốt»."""
+    _SO_GIAC_QUAN["chay"] += 1
+    nhan = ["", "sức khoẻ API Claude"]
+    tep = tep or (Path.home() / ".ebm-api-claude.json")
+    try:
+        d = json.loads(tep.read_text(encoding="utf-8"))
+        if not isinstance(d, dict):
+            raise ValueError("không phải object")
+    except OSError:
+        _ghi_chet(nhan, "chưa có lượt gọi API nào được ghi")
+        return []
+    except ValueError:
+        _ghi_chet(nhan, "nhật ký lượt gọi API hỏng")
+        return []
+    tt = str(d.get("trang_thai") or "")
+    luc = str(d.get("luc") or "")[:16].replace("T", " ")
+    ly_do = str(d.get("ly_do") or "")
+    if tt == "error":
+        return [(1, "👤", f"Lượt gọi API Claude gần nhất THẤT BẠI ({luc}): {ly_do[:110]} — kiểm khoá và tín dụng ở "
+                          "console.anthropic.com; trong lúc đó luật kiểm LẠC CHỦ ĐỀ của cổng không chạy",
+                 "python3 tools/xuat_goi_cap_nhat.py <dashboard>.html --online")]
+    if tt == "skipped" and "ANTHROPIC_API_KEY" in ly_do:
+        return [(2, "👤", f"Kiểm LẠC CHỦ ĐỀ đang TẮT vì chưa có khoá API ({luc}) — cổng liêm chính vẫn chạy, chỉ thiếu luật này",
+                 "python3 tools/xuat_goi_cap_nhat.py <dashboard>.html --online")]
+    return []
+
+
 def giac_quan_agent_lech(goc_agents: Path, mea_agents: Path) -> list[tuple[int, str, str]]:
     """Agent `.claude/agents/*.md` của repo GỐC phải trùng từng byte bản ở repo Y KHOA (PM-15, kiểm toàn diện 02/10/2026).
 
@@ -2142,6 +2175,9 @@ def main() -> int:
 
     # ⑦q WORKTREE TẠM TÍCH TỤ (14/11/2026): ~/.ebm-worktrees vượt ngưỡng — nguồn phình đĩa lớn nhất — xem docstring.
     de_xuat += giac_quan_worktree_tich_tu()  # đúng khuôn (ưu tiên, nhãn 🛎, mô tả, lệnh)
+
+    # ⑦r SỨC KHOẺ API CLAUDE (17/11/2026): lượt gọi gần nhất lỗi ⇒ luật kiểm lạc chủ đề đang không chạy — xem docstring.
+    de_xuat += giac_quan_api_claude()  # đúng khuôn (ưu tiên, nhãn 👤, mô tả, lệnh)
 
     # ⑦j CHỦ ĐỀ 0 ỨNG VIÊN NHIỀU LƯỢT LIỀN (03/10/2026): «0 ứng viên ≠ không có chứng cứ mới» — xem docstring.
     _viec_0, _tt_0 = giac_quan_chu_de_0_lien(DASH, SAN_LUONG_GIAM_SAT)
