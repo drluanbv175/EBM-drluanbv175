@@ -47,7 +47,20 @@ Lời nhắc «Cần bác sĩ kiểm chứng» của hệ KHÔNG bị bỏ, ch�
 trong phụ lục, bản thảo, bản phản biện) không mang nó. Khai báo dùng AI theo ICMJE trong bản thảo/bản phản biện là nội
 dung bắt buộc của văn bản thật, nên được giữ, chỉ đổi «bản nháp» thành «bản thảo».
 
+## Phát hiện: nhãn của bộ giả lập che ô trống
+Ô mà hồ sơ giả lập không có câu trả lời từng được điền «(GIẢ LẬP — hồ sơ chưa có)». Nhãn này vừa là dấu vết máy trong
+văn bản, vừa lọt qua `placeholder_contract`, nên bị đọc như ô đã có nội dung. Khi đổi sang lời trung tính «chưa có
+thông tin» (hợp đồng ô trống nhận đúng là chưa điền), ba thiết kế định tính · dự báo · tổng quan gộp dừng ở G7
+(G7-AUTO-05). G6 của chúng không sinh Bảng 1 nên G7 không chép được số. Như vậy kết quả «15/15 PASS_G10» trước đó
+của ba thiết kế này là đạt giả do nhãn che. Khoảng trống G6/G7 tách thành việc riêng; đề cương nộp không bị ảnh hưởng
+(ô hồ sơ chưa có thành dòng chấm điền tay).
+
 ## Kiểm
-- `tests/test_hon_hop_20261117.py` (17 phép); đột biến 12/12 đỏ đúng chỗ rồi phục hồi xanh. Lượt đầu một đột biến sống
-  sót vì nó không chạm phần phép thử khẳng định; đột biến gỡ hẳn câu chỉ đường thì đỏ.
-- Trọn vòng 16 kịch bản và trọn bộ phép thử liên quan: xem PR repo y khoa.
+- `tests/test_hon_hop_20261117.py` (23 phép); đột biến 13/13 đỏ đúng chỗ rồi phục hồi xanh. Lượt đầu một đột biến
+  sống sót vì nó không chạm phần phép thử khẳng định; đột biến gỡ hẳn câu chỉ đường thì đỏ.
+- Lượt sạch 16 kịch bản từ G0 (khoá giả):
+  - 13 tới `PASS_G10_RELEASE_PACKAGE_LOCKED`, kể cả `rct_hon_hop`; 3 dừng ở G7 như trên;
+  - 0 ô lỗi máy (hỏi lại điều đã chốt/hỏi lặp) ở cả 16;
+  - 16/16 đề cương nộp mã 0 (K1–K8), không còn «GIẢ LẬP»/«mô phỏng»/«bản nháp»;
+  - đề cương `rct_hon_hop` 637 dòng, COREQ [17] + GRAMMS [18] đã qua A12.
+- CI PR #292: một phép thử dùng đối tượng giả thiếu `_gia_tri_kinh_te` (10612 đạt / 1 hỏng); đã sửa.
