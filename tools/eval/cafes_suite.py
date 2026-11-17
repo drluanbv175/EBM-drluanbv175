@@ -381,10 +381,13 @@ class ClaudeAPIAgent:
 
     def __init__(self, agents_dir: str, effort: str = "high", client=None):
         if client is None:
-            import anthropic
-            khoa = _khoa_api()
+            khoa = _khoa_api()   # kiểm khoá TRƯỚC, nhập SDK SAU (máy thiếu SDK phải dừng gọn, không văng)
             if not khoa:
                 raise CauHinhSai("Thiếu ANTHROPIC_API_KEY (biến môi trường lẫn kho bí mật) — không chạy được --api.")
+            try:
+                import anthropic
+            except ImportError as e:
+                raise CauHinhSai("Chưa cài SDK: pip install anthropic") from e
             client = anthropic.Anthropic(api_key=khoa)
         self.client = client
         self.agents_dir = agents_dir
@@ -557,7 +560,11 @@ def main():
         if not khoa:
             print("⛔ Thiếu ANTHROPIC_API_KEY — count_tokens miễn phí nhưng vẫn phải xác thực.")
             return 2
-        import anthropic
+        try:
+            import anthropic
+        except ImportError:
+            print("⛔ Chưa cài SDK: pip install anthropic")
+            return 2
         u = uoc_tinh_chi_phi(args.agents_dir, TEST_CASES, anthropic.Anthropic(api_key=khoa))
         print(f"ƯỚC TÍNH lượt --api ({u['so_ca']} ca, {MODEL_CAFES}, effort {args.effort}) — count_tokens, MIỄN PHÍ")
         print(f"  System prompt từng agent (token): {u['system_theo_agent']}  · cache có hiệu lực từ 512 token")

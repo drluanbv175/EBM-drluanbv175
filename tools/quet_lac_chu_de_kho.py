@@ -196,10 +196,16 @@ def main(argv: list[str] | None = None, client=None, ngu=time.sleep) -> int:
     ma_theo_id = {f"d{i:03d}": y for i, y in enumerate(yeu_cau, 1)}
     trang_thai = goc / "state" / "quet-lac-chu-de.json"
     if client is None:
-        import anthropic
+        # Kiểm khoá TRƯỚC, nhập SDK SAU và trong try — CI 17/11: máy không cài SDK thì `import anthropic` đứng trước
+        # văng ModuleNotFoundError thay vì dừng gọn (máy bác sĩ có SDK nên chốt cục bộ không thấy).
         khoa = os.getenv("ANTHROPIC_API_KEY", "") or C._khoa_tu_kho()
         if not khoa:
             print("⛔ Thiếu ANTHROPIC_API_KEY (biến môi trường lẫn kho bí mật).")
+            return 2
+        try:
+            import anthropic
+        except ImportError:
+            print("⛔ Chưa cài SDK: pip install anthropic")
             return 2
         client = anthropic.Anthropic(api_key=khoa)
     if a.tiep:

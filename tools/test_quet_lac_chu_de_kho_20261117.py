@@ -160,6 +160,20 @@ class GuiVaChamDung(_CoSo):
         cli = _ClientBatch({}, trang_thai=("in_progress",))
         self.assertFalse(Q.cho_xong(cli, "msgbatch_gia", nghi=0, tran_giay=-1, ngu=lambda s: None))
 
+    def test_may_khong_co_sdk_dung_gon_khong_van(self):
+        """CI 17/11: thiếu SDK thì phải dừng mã 2, không văng ModuleNotFoundError (giả lập bằng sys.modules = None)."""
+        sdk_cu = sys.modules.get("anthropic", "VANG")
+        os.environ["ANTHROPIC_API_KEY"] = "khoa-gia"
+        sys.modules["anthropic"] = None
+        try:
+            self.assertEqual(self._chay("--ap-dung"), 2)
+        finally:
+            os.environ.pop("ANTHROPIC_API_KEY", None)
+            if sdk_cu == "VANG":
+                sys.modules.pop("anthropic", None)
+            else:
+                sys.modules["anthropic"] = sdk_cu
+
     def test_duoi_pytest_khong_doc_kho_khoa_that(self):
         """Không tiêm client, không có biến môi trường ⇒ rào của cổng chặn kho khoá thật ⇒ dừng mã 2, không gọi API."""
         self.assertEqual(self._chay("--ap-dung"), 2)
