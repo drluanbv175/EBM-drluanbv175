@@ -84,7 +84,8 @@
         "bash medical-ebm-automation/scripts/weekly_safety.sh",
         "bash medical-ebm-automation/scripts/monthly_update.sh",
         "bash medical-ebm-automation/scripts/evidence_integrity_monthly.sh",
-        "python3 tools/cap_nhat_thang_thu_muc_endnote.py --quet --toi-da * --hoan-thien --ghi"
+        "python3 tools/cap_nhat_thang_thu_muc_endnote.py --quet --toi-da * --hoan-thien --ghi",
+        "python3 tools/api_khi_can.py --chay"
       ],
       "khong_chay": ["python3 tools/quyen_lich_nen.py --ap-dung",
                      "python3 tools/cap_nhat_thang_thu_muc_endnote.py --hoan-thien --ghi-endnote --ghi"],

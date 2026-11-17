@@ -27,6 +27,7 @@ Cách dùng:
 from __future__ import annotations
 
 import argparse
+import hashlib
 import importlib.util
 import json
 import os
@@ -469,7 +470,67 @@ def check_dashboard_topic_relevance(html_path: str) -> Dict:
     if kq is None:
         kq = _cham_chu_de(html_path)
     ghi_nhat_ky_api(kq)
+    if kq.get("status") == "ok":
+        vt = van_tay_chu_de(html_path)
+        if vt:
+            ghi_so_chu_de(os.path.basename(html_path), vt, kq)
     return kq
+
+
+# ─────────────── sổ «đã kiểm chủ đề» theo VÂN TAY nội dung (cơ chế API khi cần) ───────────────
+# VÌ SAO (18/11/2026, bác sĩ duyệt «Quét lạc chủ đề phần đổi» tự chạy khi cần): quét toàn kho tốn ~2 USD mỗi lượt và
+# chấm lại cả những dashboard không đổi. `tools/api_khi_can.py` chỉ chấm dashboard có NỘI DUNG ĐƯỢC CHẤM (chủ đề + id ·
+# tiêu đề · hành động từng mục — đúng prompt của cổng) khác lần chấm «ok» gần nhất. Sổ do CHÍNH cổng ghi, nên lượt chấm
+# trong dây chuyền xuất gói cũng tính là «đã kiểm» — không trả tiền hai lần cho cùng một nội dung. Sổ nằm ngoài repo,
+# ngoài OneDrive (cùng chỗ nhật ký sức khoẻ); không chứa khoá, không chứa nội dung y khoa — chỉ mã băm và số đếm.
+NHAT_KY_CHU_DE = os.path.join(os.path.expanduser("~"), ".ebm-kiem-chu-de.json")
+_NKCD_THAT = NHAT_KY_CHU_DE
+
+
+def van_tay_chu_de(html_path: str) -> Optional[str]:
+    """sha256 của ĐÚNG prompt cổng sẽ gửi cho dashboard này; None khi không có gì để chấm (thiếu DATA/chủ đề/mục)."""
+    try:
+        db = extract_data_block(Path(html_path).read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError):
+        return None
+    if not db:
+        return None
+    chu_de = _extract_meta_question(db)
+    muc = _items_for_prompt(db)
+    if not chu_de or not muc:
+        return None
+    return hashlib.sha256(build_prompt(chu_de, muc).encode("utf-8")).hexdigest()
+
+
+def doc_so_chu_de(tep: Optional[str] = None) -> Dict[str, Dict]:
+    """Sổ đã kiểm chủ đề: {tên tệp dashboard: {van_tay, luc, so_muc, so_lac, so_khong_chac, nguon}}. Hỏng/vắng ⇒ rỗng."""
+    try:
+        with open(tep or NHAT_KY_CHU_DE, "r", encoding="utf-8") as fh:
+            d = json.load(fh)
+    except (OSError, ValueError):
+        return {}
+    return {str(k): v for k, v in d.items() if isinstance(v, dict)} if isinstance(d, dict) else {}
+
+
+def ghi_so_chu_de(ten: str, van_tay: str, kq: Dict, nguon: str = NGUON_NHAT_KY, tep: Optional[str] = None) -> None:
+    """Ghi một dashboard đã chấm «ok» với vân tay nội dung lúc chấm. Lỗi ghi đều nuốt; dưới pytest không đụng sổ THẬT."""
+    duong = tep or NHAT_KY_CHU_DE
+    if _cham_trang_thai_that(duong, _NKCD_THAT):
+        return
+    try:
+        import datetime as _dt
+        so = doc_so_chu_de(duong)
+        so[str(ten)] = {
+            "van_tay": str(van_tay),
+            "luc": _dt.datetime.now().isoformat(timespec="seconds"),
+            "so_muc": int(kq.get("total_items") or 0),
+            "so_lac": len(kq.get("off_topic") or []),
+            "so_khong_chac": len(kq.get("uncertain") or []),
+            "nguon": str(nguon)[:80],
+        }
+        _ghi_nguyen_tu(duong, so)
+    except (OSError, TypeError, ValueError):
+        pass
 
 
 def main() -> int:

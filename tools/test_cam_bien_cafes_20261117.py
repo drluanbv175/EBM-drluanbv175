@@ -18,6 +18,7 @@ import tempfile
 import types
 import unittest
 from pathlib import Path
+from unittest import mock
 
 HERE = Path(__file__).resolve().parent
 
@@ -86,13 +87,28 @@ class CamBienCafes(_CoSo):
         self.assertIn("CHƯA ĐO ĐƯỢC", v[0][2])
 
     def test_agent_doi_so_voi_van_tay_uu_tien_2(self):
+        """Chính sách KHÔNG cho tự chạy (18/11: ghim rõ — repo nay có sync/api-khi-can.json) ⇒ vẫn là việc bác sĩ quyết."""
         self._ban_ghi("cafes_api_a", "2026-11-17T14:00:00")
         (self.ag / "sang-loc-co-do.md").write_text("bản A đã sửa", encoding="utf-8")
-        v = T.giac_quan_cafes_agent_an_toan(self.goc)
+        with mock.patch.object(T, "_chinh_sach_api_khi_can", return_value=None):
+            v = T.giac_quan_cafes_agent_an_toan(self.goc)
         self.assertEqual(len(v), 1)
         self.assertEqual((v[0][0], v[0][1]), (2, "👤"))
         self.assertIn("sang-loc-co-do", v[0][2])
         self.assertNotIn("ke-don-an-toan", v[0][2])
+
+    def test_agent_doi_va_chinh_sach_tu_chay_thi_may_tu_do(self):
+        """18/11: bác sĩ cho TỰ CHẠY «CAFÉ-S khi agent an toàn đổi» ⇒ 🛎 trỏ cơ chế API khi cần, không đòi bác sĩ quyết."""
+        self._ban_ghi("cafes_api_a", "2026-11-17T14:00:00")
+        (self.ag / "sang-loc-co-do.md").write_text("bản A đã sửa", encoding="utf-8")
+        cs = {"tu_chay": {"chu_de": True, "de_cuong": True, "cafes": True}, "cafes_cach_ngay_toi_thieu": 30,
+              "chu_de_toi_da_moi_luot": 60, "nen_cach_gio_toi_thieu": 6}
+        with mock.patch.object(T, "_chinh_sach_api_khi_can", return_value=cs):
+            v = T.giac_quan_cafes_agent_an_toan(self.goc)
+        self.assertEqual(len(v), 1)
+        self.assertEqual((v[0][0], v[0][1]), (3, "🛎"))
+        self.assertIn("TỰ ĐO LẠI", v[0][2])
+        self.assertIn("api_khi_can.py", v[0][3])
 
     def test_mat_tep_agent_cung_bao(self):
         self._ban_ghi("cafes_api_a", "2026-11-17T14:00:00")
