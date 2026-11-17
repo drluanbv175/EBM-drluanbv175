@@ -1364,7 +1364,17 @@ def giac_quan_api_claude(tep: Path | None = None, bay_gio: dt.datetime | None = 
     TUỔI LƯỢT GỌI (17/11/2026, bác sĩ duyệt «mục 2»): một lượt «ok» chỉ nói khoá sống LÚC ĐÓ. Vài tuần không xuất gói nào
     thì nhật ký vẫn «ok» trong khi tín dụng có thể đã cạn — trước đây giác quan im như xanh. Nay lượt không lỗi cũ hơn
     NGAY_API_CU ngày (hoặc không đọc được mốc) ⇒ ⚪ «chưa đo được», không 👤 (không báo đỏ giả), và vẫn KHÔNG gọi thử API.
-    Lượt LỖI thì báo bất kể tuổi — đó vẫn là trạng thái cuối cùng đã biết."""
+    Lượt LỖI thì báo bất kể tuổi — đó vẫn là trạng thái cuối cùng đã biết.
+
+    THEO TỪNG CÔNG CỤ (17/11/2026, bác sĩ duyệt «mục 2»): nhật ký nay giữ lượt gần nhất của TỪNG công cụ (khoá
+    «theo_nguon»). Trước đó 8 công cụ ghi chung một ô — công cụ A lỗi rồi công cụ B chạy ổn ngay sau thì lỗi của A biến
+    mất. Giờ xét từng công cụ: lỗi mà CHƯA có lượt thành công nào sau nó ⇒ 👤 ưu tiên 1 (có thể là khoá/tín dụng); lỗi
+    mà công cụ khác đã gọi được SAU đó ⇒ 👤 ưu tiên 2 (khoá còn sống, nhiều khả năng lỗi riêng của công cụ). Thiếu khoá
+    mà sau đó đã có lượt thành công ⇒ không báo (khoá đã có). Nhật ký kiểu cũ (một lượt) đọc như trước.
+
+    THIẾU SDK (17/11/2026, bác sĩ duyệt «mục 1»): `python3` mặc định của máy không có SDK `anthropic`; lượt «bỏ qua —
+    Chưa cài SDK» trước đây im lặng (giác quan chỉ báo «skipped» khi lý do nhắc tên khoá) ⇒ luật tắt câm dù khoá tốt.
+    Nay lượt nào (skipped hay error) mang lý do «cài SDK» ⇒ 🤖 ưu tiên 2, không đổ cho khoá/tín dụng."""
     _SO_GIAC_QUAN["chay"] += 1
     nhan = ["", "sức khoẻ API Claude"]
     tep = tep or (Path.home() / ".ebm-api-claude.json")
@@ -1378,28 +1388,102 @@ def giac_quan_api_claude(tep: Path | None = None, bay_gio: dt.datetime | None = 
     except ValueError:
         _ghi_chet(nhan, "nhật ký lượt gọi API hỏng")
         return []
-    tt = str(d.get("trang_thai") or "")
-    luc = str(d.get("luc") or "")[:16].replace("T", " ")
-    ly_do = str(d.get("ly_do") or "")
-    # 17/11/2026 (kết nối API cho hệ nghiên cứu): ba công cụ của repo y khoa cũng ghi tệp này, kèm khoá «nguon». Lượt
-    # gần nhất là của công cụ nào thì báo đúng công cụ đó — không đổ cho cổng kiểm lạc chủ đề. Vắng «nguon» = cổng cũ.
-    viec, lenh = _VIEC_API.get(str(d.get("nguon") or ""), _VIEC_API[""])
-    if tt == "error":
-        return [(1, "👤", f"Lượt gọi API Claude gần nhất THẤT BẠI ({luc}, {viec}): {ly_do[:110]} — kiểm khoá và tín dụng "
-                          "ở console.anthropic.com; trong lúc đó MỌI việc dùng API (kiểm lạc chủ đề, kiểm nội dung trích "
-                          "dẫn, phản biện máy, hội đồng Batch) không chạy", lenh)]
-    if tt == "skipped" and "ANTHROPIC_API_KEY" in ly_do:
-        return [(2, "👤", f"Việc dùng API Claude đang TẮT vì chưa có khoá ({luc}, {viec}) — cổng liêm chính vẫn chạy, "
-                          "chỉ thiếu các luật/công cụ tư vấn dùng API", lenh)]
-    try:
-        moc = dt.datetime.fromisoformat(str(d.get("luc") or "")[:19])
-    except ValueError:
+    luot = _luot_api_theo_nguon(d)
+    if not luot:
+        _ghi_chet(nhan, "nhật ký lượt gọi API không có lượt nào đọc được")
+        return []
+
+    def _moc(r: dict) -> dt.datetime | None:
+        try:
+            return dt.datetime.fromisoformat(str(r.get("luc") or "")[:19])
+        except ValueError:
+            return None
+
+    def _gon(r: dict) -> str:
+        return str(r.get("luc") or "")[:16].replace("T", " ")
+
+    def _ly(r: dict) -> str:
+        return str(r.get("ly_do") or "")
+
+    thanh_cong = [(n, r) for n, r in luot if r.get("trang_thai") == "ok" and _moc(r)]
+
+    def _ok_sau(n: str, r: dict) -> tuple[str, dict] | None:
+        """Lượt THÀNH CÔNG mới nhất của công cụ KHÁC xảy ra SAU lượt r (None nếu không có / không so được)."""
+        m = _moc(r)
+        if m is None:
+            return None
+        sau = [(n2, r2) for n2, r2 in thanh_cong if n2 != n and _moc(r2) > m]
+        return max(sau, key=lambda x: _moc(x[1])) if sau else None
+
+    moi_truoc = sorted(luot, key=lambda x: _moc(x[1]) or dt.datetime.min, reverse=True)
+    thieu_sdk = [(n, r) for n, r in moi_truoc if r.get("trang_thai") in ("skipped", "error") and "cài SDK" in _ly(r)]
+    ten_sdk = {n for n, _ in thieu_sdk}
+    loi = [(n, r) for n, r in moi_truoc if r.get("trang_thai") == "error" and n not in ten_sdk]
+    loi_khoa = [(n, r) for n, r in loi if _ok_sau(n, r) is None]          # chưa ai gọi được sau đó ⇒ có thể là khoá
+    loi_rieng = [(n, r, _ok_sau(n, r)) for n, r in loi if _ok_sau(n, r) is not None]
+    thieu_khoa = [(n, r) for n, r in moi_truoc if r.get("trang_thai") == "skipped"
+                  and "ANTHROPIC_API_KEY" in _ly(r) and _ok_sau(n, r) is None]
+
+    viec_ra: list[tuple[int, str, str, str]] = []
+    if loi_khoa:
+        n0, r0 = loi_khoa[0]
+        if len(loi_khoa) == 1:
+            dau = f"Lượt gọi API Claude gần nhất THẤT BẠI ({_gon(r0)}, {_viec_api(n0)[0]}): {_ly(r0)[:110]}"
+        else:
+            dau = (f"Lượt gọi API Claude gần nhất của {len(loi_khoa)} công cụ THẤT BẠI — "
+                   + "; ".join(f"{_viec_api(n)[0]} ({_gon(r)}): {_ly(r)[:70]}" for n, r in loi_khoa))
+        viec_ra.append((1, "👤", dau + " — kiểm khoá và tín dụng ở console.anthropic.com; trong lúc đó MỌI việc dùng "
+                        "API (kiểm lạc chủ đề, kiểm nội dung trích dẫn, phản biện máy, hội đồng Batch) không chạy",
+                        _viec_api(n0)[1]))
+    if loi_rieng:
+        n0 = loi_rieng[0][0]
+        phan = "; ".join(f"{_viec_api(n)[0]} ({_gon(r)}): {_ly(r)[:80]} — {_viec_api(n2)[0]} gọi THÀNH CÔNG sau đó "
+                         f"({_gon(r2)})" for n, r, (n2, r2) in loi_rieng)
+        viec_ra.append((2, "👤", f"Lượt gọi API Claude gần nhất của {len(loi_rieng)} công cụ THẤT BẠI: {phan} ⇒ khoá còn "
+                        "sống, nhiều khả năng lỗi riêng của công cụ — chạy lại công cụ đó khi cần (tốn tiền API)",
+                        _viec_api(n0)[1]))
+    if thieu_sdk:
+        n0, r0 = thieu_sdk[0]
+        ten = ", ".join(_viec_api(n)[0] for n, _ in thieu_sdk)
+        viec_ra.append((2, "🤖", f"Việc dùng API Claude bị BỎ QUA vì trình Python thiếu SDK `anthropic` ({_gon(r0)}, {ten}): "
+                        f"{_ly(r0)[:120]} — luật/công cụ đó KHÔNG chạy dù khoá có thể vẫn tốt; cài SDK vào venv hoặc "
+                        "chạy công cụ bằng ~/.ebm-venv/bin/python", "~/.ebm-venv/bin/python -m pip install anthropic"))
+    if thieu_khoa:
+        n0, r0 = thieu_khoa[0]
+        ten = ", ".join(_viec_api(n)[0] for n, _ in thieu_khoa)
+        viec_ra.append((2, "👤", f"Việc dùng API Claude đang TẮT vì chưa có khoá ({_gon(r0)}, {ten}) — cổng liêm chính vẫn "
+                        "chạy, chỉ thiếu các luật/công cụ tư vấn dùng API", _viec_api(n0)[1]))
+    if viec_ra:
+        return viec_ra
+    moc_moi = max((m for m in (_moc(r) for _n, r in luot) if m), default=None)
+    if moc_moi is None:
         _ghi_chet(nhan, "nhật ký lượt gọi API không có mốc thời gian đọc được")
         return []
-    tuoi = ((bay_gio or dt.datetime.now()) - moc).days
+    tuoi = ((bay_gio or dt.datetime.now()) - moc_moi).days
     if tuoi > NGAY_API_CU:
-        _ghi_chet(nhan, f"lượt gọi API gần nhất cách {tuoi} ngày ({luc}) — chưa biết khoá còn sống/còn tín dụng")
+        _ghi_chet(nhan, f"lượt gọi API gần nhất cách {tuoi} ngày ({moc_moi.isoformat(sep=' ', timespec='minutes')}) — "
+                        "chưa biết khoá còn sống/còn tín dụng")
     return []
+
+
+def _luot_api_theo_nguon(d: dict) -> list[tuple[str, dict]]:
+    """Các lượt gần nhất theo TỪNG công cụ. Nhật ký kiểu cũ (chưa có «theo_nguon») = một lượt của nguồn ghi nó.
+
+    «» là tên cũ của cổng kiểm lạc chủ đề (bản trước không ghi «nguon»); đã có lượt mang tên mới thì bỏ lượt tên cũ."""
+    tn = d.get("theo_nguon")
+    if isinstance(tn, dict) and tn:
+        luot = [(str(n), r) for n, r in tn.items() if isinstance(r, dict)]
+        if any(n == "check_topic_relevance" for n, _ in luot):
+            luot = [(n, r) for n, r in luot if n != ""]
+        return luot
+    return [(str(d.get("nguon") or ""), d)]
+
+
+def _viec_api(nguon: str) -> tuple[str, str]:
+    """(tên việc, lệnh chạy lại) của một nguồn ghi nhật ký; nguồn lạ thì nêu đúng tên — không đổ cho cổng kiểm chủ đề."""
+    if nguon in _VIEC_API:
+        return _VIEC_API[nguon]
+    return (f"công cụ «{nguon}»", "python3 tools/tu_de_xuat_viec.py")
 
 
 # Lượt gọi API không lỗi cũ hơn số ngày này ⇒ ⚪ «chưa đo được» (không gọi thử: thăm dò định kỳ là tốn tiền vô ích).
@@ -1407,6 +1491,8 @@ NGAY_API_CU = 14
 
 _VIEC_API = {
     "": ("kiểm lạc chủ đề", "python3 tools/xuat_goi_cap_nhat.py <dashboard>.html --online"),
+    # 17/11/2026: cổng kiểm lạc chủ đề nay ghi «nguon» như mọi công cụ khác («» là tên cũ của nó).
+    "check_topic_relevance": ("kiểm lạc chủ đề", "python3 tools/xuat_goi_cap_nhat.py <dashboard>.html --online"),
     "kiem_noi_dung_trich_dan": ("kiểm nội dung trích dẫn A12",
                                 "python3 medical-ebm-automation/tools/kiem_noi_dung_trich_dan.py --study <mã>"),
     "phan_bien_may_de_cuong": ("phản biện máy đề cương",

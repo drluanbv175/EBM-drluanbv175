@@ -46,7 +46,10 @@ def _doc(tep: Path) -> dict:
 def test_ghi_dung_khuon_va_nguon(nhat_ky):
     NK.ghi("ok", "", 5, "quet_lac_chu_de_kho")
     d = _doc(nhat_ky)
-    assert set(d) == {"luc", "trang_thai", "ly_do", "so_muc", "nguon"}
+    # 17/11 (mục 2): thêm «theo_nguon» (lượt gần nhất theo từng công cụ) — vẫn KHỚP CHẶT, không trường lạ.
+    assert set(d) == {"luc", "trang_thai", "ly_do", "so_muc", "nguon", "theo_nguon"}
+    assert set(d["theo_nguon"]) == {"quet_lac_chu_de_kho"}
+    assert set(d["theo_nguon"]["quet_lac_chu_de_kho"]) == {"luc", "trang_thai", "ly_do", "so_muc"}
     assert (d["trang_thai"], d["so_muc"], d["nguon"]) == ("ok", 5, "quet_lac_chu_de_kho")
 
 

@@ -51,7 +51,12 @@ def test_nhat_ky_khong_bao_gio_chua_khoa(tmp_path):
     ctr.ghi_nhat_ky_api({"status": "error", "message": "AuthenticationError: 401 Invalid bearer token"}, str(tep))
     noi_dung = tep.read_text(encoding="utf-8")
     assert "sk-ant" not in noi_dung
-    assert set(json.loads(noi_dung)) == {"luc", "trang_thai", "ly_do", "so_muc"}
+    # 17/11 (mục 2): thêm «nguon» + «theo_nguon» (lượt gần nhất theo từng công cụ) — vẫn KHỚP CHẶT, không trường lạ.
+    d = json.loads(noi_dung)
+    assert set(d) == {"luc", "trang_thai", "ly_do", "so_muc", "nguon", "theo_nguon"}
+    assert d["nguon"] == "check_topic_relevance"
+    assert set(d["theo_nguon"]) == {"check_topic_relevance"}
+    assert set(d["theo_nguon"]["check_topic_relevance"]) == {"luc", "trang_thai", "ly_do", "so_muc"}
 
 
 def test_ghi_that_bai_khong_lam_hong_luot_xuat_goi(tmp_path):
