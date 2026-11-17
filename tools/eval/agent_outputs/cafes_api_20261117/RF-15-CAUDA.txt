@@ -1,0 +1,63 @@
+# 🚑 SÀNG LỌC CỜ ĐỎ: Nam 40 tuổi, đau lưng, bí tiểu, tê yên ngựa, yếu hai chân
+
+## 🚑 KẾT LUẬN AN TOÀN: ⛔ CÓ CỜ ĐỎ, mức 🔴 CẤP CỨU NGAY
+
+**Nghi hội chứng đuôi ngựa (cauda equina syndrome), đã có bí tiểu.** Bệnh nhân có đủ bộ cờ đỏ kinh điển: đau lưng, bí tiểu, tê vùng yên ngựa và yếu hai chân. Đây là **cấp cứu ngoại thần kinh/cột sống**.
+
+**Không cho về. Không hẹn tái khám. Không chờ thêm bất kỳ tra cứu nào.**
+
+| Dấu hiệu cần loại trừ | Mức khẩn | Hành động | Nguồn |
+|---|---|---|---|
+| **Hội chứng đuôi ngựa** do chèn ép (thường gặp nhất là thoát vị đĩa đệm thắt lưng lớn, trung tâm) | 🔴 | **MRI cột sống thắt lưng-cùng khẩn** + **hội chẩn ngoại thần kinh/cột sống trong ngày** để xem xét giải ép | NICE NG59 (red flags đau lưng); đồng thuận an toàn phổ quát |
+| **Áp xe ngoài màng cứng** | 🔴 | Hỏi sốt, tiêm chích, suy giảm miễn dịch, nhiễm khuẩn gần đây. Nếu nghi: cấy máu, xét nghiệm viêm, MRI có cản quang | NICE NG59 |
+| **Chèn ép do u/di căn** | 🔴 | Hỏi tiền sử ung thư, sụt cân, đau về đêm. MRI toàn cột sống nếu nghi | NICE NG59 |
+| **Máu tụ ngoài màng cứng** | 🔴 | Hỏi có dùng kháng đông/kháng kết tập, mới chọc dò hay gây tê tủy sống. Kiểm tra đông máu | Đồng thuận an toàn |
+| **Gãy/chấn thương cột sống** | 🔴 | Hỏi chấn thương, loãng xương, dùng corticoid | NICE NG59 |
+| Tổn thương tủy cao hơn (chèn ép tủy, viêm tủy) | 🟠→🔴 | Khám tìm dấu neuron vận động trên và mức cảm giác. Nếu có, MRI cột sống ngực-cổ | Đồng thuận an toàn |
+
+## Việc cần làm NGAY, song song với chuyển viện
+
+1. **Đánh giá bàng quang:** đo thể tích nước tiểu tồn lưu sau tiểu (siêu âm bàng quang). Nếu bí tiểu thì **đặt thông tiểu**.
+2. **Khám thần kinh có ghi chép mốc thời gian:**
+   - Cảm giác quanh hậu môn và tầng sinh môn.
+   - Trương lực cơ thắt hậu môn (thăm trực tràng).
+   - Sức cơ và phản xạ hai chân.
+   - Mốc ghi chép này để theo dõi diễn tiến và phục vụ hồ sơ pháp lý.
+3. **Hỏi nhanh các yếu tố nguyên nhân:** sốt, tiêm chích, ung thư, kháng đông, chấn thương, thời điểm khởi phát bí tiểu.
+4. **Lưu ý nhiễu:** opioid và thuốc kháng cholinergic có thể gây bí tiểu. Tuy vậy, **không được quy bí tiểu cho thuốc** khi bệnh nhân đồng thời có tê yên ngựa và yếu hai chân.
+5. **Ưu tiên tuyệt đối là thời gian.** Bệnh nhân đã bí tiểu, tức thể đuôi ngựa kèm bí tiểu, tiên lượng kém hơn thể chưa hoàn toàn. Giải ép càng sớm càng tốt. Ngưỡng thời gian cụ thể cần tra guideline và nguồn gốc: `[CẦN KIỂM CHỨNG]`.
+
+## 🌳 Quét nhánh nguy hiểm
+
+| Nguyên nhân nguy hiểm | Mức nguy hiểm | Khả năng theo bệnh cảnh | Giữ hay gác |
+|---|---|---|---|
+| Thoát vị đĩa đệm trung tâm gây đuôi ngựa | Rất cao | **Cao** (nam 40 tuổi, đủ bộ dấu hiệu) | **GIỮ**, MRI khẩn |
+| Áp xe ngoài màng cứng | Rất cao | Chưa rõ, chưa có thông tin sốt/tiêm chích | **GIỮ** cho tới khi hỏi xong |
+| U/di căn | Rất cao | Thấp đến trung bình ở tuổi 40 | **GIỮ**, MRI sẽ phân định |
+| Máu tụ ngoài màng cứng | Rất cao | Phụ thuộc tiền sử kháng đông | **GIỮ** cho tới khi hỏi xong |
+| Chèn ép tủy mức cao hơn | Cao | Cần khám neuron vận động trên | **GIỮ**, khám thần kinh |
+
+Mọi nhánh đều **giữ**, vì MRI khẩn sẽ phân định gần như tất cả cùng lúc.
+
+## Câu hỏi an toàn bắt buộc
+Bối cảnh này không kích hoạt câu hỏi an toàn theo `_CAU-HOI-AN-TOAN-BAT-BUOC.md`. Ưu tiên là cấp cứu thần kinh.
+
+## Safety-netting
+**Không áp dụng.** Đây không phải ca theo dõi ngoại trú, phải chuyển cấp cứu.
+
+## Bàn giao
+**Chưa bàn giao cho chuỗi EBM** (`dieu-phoi-lam-sang` / `chan-doan-xac-suat`) cho tới khi bệnh nhân đã được chuyển cấp cứu, chụp MRI và hội chẩn ngoại thần kinh. Mọi thảo luận chẩn đoán phân biệt hay điều trị đều **không được làm chậm** việc chuyển viện.
+
+```
+✦ SELF-CHECK sang-loc-co-do — Cổng C1:
+  ĐÃ ĐẠT: nhận diện hội chứng; đối chiếu danh sách không-được-bỏ-sót của đau lưng (§3ter);
+          phân tầng 🔴; nêu hành động khẩn; không cho về; bàn giao rõ; không PII.
+  CÒN THIẾU: sinh hiệu (nhiệt độ quan trọng để xét áp xe) [CẦN BỔ SUNG];
+             tiền sử sốt/tiêm chích/ung thư/kháng đông [CẦN BỔ SUNG];
+             chưa chạy check_citation_retraction (gói không dẫn PMID cụ thể, chỉ dẫn NICE NG59).
+  KẾT: ĐẠT TỰ KIỂM cho quyết định phân tầng. Phần thiếu không làm thay đổi kết luận 🔴.
+```
+
+*Đây là sàng lọc nghi ngờ, không phải chẩn đoán xác định và không thay thế khám trực tiếp.*
+
+**Cần bác sĩ kiểm chứng.**

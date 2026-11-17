@@ -1,0 +1,141 @@
+# Rà soát an toàn kê đơn: Verapamil/Diltiazem + Chẹn beta khi có blốc nhĩ thất
+
+**Phạm vi:** đây là rà soát theo cặp thuốc–bệnh chung, chưa có ca cụ thể. Mọi đề xuất bên dưới chỉ để bác sĩ cân nhắc (Cổng A). Agent không tự sửa đơn.
+
+---
+
+## ⛔ CỜ CHẶN (CỔNG A): 🔴 CHỐNG CHỈ ĐỊNH, xử lý trước khi kê
+
+**Blốc nhĩ thất độ II, độ III hoặc blốc cao độ, khi KHÔNG có máy tạo nhịp hoạt động:**
+- Từng thuốc riêng lẻ (verapamil, diltiazem, chẹn beta) đã **chống chỉ định theo nhãn FDA**.
+- Phối hợp hai thuốc thì **chống chỉ định tuyệt đối**.
+
+**Verapamil tĩnh mạch + chẹn beta tĩnh mạch (dùng gần nhau trong vài giờ):** chống chỉ định theo nhãn verapamil tĩnh mạch, ở **mọi** mức blốc.
+
+Không thay được bằng "giảm liều" hay "chỉ dùng tạm vài ngày".
+
+| Cổng | Trạng thái |
+|---|---|
+| Cổng an toàn tâm thần (S1/S3) | Không kích hoạt. Không có hypnotic hay thuốc chống trầm cảm/giải lo âu. |
+| Cổng thai kỳ (S2) | Không kích hoạt. Các thuốc này không thuộc danh mục gây quái thai của cổng. Nếu là phụ nữ tuổi sinh đẻ, vẫn rà theo M5 (xem dưới). |
+
+---
+
+## Dữ kiện còn thiếu `[CẦN BỔ SUNG]`
+
+1. **Mức blốc trên ECG:** độ I (PR bao nhiêu ms), Mobitz I, Mobitz II, blốc cao độ hay độ III. Nhịp thoát QRS hẹp hay rộng.
+2. **Máy tạo nhịp:** có hay không, có đang hoạt động không.
+3. Tần số tim, huyết áp, triệu chứng (ngất, choáng, khó thở).
+4. **LVEF hoặc tình trạng suy tim.**
+5. **K⁺, eGFR/creatinin.**
+6. **Chỉ định** của từng thuốc: tăng huyết áp, đau thắt ngực, kiểm soát tần số rung nhĩ, dự phòng migraine…
+7. **Đường dùng:** uống hay tĩnh mạch. Tên chẹn beta cụ thể. **Thuốc nhỏ mắt timolol/betaxolol** (cũng gây chẹn beta toàn thân).
+8. Các thuốc làm chậm dẫn truyền nút nhĩ thất khác: digoxin, amiodarone, ivabradine, clonidine, donepezil/rivastigmine, lithium…
+
+---
+
+## 🔴 NGHIÊM TRỌNG / CHỐNG CHỈ ĐỊNH
+
+**• Blốc độ II, độ III hoặc cao độ, không có máy tạo nhịp**
+- **Cơ chế:** tương tác dược lực học cộng hưởng. Cả hai nhóm đều ức chế dẫn truyền nút nhĩ thất, giảm tần số và giảm co bóp (verapamil mạnh hơn diltiazem). Hậu quả có thể là blốc hoàn toàn, vô tâm thu, tụt huyết áp, suy tim cấp.
+- **Đề xuất:** không kê phối hợp. Không kê đơn trị bất kỳ thuốc nào trong ba thuốc này. Đổi theo chỉ định (xem bảng thay thế). Chuyển tim mạch đánh giá.
+- **Nguồn:** nhãn FDA verapamil (Calan/Isoptin), diltiazem (Cardizem), metoprolol (Lopressor/Toprol-XL) qua DailyMed. ACC/AHA/HRS 2018 về nhịp chậm và rối loạn dẫn truyền (Kusumoto FM et al., *Circulation* 2019;140:e382–e482, PMID 30586772).
+
+**• Người cao tuổi đang phối hợp chẹn beta + verapamil/diltiazem**
+- STOPP v2 gắn cờ "chẹn beta phối hợp verapamil hoặc diltiazem (nguy cơ blốc tim)". Cũng gắn cờ chẹn beta khi có nhịp chậm dưới 50/phút, blốc độ II type II hoặc blốc hoàn toàn.
+- **Nguồn:** O'Mahony D et al., *Age Ageing* 2015;44(2):213-8, PMID 25324330. Bản v3: *Eur Geriatr Med* 2023;14(4):625-32, PMID 37256475. `[CẦN KIỂM CHỨNG mã mục chính xác trong v3]`
+
+**• Verapamil/diltiazem khi suy tim phân suất tống máu giảm**
+- Tránh dùng (tương tác thuốc–bệnh). Phối hợp thêm chẹn beta làm tăng nguy cơ suy tim mất bù.
+- **Nguồn:** AGS Beers 2023, *J Am Geriatr Soc* 2023;71(7):2052-81, PMID 37139824. Nhãn FDA verapamil.
+
+**• Đang dùng phối hợp và phát hiện blốc có cờ đỏ**
+- Cờ đỏ: ngất, tần số rất chậm, tụt huyết áp, suy tim, Mobitz II, độ III, nhịp thoát QRS rộng.
+- **Chuyển cấp cứu ngay.** Xử trí nhịp chậm do thuốc (atropine, calci, glucagon, insulin liều cao, tạo nhịp) thuộc phác đồ cấp cứu và chuyên gia ngộ độc, nằm ngoài phạm vi agent này.
+- **Nguồn:** St-Onge M et al., *Crit Care Med* 2017;45(3):e306-15, PMID 27749343.
+- **Lưu ý hội chứng BRASH** (nhịp chậm, suy thận, thuốc chẹn nút nhĩ thất, sốc, tăng kali): đặc biệt ở người cao tuổi có bệnh thận mạn, mất nước hoặc kèm ACEi/ARB. Farkas JD et al., *J Emerg Med* 2020;59(2):216-23, PMID 32565167.
+
+---
+
+## 🟠 THẬN TRỌNG / CHỈNH LIỀU
+
+**• Blốc độ I đơn thuần (PR kéo dài, dẫn truyền 1:1)**
+- Không phải chống chỉ định tuyệt đối theo nhãn, nhưng phối hợp hai thuốc làm tăng nguy cơ tiến triển sang blốc cao độ.
+- Nhãn verapamil khuyên giảm liều hoặc ngừng nếu PR kéo dài rõ hoặc blốc tiến triển. Ngưỡng PR cụ thể để ngừng: `[CẦN KIỂM CHỨNG]`, không tự đặt số.
+- **Ưu tiên tránh phối hợp.** Nếu vẫn buộc dùng (bác sĩ quyết): làm ECG nền, ECG lại sau khởi trị hoặc tăng liều, theo dõi mạch và huyết áp, tránh thêm thuốc ức chế nút nhĩ thất khác.
+
+**• Có máy tạo nhịp đang hoạt động**
+- Nhãn thuốc gỡ chống chỉ định liên quan blốc.
+- Nguy cơ còn lại: tụt huyết áp, giảm co bóp, suy tim. Vẫn theo dõi.
+
+**• Tương tác dược động học**
+- Verapamil/diltiazem có thể làm tăng nồng độ một số chẹn beta chuyển hóa qua gan (metoprolol, propranolol).
+- Mức độ cụ thể: `[CẦN KIỂM CHỨNG theo nhãn từng cặp]`.
+- Đây là yếu tố cộng thêm vào nguy cơ dược lực học chính.
+
+**• Không ngừng chẹn beta đột ngột ở người có bệnh mạch vành** (cảnh báo đóng khung trên nhãn metoprolol/propranolol)
+- Ở blốc cao độ có triệu chứng, nguy cơ blốc thường lấn át, nên quyết định ngừng hay giảm dần phải có theo dõi monitor, do bác sĩ cân nhắc.
+
+**• Blốc "do thuốc" không có nghĩa là lành tính**
+- Blốc nhĩ thất xuất hiện khi dùng thuốc liều điều trị thường bộc lộ bệnh dẫn truyền nền. Một tỷ lệ đáng kể tái phát dù đã ngừng thuốc gây ra.
+- Vì vậy cần đánh giá tim mạch về chỉ định tạo nhịp, không chỉ ngừng thuốc rồi thôi.
+- **Nguồn:** Zeltser D et al., *J Am Coll Cardiol* 2004;44(1):105-8, PMID 15234416. Kusumoto 2018 (trên).
+
+---
+
+## Phương án thay thế theo chỉ định
+
+Áp dụng khi có blốc, chưa có máy tạo nhịp. Bác sĩ chọn.
+
+| Chỉ định | Hướng thay thế (không ức chế nút nhĩ thất) | Ghi chú |
+|---|---|---|
+| Tăng huyết áp | Chẹn kênh calci nhóm dihydropyridine (vd amlodipine), ACEi/ARB, lợi tiểu thiazide | Theo guideline tăng huyết áp hiện hành. Liều theo nhãn. |
+| Đau thắt ngực | Dihydropyridine, nitrat, ranolazine (lưu ý QT và tương tác CYP3A4) | **Ivabradine:** chống chỉ định khi blốc độ III không có máy tạo nhịp. Cũng tránh phối hợp với verapamil/diltiazem (nhãn FDA). |
+| Kiểm soát tần số rung nhĩ | Rung nhĩ kèm blốc nhĩ thất có thể đáp ứng thất chậm, khi đó không cần thuốc kiểm soát tần số. **Digoxin và amiodarone cũng ức chế nút nhĩ thất**, không phải lối thoát. | Hội chẩn tim mạch, cân nhắc tạo nhịp. Joglar JA et al., *Circulation* 2024;149:e1–e156, PMID 38033089. `[CẦN KIỂM CHỨNG khuyến cáo cụ thể]` |
+| Dự phòng migraine (nếu là chỉ định) | Lựa chọn không tác động dẫn truyền, theo guideline đau đầu | `[CẦN KIỂM CHỨNG]` |
+
+---
+
+## 🟡 LƯU Ý / THEO DÕI
+
+**Dặn bệnh nhân:** chóng mặt, choáng váng, ngất hoặc gần ngất, mạch rất chậm, khó thở, phù tăng, mệt lả thì **ngừng thuốc nghi ngờ và đi cấp cứu ngay**.
+
+**Xét nghiệm và mốc** (tần suất cụ thể `[CẦN KIỂM CHỨNG]` theo bối cảnh):
+- ECG nền và sau mỗi lần khởi trị hoặc chỉnh liều.
+- Mạch, huyết áp tại nhà.
+- K⁺ và eGFR (thận suy giảm và tăng kali làm nặng nhịp chậm).
+- Nồng độ digoxin nếu có dùng.
+- Holter nếu triệu chứng từng cơn.
+
+---
+
+## Nhóm đặc biệt: thai kỳ / cho con bú
+
+Verapamil, diltiazem và chẹn beta không thuộc danh mục gây quái thai của cổng S2. Nếu bệnh nhân là phụ nữ tuổi sinh đẻ, vẫn đối chiếu nhãn FDA-PLLR và LactMed cho từng thuốc. `[CẦN KIỂM CHỨNG theo thuốc cụ thể]`
+
+---
+
+## Kê đơn thác và giảm thuốc
+
+- **Rà kê đơn thác:** donepezil hoặc rivastigmine gây nhịp chậm rồi lại thêm thuốc khác. Timolol nhỏ mắt bị bỏ sót khi đối chiếu thuốc.
+- **Cơ hội giảm thuốc:** thường giữ một thuốc có chỉ định mạnh nhất (vd chẹn beta sau nhồi máu cơ tim hoặc suy tim phân suất tống máu giảm, chỉ khi đã có máy tạo nhịp nếu blốc cao độ). Thuốc còn lại thay bằng nhóm không ức chế nút nhĩ thất.
+
+**Kháng sinh:** không liên quan.
+
+---
+
+**Ghi chú nguồn:** các PMID trên trích từ trí nhớ. **Chưa kiểm tra rút bài** (chưa chạy `check_citation_retraction.py`). Bác sĩ hoặc pipeline cần tra lại trước khi đưa vào tài liệu chính thức. Nhãn thuốc FDA tra trên DailyMed.
+
+```
+✦ SELF-CHECK ke-don-an-toan — Cổng A
+  ĐÃ ĐẠT: cờ CHẶN đầu output; phân tầng theo mức blốc + IV/uống + máy tạo nhịp;
+          cơ chế + đề xuất + nguồn cho mỗi cảnh báo; không bịa liều/ngưỡng PR;
+          Beers 2023 + STOPP; thay thế theo chỉ định; theo dõi + safety-netting;
+          cổng S1/S2/S3 đã xét; không PII
+  CÒN THIẾU: dữ kiện ca cụ thể [CẦN BỔ SUNG]; kiểm rút bài PMID; mã mục STOPP v3
+  KẾT: ĐẠT TỰ KIỂM cho rà soát chung; cần dữ kiện ca để rà cá thể hóa
+```
+
+*Đây là rà soát hỗ trợ. Quyết định kê đơn thuộc về bác sĩ điều trị.*
+
+**Cần bác sĩ kiểm chứng.**

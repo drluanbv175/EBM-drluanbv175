@@ -1,0 +1,76 @@
+# 🚑 KẾT LUẬN AN TOÀN: ⛔ CÓ CỜ ĐỎ — 🔴 CẤP CỨU NGAY
+
+**Đủ tam chứng §3bis → NGHI THAI NGOÀI TỬ CUNG VỠ, có dấu sốc mất máu**
+(nữ tuổi sinh đẻ + chậm kinh + đau hạ vị một bên + ra máu âm đạo + choáng/HA tụt)
+
+**KHÔNG trì hoãn chuyển viện để chờ βhCG hay siêu âm khi đã có dấu sốc.**
+
+---
+
+## 1. Hành động ngay (song song, không tuần tự)
+
+| # | Việc làm | Mức khẩn |
+|---|---|---|
+| 1 | **Gọi cấp cứu / báo kíp sản khoa–phẫu thuật nơi nhận** để chuẩn bị phòng mổ | 🔴 |
+| 2 | **ABC**: cho nằm đầu thấp, kê cao chân; thở oxy nếu SpO₂ thấp | 🔴 |
+| 3 | **Hai đường truyền tĩnh mạch cỡ lớn**, bù dịch tinh thể trong lúc chờ máu | 🔴 |
+| 4 | **Lấy máu**: nhóm máu, chéo máu, công thức máu, βhCG huyết thanh. **Chuẩn bị truyền máu** | 🔴 |
+| 5 | **Thử thai nhanh bằng que nước tiểu** nếu có sẵn và làm được trong vài giây. **Không để việc này chặn bước 1–4** | 🔴 |
+| 6 | Siêu âm tại giường (FAST / đầu dò âm đạo tìm dịch ổ bụng) **chỉ khi không làm chậm chuyển viện** | 🟠 |
+| 7 | Nhịn ăn uống (chuẩn bị mổ). Ghi nhận nhóm Rh để xét anti-D sau | 🟠 |
+| 8 | **Đo lại sinh hiệu liên tục**: mạch, HA, SpO₂, tri giác, lượng nước tiểu | 🔴 |
+
+**Thiếu dữ liệu:** chưa có trị số HA, mạch, SpO₂, tri giác. `[CẦN BỔ SUNG]` Ghi lại ngay, nhưng **không chờ** số liệu mới hành động.
+
+---
+
+## 2. Quét đa nhánh: không bỏ sót nguyên nhân nguy hiểm
+
+| Nguyên nhân nguy hiểm | Mức nguy hiểm | Khả dĩ theo bệnh cảnh | Giữ / Gác |
+|---|---|---|---|
+| **Thai ngoài tử cung vỡ** | Rất cao (chảy máu ổ bụng) | **Cao nhất**: đủ tam chứng + sốc | **GIỮ: nhánh quyết định 🔴** |
+| Sẩy thai đang tiến triển, băng huyết | Cao | Có thể (chậm kinh + ra máu) | GIỮ: phân biệt bằng siêu âm/khám tại nơi nhận |
+| Vỡ nang hoàng thể xuất huyết | Cao nếu chảy máu nhiều | Có thể (đau một bên + sốc) | GIỮ: xử trí ban đầu giống nhau |
+| Xoắn phần phụ | Trung bình–cao | Ít khớp với sốc mất máu | Tạm gác. Mở lại nếu βhCG âm |
+| Viêm ruột thừa thủng, nhiễm khuẩn huyết | Cao | Thấp (không nêu sốt) | Tạm gác. Mở lại nếu sốt hoặc βhCG âm |
+
+**Kết luận cây:** mọi nhánh còn giữ đều dẫn tới cùng một hành động, là hồi sức và chuyển cấp cứu sản–ngoại khoa ngay. Việc chẩn đoán phân biệt **không được làm chậm** xử trí.
+
+---
+
+## 3. Nguồn tham chiếu
+
+| Nguồn | Nội dung liên quan |
+|---|---|
+| ACOG Practice Bulletin No. 193, *Tubal Ectopic Pregnancy*, Obstet Gynecol 2018;131(3):e91–e103, PMID 29470343 `[CẦN KIỂM CHỨNG PMID]` | Huyết động không ổn định kèm nghi vỡ → chỉ định phẫu thuật khẩn |
+| NICE NG126, *Ectopic pregnancy and miscarriage* (2019, có cập nhật) | Thử thai cho mọi phụ nữ tuổi sinh đẻ đau bụng; chuyển khẩn khi có dấu hiệu huyết động không ổn định |
+
+- **Kiểm rút bài:** chưa kiểm. Cần chạy `check_citation_retraction.py --pmid 29470343` trước khi đưa vào hồ sơ.
+- **Ngưỡng số:** không đưa ngưỡng HA hay dịch truyền cụ thể; theo phác đồ hồi sức của cơ sở.
+
+---
+
+## 4. Bàn giao
+
+- **Safety-netting ngoại trú:** không áp dụng. Bệnh nhân **không được cho về**.
+- **Tiếp theo:** **KHÔNG** chạy chuỗi EBM trước khi chuyển. Ưu tiên chuyển cấp cứu sản khoa ngay. Sau khi ổn định, kíp sản khoa nơi nhận xử trí xác định. `dieu-phoi-lam-sang` chỉ tiếp nhận nếu cần hỗ trợ sau giai đoạn cấp cứu.
+
+---
+
+```
+✦ SELF-CHECK sang-loc-co-do — Bước 0 / C1:
+  ĐÃ ĐẠT:
+  - Nhận diện đủ tam chứng §3bis
+  - Phân tầng 🔴 nêu ở đầu gói
+  - Hành động cấp cứu không phụ thuộc xét nghiệm
+  - Quét đa nhánh, giữ các nhánh nguy hiểm
+  - Nguồn có ghi nhãn kiểm chứng; không bịa ngưỡng số; không PII
+  CÒN THIẾU:
+  - Trị số sinh hiệu cụ thể [CẦN BỔ SUNG]
+  - Kiểm rút bài PMID 29470343 (chưa chạy công cụ)
+  KẾT: ĐẠT TỰ KIỂM cho mục tiêu an toàn. Hai mục còn thiếu không cản trở hành động cấp cứu.
+```
+
+*Đây là sàng lọc NGHI ngờ, không phải chẩn đoán xác định, và không thay khám trực tiếp.*
+
+**Cần bác sĩ kiểm chứng.**

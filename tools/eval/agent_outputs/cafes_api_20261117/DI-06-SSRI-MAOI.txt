@@ -1,0 +1,82 @@
+# ⛔ CHẶN — Chống chỉ định 🔴: SSRI + MAOI khi chưa đủ khoảng nghỉ
+
+**Không kê MAOI lúc này.** Cặp thuốc này là **chống chỉ định** theo nhãn FDA của cả hai nhóm, vì nguy cơ **hội chứng serotonin**, có thể gây tử vong. Không có cách giảm nguy cơ bằng liều thấp, dặn uống sau ăn hay theo dõi sát. Agent chỉ đề xuất, bác sĩ quyết định. Agent không sửa đơn.
+
+**⛔ Cổng an toàn tâm thần (S3), cũng đang CHẶN:** thêm hoặc đổi sang MAOI là khởi trị thuốc chống trầm cảm. Cần xác nhận **đã sàng lọc ý tưởng tự sát** (PHQ-9 mục 9 hoặc C-SSRS rút gọn). **Chưa sàng lọc → yêu cầu `sang-loc-co-do` hỏi trước.** Lưu ý thêm:
+- MAOI rất độc khi quá liều.
+- Giai đoạn ngừng SSRI để chờ đủ khoảng nghỉ là lúc bệnh nhân không được điều trị và trầm cảm có thể nặng lên.
+- Nếu sàng lọc dương tính: không khởi trị đơn độc ở chăm sóc ban đầu, chuyển hoặc hội chẩn tâm thần khẩn, hạn chế tiếp cận phương tiện, cấp lượng thuốc nhỏ.
+
+---
+
+**Đối chiếu thuốc:** 2 thuốc (SSRI đang dùng và MAOI dự kiến).
+**Dữ kiện thiếu [CẦN BỔ SUNG]:**
+- Tên SSRI, liều, thời gian dùng, **ngày dự kiến hoặc đã ngừng**.
+- **Tên MAOI và chỉ định**: phenelzine hay tranylcypromine (trầm cảm), selegiline hay rasagiline (Parkinson), hay **linezolid hoặc xanh methylen tĩnh mạch** (cũng là MAOI). Cách xử lý khác nhau tùy loại.
+- Các thuốc tăng serotonin khác: tramadol, pethidine, fentanyl, triptan, dextromethorphan, linezolid, St John's wort, amphetamine…
+- Tuổi, giới, khả năng có thai, chức năng gan.
+- Kết quả sàng lọc tự sát.
+
+## 🔴 Nghiêm trọng / chống chỉ định: xử lý trước khi kê
+
+**Vấn đề:** SSRI phối hợp MAOI, hoặc chuyển thuốc khi chưa đủ khoảng nghỉ.
+
+**Cơ chế:** SSRI ức chế tái hấp thu serotonin, MAOI ức chế thoái giáng serotonin. Hai tác dụng cộng lại làm serotonin tích tụ quá mức. Biểu hiện gồm:
+- Rung giật cơ, tăng phản xạ.
+- Tăng thân nhiệt.
+- Rối loạn thần kinh thực vật.
+- Kích động, lú lẫn.
+
+Có thể tiến triển đến tiêu cơ vân và tử vong. Nguồn:
+- Boyer EW, Shannon M. *N Engl J Med* 2005;352:1112-20. PMID 15784664.
+- Tiêu chuẩn Hunter: Dunkley EJ et al. *QJM* 2003;96:635-42. PMID 12925718.
+
+**Khoảng nghỉ tối thiểu theo nhãn FDA từng thuốc** (đối chiếu lại nhãn bản hiện hành trước khi áp dụng):
+
+| Chuyển thuốc | Khoảng nghỉ tối thiểu |
+|---|---|
+| Ngừng **fluoxetine** → bắt đầu MAOI | **≥ 5 tuần** (do norfluoxetine có thời gian bán thải dài) |
+| Ngừng sertraline, paroxetine, citalopram, escitalopram, fluvoxamine → bắt đầu MAOI | **≥ 14 ngày** |
+| Ngừng MAOI → bắt đầu SSRI | **≥ 14 ngày** |
+
+Không được giảm dần chồng chéo (cross-taper) giữa SSRI và MAOI.
+
+**Đề xuất (bác sĩ chọn):**
+1. **Nếu chỉ định là trầm cảm kháng trị: chuyển hoặc hội chẩn tâm thần.** Chuyển sang MAOI là bước chuyên khoa. Trước đó, cân nhắc các lựa chọn không cần khoảng nghỉ có bằng chứng: tăng cường SSRI bằng aripiprazole, lithium, bupropion hoặc mirtazapine, hoặc đổi sang thuốc chống trầm cảm khác. Nguồn: STAR*D, Rush AJ et al. *Am J Psychiatry* 2006;163:1905-17, PMID 17074942; CANMAT cập nhật 2023 `[CẦN KIỂM CHỨNG PMID]`. Liều cụ thể theo nhãn thuốc hoặc guideline `[CẦN KIỂM CHỨNG]`, agent không tự nêu số.
+2. **Nếu vẫn quyết định chuyển sang MAOI:**
+   - Giảm liều SSRI dần để tránh hội chứng ngừng thuốc, nhất là paroxetine. Phác đồ giảm liều `[CẦN KIỂM CHỨNG]`.
+   - Đợi đủ khoảng nghỉ ở bảng trên, tính từ liều SSRI cuối cùng.
+   - Trong thời gian chờ, theo dõi sát tâm trạng và nguy cơ tự sát.
+   - Trước khi bắt đầu MAOI, dặn chế độ ăn hạn chế tyramine và rà lại toàn bộ thuốc tăng serotonin hoặc cường giao cảm.
+3. **Nếu MAOI là linezolid hoặc xanh methylen trong tình huống cấp cứu:** đây là ngoại lệ có điều kiện theo FDA Drug Safety Communication 2011. Cân nhắc lợi ích so với nguy cơ, thường ngừng SSRI và theo dõi hội chứng serotonin trong nhiều ngày `[CẦN KIỂM CHỨNG bản cập nhật]`.
+4. **Nếu MAOI là selegiline hoặc rasagiline cho Parkinson:** rà theo nhãn riêng của từng thuốc (mức chống chỉ định hoặc cảnh báo khác nhau). Hội chẩn thần kinh và tâm thần.
+
+## 🟠 Thận trọng
+- **Hội chứng ngừng SSRI** khi ngừng đột ngột: chóng mặt, dị cảm, kích thích. Dặn bệnh nhân không tự ngừng thuốc.
+- **Khoảng trống điều trị** trong thời gian chờ: nguy cơ tái phát hoặc nặng lên. Hẹn tái khám sớm, mốc cụ thể do bác sĩ đặt.
+
+## 🟡 Theo dõi và dặn dò (safety-netting)
+Dặn bệnh nhân **đi cấp cứu ngay** nếu có:
+- Sốt cao, vã mồ hôi.
+- Run, giật cơ, cứng cơ.
+- Tim nhanh.
+- Kích động hoặc lú lẫn.
+- Ý nghĩ tự hại.
+
+Không tự dùng thuốc ho chứa dextromethorphan, thuốc giảm đau tramadol hay thảo dược St John's wort.
+
+**Nhóm đặc biệt (thai kỳ / cho con bú):** chưa rà vì thiếu dữ liệu về giới và khả năng có thai `[CẦN BỔ SUNG]`.
+**Cơ hội giảm thuốc (deprescribing):** cần danh sách thuốc đầy đủ để đánh giá.
+**Kháng sinh:** không áp dụng, trừ khi MAOI chính là linezolid.
+
+*Trích dẫn trên chưa được kiểm rút bài bằng `check_citation_retraction.py` trong phiên này.*
+
+---
+```
+✦ TỰ KIỂM ke-don-an-toan — Cổng A
+  ĐÃ ĐẠT: gắn cờ CHẶN 🔴 ở đầu · cơ chế + nguồn · khoảng nghỉ theo nhãn · cổng S3 tâm thần · đề xuất thay thế · dặn dò an toàn
+  CÒN THIẾU: tên thuốc cụ thể, sàng lọc tự sát, danh sách thuốc đầy đủ, khả năng có thai
+  KẾT: CÒN 🔴 → chưa kê MAOI; bổ sung dữ kiện + sàng lọc tự sát + hội chẩn tâm thần
+```
+
+Đây là rà soát hỗ trợ, quyết định kê đơn thuộc về bác sĩ điều trị. **Cần bác sĩ kiểm chứng.**

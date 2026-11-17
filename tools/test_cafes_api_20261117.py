@@ -203,6 +203,38 @@ class ChiPhiMinhBach(_CoSo):
         self.assertEqual(u["so_ca"], 2)
 
 
+class MayKhongCoSDK(unittest.TestCase):
+    """CI 17/11: máy không cài SDK ⇒ dừng gọn (CauHinhSai / mã 2), không văng ModuleNotFoundError."""
+
+    def setUp(self):
+        self.sdk_cu = sys.modules.get("anthropic", "VANG")
+        self.env_cu = os.environ.get("ANTHROPIC_API_KEY")
+        os.environ["ANTHROPIC_API_KEY"] = "khoa-gia"
+        sys.modules["anthropic"] = None
+
+    def tearDown(self):
+        if self.sdk_cu == "VANG":
+            sys.modules.pop("anthropic", None)
+        else:
+            sys.modules["anthropic"] = self.sdk_cu
+        if self.env_cu is None:
+            os.environ.pop("ANTHROPIC_API_KEY", None)
+        else:
+            os.environ["ANTHROPIC_API_KEY"] = self.env_cu
+
+    def test_agent_api_dung_gon(self):
+        with self.assertRaisesRegex(C.CauHinhSai, "SDK"):
+            C.ClaudeAPIAgent(tempfile.mkdtemp())
+
+    def test_uoc_tinh_dung_gon(self):
+        cu = sys.argv
+        sys.argv = ["cafes_suite.py", "--uoc-tinh"]
+        try:
+            self.assertEqual(C.main(), 2)
+        finally:
+            sys.argv = cu
+
+
 class KhoaTuKhoBiMat(unittest.TestCase):
     def test_doc_khoa_tu_kho_khi_vang_bien_moi_truong(self):
         if not C.CTR_NGUON.exists():

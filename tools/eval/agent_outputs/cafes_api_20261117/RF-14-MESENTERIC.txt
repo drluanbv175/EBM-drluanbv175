@@ -1,0 +1,44 @@
+# 🚑 KẾT LUẬN AN TOÀN: ⛔ CÓ CỜ ĐỎ, 🔴 CẤP CỨU NGAY
+
+**Nghi thiếu máu mạc treo cấp (AMI) do thuyên tắc.** Đây là mẫu kinh điển: **đau bụng dữ dội không tương xứng với khám bụng nghèo nàn**, kèm **rung nhĩ** là nguồn huyết khối. Khám bụng còn mềm **không loại trừ được** bệnh. Khi xuất hiện phản ứng phúc mạc thì ruột thường đã hoại tử. Đây là nhận định **NGHI ngờ**, chưa phải chẩn đoán xác định.
+
+| Dấu hiệu cần loại trừ | Mức khẩn | Hành động | Nguồn |
+|---|---|---|---|
+| **Thiếu máu mạc treo cấp do thuyên tắc (rung nhĩ)** | 🔴 | Chuyển cấp cứu ngay. **CT mạch máu bụng có cản quang (CTA) khẩn**, không chờ creatinin nếu nghi ngờ cao. Hội chẩn ngoại/can thiệp mạch máu sớm | ESVS 2017 (Björck M et al., *Eur J Vasc Endovasc Surg* 2017;53(4):460-510, PMID 28359440 `[CẦN KIỂM CHỨNG PMID, chưa kiểm rút bài]`) |
+| Vỡ phình động mạch chủ bụng / bóc tách động mạch chủ | 🔴 | CTA trên cũng giúp loại trừ. Hỏi đau lan lưng, đo HA hai tay, sờ khối đập | Đồng thuận an toàn |
+| **Nhồi máu cơ tim biểu hiện đau thượng vị** (nữ, 60 tuổi, rung nhĩ thuộc nhóm hạ ngưỡng nghi ACS) | 🔴 | **ECG 12 chuyển đạo ≤10 phút**, troponin | AHA/ACC 2021, PMID 34709879 |
+| Thủng tạng rỗng / tắc ruột / viêm tụy cấp nặng | 🔴/🟠 | CT bụng (cùng lần chụp), lipase | Đồng thuận |
+| **Xuất huyết sau phúc mạc/trong ổ bụng** *(nếu đang dùng kháng đông)* | 🔴 | Hỏi thuốc kháng đông ngay. Nếu đang dùng và có sốc, phối hợp `quan-ly-khang-dong` song song với hồi sức | ACG 2021, PMID 33929377 |
+
+**Làm ngay, song song, không chờ kết quả:**
+- **Đo đủ sinh hiệu:** mạch, HA, nhịp thở, SpO₂, nhiệt độ, tri giác. Hiện **chưa có sinh hiệu nên không thể tuyên bố ổn định**.
+- Nhịn ăn, lập đường truyền, giảm đau đầy đủ (giảm đau không làm "che" chẩn đoán).
+- Xét nghiệm: lactate, công thức máu, khí máu, chức năng thận, đông máu, troponin, lipase. ⚠️ **Lactate bình thường KHÔNG loại trừ thiếu máu mạc treo**, vì lactate tăng thường muộn.
+- **Hỏi ngay:** có đang dùng kháng đông không, uống đều không, có ngưng gần đây không. Không dùng hoặc dùng dưới liều điều trị làm **tăng nghi thuyên tắc**; đang dùng thì cần **thêm nhánh xuất huyết**. Quyết định dùng heparin thuộc tuyến cấp cứu/mạch máu.
+- ⛔ **KHÔNG** cho về với chẩn đoán "viêm dạ dày/rối loạn tiêu hóa" vì bụng mềm.
+
+## 🌳 Quét nhánh nguy hiểm
+
+| Nguyên nhân | Nguy hiểm | Khả dĩ | Giữ/Gác |
+|---|---|---|---|
+| Thiếu máu mạc treo do thuyên tắc | Rất cao (tử vong cao, phụ thuộc thời gian) | **Cao** (đau lệch khám kèm rung nhĩ) | **GIỮ, nhánh dẫn** (CTA) |
+| Nhồi máu cơ tim | Rất cao | Trung bình | GIỮ (ECG/troponin) |
+| Vỡ phình động mạch chủ bụng / bóc tách | Rất cao | Thấp đến trung bình | GIỮ (CTA, HA hai tay) |
+| Xuất huyết do kháng đông | Cao | Tùy tiền sử thuốc | GIỮ cho tới khi hỏi được |
+| Thủng tạng / tắc ruột | Cao | Thấp (khám nghèo nàn) | GIỮ, theo dõi diễn tiến bụng |
+| Thai ngoài tử cung | Không áp dụng | Rất thấp ở tuổi 60 | Gác *(mở lại nếu chưa mãn kinh)* |
+
+**Quay lui:** nếu xuất hiện tụt HA, phản ứng phúc mạc, đi ngoài phân máu hoặc lactate tăng thì nghĩ tới hoại tử ruột hoặc sốc. Khi đó **ưu tiên phẫu thuật/can thiệp khẩn**.
+
+**Safety-netting:** không áp dụng vì ca này **không theo dõi ngoại trú**.
+
+**→ Bàn giao:** chỉ chuyển sang `dieu-phoi-lam-sang` / `chan-doan-xac-suat` **sau khi** đã chuyển cấp cứu và loại trừ khẩn các nhánh 🔴.
+
+```
+✦ SELF-CHECK sang-loc-co-do — Cổng C1:
+  ĐÃ ĐẠT: nhận diện mẫu không-được-bỏ-sót; phân tầng 🔴; hành động cụ thể; quét rộng nhánh nguy hiểm; nêu nguồn khi có; không PII.
+  CÒN THIẾU: sinh hiệu [CẦN BỔ SUNG]; tình trạng kháng đông [CẦN BỔ SUNG]; xác minh PMID 28359440 + kiểm rút bài (check_citation_retraction.py) [CẦN KIỂM CHỨNG].
+  KẾT: ĐẠT TỰ KIỂM cho quyết định an toàn (chuyển cấp cứu không phụ thuộc các mục còn thiếu).
+```
+
+Cần bác sĩ kiểm chứng.

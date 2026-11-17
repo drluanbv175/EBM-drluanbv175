@@ -1,0 +1,128 @@
+# Rà soát an toàn kê đơn: Paracetamol + Amoxicillin
+
+**Bối cảnh:** người lớn khỏe, sốt kèm đau họng, không bệnh nền.
+
+## ⛔ Kết quả 3 cổng an toàn
+
+| Cổng | Kết quả |
+|---|---|
+| Chống chỉ định / tương tác mức 🔴 | **Không chặn.** Hai thuốc không có tương tác đáng kể với nhau. Tuy vậy, **còn 1 điều kiện phải xác nhận trước khi phát đơn** (dị ứng penicillin, xem 🔴 bên dưới). |
+| An toàn tâm thần (dòng S1/S3) | Không áp dụng: đơn không có thuốc ngủ, chống trầm cảm hay giải lo âu. |
+| An toàn thai kỳ (dòng S2) | Không có thuốc thuộc nhóm gây quái thai, nên cổng không kích hoạt. Nếu là nữ tuổi sinh đẻ, xem phần nhóm đặc biệt. |
+
+**Đối chiếu thuốc:** 2 thuốc dự kiến kê.
+**Dữ kiện còn thiếu:**
+- `[CẦN BỔ SUNG: tiền sử dị ứng thuốc (penicillin/beta-lactam)]`
+- `[CẦN BỔ SUNG: giới, khả năng có thai, cho con bú]`
+- `[CẦN BỔ SUNG: thuốc OTC đang dùng, đặc biệt thuốc cảm cúm phối hợp]`
+- `[CẦN BỔ SUNG: mức uống rượu]`
+- `[CẦN BỔ SUNG: cân nặng]`
+- `[CẦN BỔ SUNG: điểm Centor/McIsaac hoặc FeverPAIN, test nhanh liên cầu]`
+
+**Giả định:** người lớn khỏe nên coi chức năng thận và gan bình thường. Không cần xét nghiệm creatinin thường quy chỉ vì đơn này.
+
+---
+
+## 🔴 Phải xử lý trước khi phát đơn
+
+**1. Chưa ghi nhận tiền sử dị ứng penicillin**
+- "Không bệnh nền" không có nghĩa là "không dị ứng".
+- Amoxicillin là beta-lactam. Phản vệ với penicillin hiếm nhưng có thể tử vong.
+- **Đề xuất:**
+  - Hỏi và ghi nhận dị ứng trước khi phát đơn.
+  - Nếu có dị ứng: loại phản ứng (tức thì/phản vệ hay ban muộn nhẹ) quyết định lựa chọn thay thế (cephalosporin, clindamycin, macrolide).
+  - Lựa chọn thay thế chỉ chọn theo guideline, có tính đến tỷ lệ kháng macrolide tại chỗ `[CẦN KIỂM CHỨNG theo dữ liệu kháng thuốc Việt Nam]`.
+- **Nguồn:** nhãn amoxicillin (FDA/DailyMed), mục chống chỉ định; IDSA GAS pharyngitis 2012 (Shulman ST et al., *Clin Infect Dis* 2012;55(10):e86-102, PMID 22965026).
+
+---
+
+## 🟠 Thận trọng / cần cân nhắc
+
+**2. Chỉ định kháng sinh chưa được chứng minh. Đây là cơ hội giảm thuốc lớn nhất của đơn này.**
+- Đa số viêm họng cấp ở người lớn do virus. Triệu chứng lâm sàng đơn thuần không phân biệt chắc chắn được viêm họng do liên cầu nhóm A (GAS).
+- **Đề xuất:**
+  - Chấm điểm Centor/McIsaac hoặc FeverPAIN.
+  - Nếu khả năng GAS cao: làm test nhanh kháng nguyên (RADT) hoặc cấy họng nếu có điều kiện. Chỉ dùng kháng sinh khi xác nhận GAS.
+  - Nếu không test được: cân nhắc kê đơn trì hoãn (delayed prescribing) theo điểm FeverPAIN, theo NICE NG84.
+  - Gợi ý ho, sổ mũi, khàn tiếng, loét miệng nghiêng về virus và làm giảm khả năng cần kháng sinh.
+- **Nguồn:** IDSA 2012 (PMID 22965026); NICE NG84 *Sore throat (acute): antimicrobial prescribing* (nice.org.uk/guidance/ng84); WHO AWaRe Antibiotic Book 2022.
+
+**3. Nguy cơ phát ban khi nhiễm EBV (bạch cầu đơn nhân nhiễm khuẩn)**
+- Người trẻ bị sốt, đau họng, có hạch cổ sau, mệt nhiều, gan lách to có thể đang nhiễm EBV.
+- Amoxicillin ở bệnh nhân này thường gây ban dát sẩn. Ban này dễ bị ghi nhầm thành "dị ứng penicillin" suốt đời.
+- **Đề xuất:** khám tìm dấu hiệu bạch cầu đơn nhân. Nghi ngờ thì tránh amoxicillin, cân nhắc xét nghiệm.
+- **Nguồn:** nhãn amoxicillin (FDA/DailyMed), mục cảnh báo.
+
+**4. Liều amoxicillin, nếu có chỉ định**
+- Phác đồ IDSA 2012 cho GAS: **50 mg/kg × 1 lần/ngày (tối đa 1000 mg), hoặc 25 mg/kg × 2 lần/ngày (tối đa 500 mg/lần), trong 10 ngày.**
+- **Nguồn:** PMID 22965026, Bảng 2 `[CẦN KIỂM CHỨNG đối chiếu bảng gốc]`.
+- NICE NG84 ưu tiên phenoxymethylpenicillin 5–10 ngày.
+- Cần dặn uống đủ liệu trình. Mục tiêu phòng thấp tim có ý nghĩa ở bối cảnh có lưu hành thấp tim.
+- Suy thận không áp dụng ở người khỏe. Ngưỡng chỉnh liều theo CrCl đã có trong nhãn nếu sau này cần.
+
+**5. Paracetamol: nguy cơ quá liều do trùng hoạt chất**
+- Nhiều thuốc cảm cúm, hạ sốt phối hợp bán không cần đơn có chứa paracetamol. Bệnh nhân dễ dùng chồng mà không biết.
+- **Liều tối đa người lớn: 4 g/24 giờ** (nhãn OTC FDA). Khoảng cách giữa các liều theo nhãn sản phẩm.
+- Với người uống rượu thường xuyên, cân nặng thấp hoặc suy dinh dưỡng: cần ngưỡng thấp hơn `[CẦN KIỂM CHỨNG con số cụ thể theo nguồn]`.
+- **Đề xuất:** hỏi rõ các thuốc OTC đang dùng. Dặn **không** dùng thêm thuốc nào có chữ "paracetamol" hoặc "acetaminophen".
+- **Nguồn:** nhãn acetaminophen OTC (FDA), cảnh báo độc gan.
+
+---
+
+## 🟡 Lưu ý / theo dõi
+
+- **Tương tác paracetamol – amoxicillin:** không có tương tác có ý nghĩa lâm sàng.
+- **Amoxicillin với thuốc khác (nếu bệnh nhân đang dùng mà chưa khai):**
+  - Methotrexate: tăng độc tính.
+  - Allopurinol: tăng tỷ lệ phát ban.
+  - Warfarin: có thể tăng INR.
+  - Nguồn: nhãn amoxicillin.
+- **Tác dụng phụ cần dặn:**
+  - Tiêu chảy. Nếu tiêu chảy nặng hoặc có máu, đi khám vì có thể do *C. difficile*.
+  - Nổi mẩn, ngứa. Nếu kèm khó thở, phù môi hoặc mặt, ngừng thuốc và đi cấp cứu.
+- **Xét nghiệm theo dõi:** không cần cho đợt ngắn ở người khỏe.
+
+---
+
+## Nhóm đặc biệt: thai kỳ / cho con bú (nếu là nữ tuổi sinh đẻ)
+
+**Đã rà:** chưa, vì thiếu thông tin giới và khả năng có thai.
+- **Amoxicillin:** thường được coi là lựa chọn sử dụng được trong thai kỳ và khi cho con bú. Nguồn: nhãn FDA-PLLR, LactMed (NIH).
+- **Paracetamol:** ACOG vẫn coi là lựa chọn hạ sốt, giảm đau phù hợp trong thai kỳ, dùng liều thấp nhất hiệu quả trong thời gian ngắn nhất. Nhãn FDA về dùng paracetamol trong thai kỳ đã có cập nhật năm 2025 `[CẦN KIỂM CHỨNG nội dung nhãn hiện hành]`.
+- Dùng được khi cho con bú (LactMed).
+
+---
+
+## Cơ hội giảm thuốc · Kháng sinh
+
+- **Giảm thuốc:** bỏ amoxicillin nếu không xác nhận GAS. Đây là thay đổi có giá trị nhất của đơn.
+- **Kháng sinh:** chỉ cần khi có bằng chứng GAS. Amoxicillin thuộc nhóm **Access** của WHO AWaRe, là lựa chọn phổ hẹp phù hợp nếu có chỉ định.
+
+---
+
+## Dặn dò an toàn (safety-netting): đi khám ngay nếu
+
+- Khó nuốt đến mức không uống được, chảy nước dãi, khó há miệng (cứng hàm).
+- Khó thở, thở rít, giọng "ngậm hạt thị". Nghi áp xe quanh amidan hoặc viêm nắp thanh môn.
+- Sưng đau một bên cổ, sốt cao rét run kéo dài.
+- Phát ban, phù mặt hoặc môi, khó thở sau khi uống thuốc.
+- Sốt không giảm sau khoảng 48–72 giờ, hoặc triệu chứng kéo dài quá khoảng 1 tuần `[mốc theo NICE NG84, CẦN KIỂM CHỨNG]`.
+
+---
+
+**Ghi chú nguồn:** chưa kiểm rút bài cho PMID 22965026, cần chạy `check_citation_retraction.py --pmid 22965026` trước khi đưa vào hồ sơ.
+
+```
+✦ SELF-CHECK ke-don-an-toan — Cổng A
+  ĐÃ ĐẠT: 3 cổng ⛔ đã rà; tương tác thuốc–thuốc/thuốc–bệnh; liều theo nguồn
+          hoặc gắn [CẦN KIỂM CHỨNG]; rà thai kỳ/cho con bú (có điều kiện);
+          trùng hoạt chất OTC; AWaRe; safety-netting; không PII.
+  CÒN THIẾU: xác nhận dị ứng penicillin; giới/thai kỳ; thuốc OTC;
+             điểm lâm sàng hoặc test liên cầu; kiểm rút bài PMID.
+  KẾT: CÒN 🔴 (dị ứng chưa xác nhận) → bác sĩ hỏi và ghi nhận trước khi phát đơn;
+       xem lại chỉ định kháng sinh.
+```
+
+Đây là rà soát hỗ trợ. Quyết định kê đơn thuộc về bác sĩ điều trị (Cổng A, agent chỉ đề xuất, không tự sửa đơn).
+
+**Cần bác sĩ kiểm chứng.**

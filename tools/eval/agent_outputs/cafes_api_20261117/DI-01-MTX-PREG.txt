@@ -1,0 +1,71 @@
+# ⛔ CHẶN: Chống chỉ định methotrexate trong thai kỳ (Cổng A, 🔴)
+
+**Không kê methotrexate (MTX) cho thai 8 tuần khi chỉ định không phải ung thư**, kể cả liều thấp hằng tuần hay khi đã dặn uống bù acid folic. Agent chỉ đề xuất, không sửa đơn. Bác sĩ quyết định.
+
+**Cần làm rõ trước:** MTX định kê để điều trị **thai ngoài tử cung / thai chưa rõ vị trí** hay **bệnh nền** (viêm khớp dạng thấp, vảy nến, bệnh viêm ruột…)? Hai tình huống xử lý hoàn toàn khác nhau (xem nhánh B).
+
+---
+
+## Rà soát
+
+**Đối chiếu thuốc:** 1 thuốc dự kiến (MTX).
+**Thiếu dữ kiện:** `[CẦN BỔ SUNG: chỉ định cụ thể · thai trong tử cung đã xác nhận và có mong muốn giữ thai không · đã dùng MTX trong thai kỳ chưa (liều, thời điểm) · thuốc đang dùng · eGFR/men gan · mức hoạt động bệnh]`
+
+### 🔴 Nghiêm trọng / chống chỉ định: xử lý trước khi kê
+
+**Methotrexate trong thai kỳ, bệnh không ung thư**
+- **Cơ chế:** MTX đối kháng folate, gây độc phôi thai. Hậu quả gồm sẩy thai/thai chết và hội chứng bệnh lý phôi do MTX (dị tật sọ mặt, chi, tim, chậm phát triển).
+- **Thời điểm:** Thai 8 tuần tính từ kỳ kinh cuối ≈ 6 tuần sau thụ thai. Mốc này nằm trong cửa sổ được mô tả là nhạy cảm nhất (khoảng 6–8 tuần sau thụ thai). `[CẦN KIỂM CHỨNG: cửa sổ chính xác và ngưỡng liều liên quan]`
+- **Nguồn:**
+  - Nhãn thuốc FDA methotrexate: cảnh báo đóng khung về độc tính phôi thai, chống chỉ định ở phụ nữ có thai mắc bệnh không ung thư.
+  - ACR 2020 Guideline sức khỏe sinh sản trong bệnh khớp (Sammaritano LR et al., *Arthritis Rheumatol* 2020;72(4):529-556, PMID 32090480): ngừng MTX 1–3 tháng trước thụ thai, không dùng trong thai kỳ.
+  - EULAR 2016 Points to consider (Götestam Skorpen C et al., *Ann Rheum Dis* 2016;75(5):795-810, PMID 26888948).
+
+**Đề xuất:** Không kê. Chọn thuốc thay thế phù hợp thai kỳ theo bệnh nền (bảng dưới).
+
+### 🟠 Thận trọng: thuốc thay thế (chọn theo bệnh, cần đối chiếu nhãn thuốc và guideline chuyên khoa)
+
+| Nhóm | Được coi là tương thích thai kỳ (ACR 2020) | Ghi chú |
+|---|---|---|
+| Thuốc DMARD cổ điển | Hydroxychloroquine · sulfasalazine · azathioprine | Sulfasalazine: bổ sung acid folic. Liều cụ thể `[CẦN KIỂM CHỨNG theo nguồn]` |
+| Thuốc ức chế calcineurin | Tacrolimus · cyclosporin | Theo dõi huyết áp, chức năng thận, đường huyết |
+| Corticoid | Prednisone liều thấp nhất có hiệu quả | Nguy cơ đái tháo đường thai kỳ, tăng huyết áp |
+| Thuốc sinh học | Thuốc ức chế TNF; certolizumab ít qua nhau thai | Thời điểm ngưng và kế hoạch vắc-xin sống cho trẻ sau sinh theo guideline |
+| Vảy nến (nếu là chỉ định) | Thuốc bôi · chiếu UVB dải hẹp · certolizumab | `[CẦN KIỂM CHỨNG theo guideline da liễu]` |
+
+**Cũng phải tránh:** leflunomide (cần thải trừ bằng cholestyramine), mycophenolate, cyclophosphamide.
+
+### 🟡 Lưu ý / theo dõi
+- **Nếu đã dùng MTX trong thai kỳ:**
+  - Không tự động kết luận phải đình chỉ thai.
+  - Ngưng MTX và chuyển **tư vấn dị tật bẩm sinh / sản khoa nguy cơ cao**.
+  - Siêu âm hình thái theo mốc, ghi nhận liều và thời điểm phơi nhiễm.
+  - Bổ sung acid folic theo chỉ định sản khoa.
+- Bảo đảm bổ sung **acid folic trước sinh** theo chuẩn.
+- Hội chẩn **thấp khớp/chuyên khoa và sản khoa** để kiểm soát bệnh nền. Bệnh hoạt động cũng là yếu tố nguy cơ cho thai.
+
+---
+
+## Nhánh B: nếu MTX dùng cho thai ngoài tử cung
+Đây là chỉ định **có chủ đích** và nằm ngoài phạm vi rà đơn ngoại trú thông thường.
+- Phải do **sản khoa** chỉ định.
+- Chỉ dùng sau khi **loại trừ thai trong tử cung còn sống** và đánh giá huyết động, βhCG, siêu âm, công thức máu, chức năng gan và thận.
+- Nguồn: ACOG Practice Bulletin 193, *Tubal Ectopic Pregnancy*, *Obstet Gynecol* 2018;131(3):e91-e103, PMID 29470343.
+- Agent không đưa phác đồ liều.
+
+---
+
+**Nhóm đặc biệt (thai kỳ):** Đã rà. MTX phải tránh. Thay thế theo bảng trên, có nguồn.
+**Cơ hội giảm gánh thuốc:** Rà lại toàn bộ thuốc đang dùng khi có danh sách.
+**Kháng sinh:** Không áp dụng.
+
+*Các PMID trên **chưa kiểm rút bài** (chưa chạy `check_citation_retraction.py`). Cần tra trước khi đưa vào kết luận chính thức.*
+
+```
+✦ SELF-CHECK ke-don-an-toan — Cổng A
+  ĐÃ ĐẠT: cờ CHẶN đầu output · cơ chế + nguồn (nhãn FDA, ACR 2020, EULAR 2016) · thay thế có nguồn · tách nhánh thai ngoài tử cung · hướng xử lý nếu đã phơi nhiễm · không PII · không bịa liều
+  CÒN THIẾU: chỉ định cụ thể, tình trạng phơi nhiễm, danh sách thuốc, eGFR/men gan [CẦN BỔ SUNG]; chưa kiểm rút bài PMID
+  KẾT: ĐẠT TỰ KIỂM với cờ CHẶN, chờ bác sĩ bổ sung dữ kiện và quyết định
+```
+
+Đây là rà soát hỗ trợ. Quyết định kê đơn thuộc về bác sĩ điều trị. **Cần bác sĩ kiểm chứng.**

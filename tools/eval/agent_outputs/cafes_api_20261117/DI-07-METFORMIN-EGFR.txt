@@ -1,0 +1,127 @@
+# Rà soát an toàn kê đơn: Metformin, eGFR rất thấp, sắp chụp cản quang
+
+## ⛔ CỔNG AN TOÀN ĐƠN: 🔴 CHẶN (tạm thời)
+
+> **Nếu eGFR < 30 mL/phút/1,73m², metformin bị CHỐNG CHỈ ĐỊNH theo nhãn FDA.** Phải xử lý trước khi chụp và trước khi đơn tiếp tục.
+> Nếu bệnh nhân vẫn đang dùng metformin: đề xuất **NGỪNG ngay**, không chờ đến ngày chụp. Không áp dụng "giảm liều" hay "uống sau ăn" thay cho việc ngừng.
+> Agent chỉ đề xuất. **Bác sĩ quyết định.**
+
+| Cổng phụ | Kết quả |
+|---|---|
+| Cổng tâm thần (S1/S3) | Không áp dụng. Không có hypnotic hay thuốc chống trầm cảm/giải lo âu trong yêu cầu. |
+| Cổng thai kỳ (S2) | Metformin không thuộc nhóm gây quái thai trong danh mục. **Nếu là phụ nữ tuổi sinh đẻ**, vẫn cần hỏi khả năng có thai trước khi dùng thuốc cản quang và bức xạ ion hóa `[CẦN BỔ SUNG]`. |
+
+**Dữ kiện còn thiếu `[CẦN BỔ SUNG]`:**
+- Giá trị eGFR cụ thể, và đây là **suy thận mạn ổn định** hay **tổn thương thận cấp (AKI)**. Khi đang AKI, eGFR không phản ánh đúng chức năng thận.
+- Bệnh nhân có đang **lọc máu** không.
+- Đường dùng cản quang: **tĩnh mạch hay động mạch** (như chụp mạch vành hoặc can thiệp).
+- Mức khẩn cấp của chẩn đoán hình ảnh.
+- Danh sách thuốc đầy đủ, gồm NSAID, lợi tiểu, ACEi/ARB, SGLT2i, sulfonylurea, insulin.
+- Tuổi, cân nặng, HbA1c, có suy tim, bệnh gan hoặc rượu không.
+
+---
+
+## 🔴 NGHIÊM TRỌNG / CHỐNG CHỈ ĐỊNH
+
+**1. Metformin khi eGFR < 30**
+- **Cơ chế:** metformin thải qua thận. Khi thận suy, thuốc tích lũy và tăng nguy cơ **nhiễm toan lactic**, biến chứng hiếm nhưng tử vong cao.
+- **Đề xuất:** ngừng metformin và **không tái khởi động** chừng nào eGFR còn < 30.
+- **Nguồn:**
+  - Nhãn FDA metformin và FDA Drug Safety Communication 04/2016 (đổi tiêu chí từ creatinin sang eGFR): https://www.fda.gov/drugs/drug-safety-and-availability
+  - KDIGO 2022 Clinical Practice Guideline for Diabetes Management in CKD. *Kidney Int* 2022;102(5S):S1–S127, **PMID 36243226** `[CẦN KIỂM CHỨNG PMID]`
+
+**2. Metformin quanh thời điểm chụp cản quang iod**
+- **Cơ chế:** nếu cản quang gây tổn thương thận cấp, metformin sẽ tích lũy thêm. Rủi ro chính đến từ AKI sau cản quang, không phải từ tương tác trực tiếp giữa hai thuốc.
+- **Đề xuất theo nhãn FDA:** ngừng metformin **trước hoặc tại thời điểm chụp** ở các nhóm sau:
+  - eGFR 30–60,
+  - có bệnh gan, nghiện rượu hoặc suy tim,
+  - dùng cản quang **đường động mạch**.
+
+  Sau chụp **48 giờ**, đo lại eGFR. Chỉ tái dùng nếu chức năng thận ổn định.
+- **Ở ca này:** nếu eGFR < 30 thì metformin đã phải ngừng do chống chỉ định. Câu hỏi tái dùng sau 48 giờ chỉ đặt ra khi eGFR thật sự ≥ 30.
+- **Nguồn:**
+  - Nhãn FDA metformin (như trên).
+  - ACR Manual on Contrast Media, mục Metformin: https://www.acr.org/Clinical-Resources/Contrast-Manual `[CẦN KIỂM CHỨNG phiên bản hiện hành]`
+
+---
+
+## 🟠 THẬN TRỌNG
+
+**3. Nguy cơ tổn thương thận cấp do cản quang khi eGFR < 30**
+- Đây là vấn đề riêng, không liên quan metformin, và có thể là rủi ro lớn hơn.
+- Theo đồng thuận ACR/NKF:
+  - Với eGFR < 30 không lọc máu, nên **bù dịch đẳng trương tĩnh mạch dự phòng**, trừ khi có chống chỉ định như suy tim mất bù hoặc quá tải dịch.
+  - Dùng **liều cản quang thấp nhất đủ chẩn đoán**.
+  - Cân nhắc phương thức hình ảnh khác nếu đạt được câu hỏi lâm sàng.
+- **Nguồn:** Davenport MS et al. *Radiology* 2020;294(3):660–668, **PMID 31961246** `[CẦN KIỂM CHỨNG PMID]`.
+- Phác đồ dịch cụ thể (loại, tốc độ, thời gian) chỉ nêu khi đối chiếu được nguồn `[CẦN KIỂM CHỨNG]`.
+- **Không trì hoãn chụp cấp cứu cứu mạng** chỉ vì metformin hoặc lo ngại AKI. Khi đó cân nhắc lợi ích và nguy cơ.
+
+**4. Thuốc độc thận dùng kèm** (chờ danh sách đầy đủ)
+- Rà NSAID: nên tránh.
+- Lợi tiểu, ACEi/ARB, SGLT2i quanh thời điểm chụp: quyết định tạm ngừng hay tiếp tục thuộc bác sĩ, theo nguồn `[CẦN KIỂM CHỨNG]`.
+
+**5. Nếu bác sĩ cân nhắc MRI thay CT có cản quang**
+- Với eGFR < 30, nếu cần gadolinium thì ưu tiên **chất nhóm II theo ACR** vì nguy cơ xơ hóa hệ thống do thận (NSF) thấp.
+- **Nguồn:** ACR Manual `[CẦN KIỂM CHỨNG]`.
+
+**6. Kiểm soát đường huyết khi ngừng metformin**
+- Cần phương án thay thế, đối chiếu KDIGO 2022 và ADA Standards of Care (năm hiện hành):
+  - **Insulin:** dùng được ở mọi mức eGFR. Thận suy làm giảm thải insulin nên nguy cơ hạ đường huyết tăng; cần chỉnh liều.
+  - **Thuốc ức chế DPP-4:** đa số cần chỉnh liều theo thận. Linagliptin không cần chỉnh theo nhãn `[CẦN KIỂM CHỨNG]`.
+  - **Thuốc đồng vận GLP-1:** được KDIGO 2022 ưu tiên khi chưa đạt mục tiêu. Cần kiểm tra nhãn từng thuốc ở eGFR thấp.
+  - **SGLT2i:** được dùng vì lợi ích bảo vệ thận và tim, nhưng tác dụng hạ đường huyết rất ít khi eGFR thấp. Ngưỡng khởi trị và ngưỡng ngừng theo KDIGO và nhãn từng thuốc `[CẦN KIỂM CHỨNG]`.
+  - **Tránh sulfonylurea tác dụng dài** như glyburide/glibenclamide vì nguy cơ hạ đường huyết kéo dài khi suy thận. Beers AGS 2023 khuyến cáo tránh sulfonylurea ở người cao tuổi.
+- Liều cụ thể của từng thuốc chỉ nêu khi có nguồn `[CẦN KIỂM CHỨNG]`.
+
+---
+
+## 🟡 LƯU Ý / THEO DÕI
+
+| Xét nghiệm | Mốc |
+|---|---|
+| Creatinin, eGFR | Trước chụp (nếu chưa có kết quả gần đây) và **48 giờ sau chụp** |
+| Glucose mao mạch | Tăng tần suất trong giai đoạn ngừng metformin hoặc chuyển thuốc |
+| Điện giải, bicarbonat, lactat | Khi có triệu chứng nghi nhiễm toan |
+
+---
+
+**Nhóm đặc biệt (thai kỳ/cho con bú):** chưa rõ giới và tuổi `[CẦN BỔ SUNG]`.
+
+**Cơ hội deprescribing:** metformin phải ngừng do chống chỉ định. Cần rà toàn bộ phác đồ hạ đường huyết theo mục tiêu HbA1c cá thể hóa, vì người cao tuổi hoặc suy thận nặng thường có mục tiêu nới lỏng hơn.
+
+**Kháng sinh:** không áp dụng.
+
+---
+
+## Safety-netting (dặn bệnh nhân)
+
+Đi khám **ngay** nếu có một trong các dấu hiệu sau:
+- **Có thể là nhiễm toan lactic:** mệt lả, đau cơ bất thường, thở nhanh hoặc khó thở, đau bụng, buồn nôn hoặc nôn, lơ mơ, chóng mặt, tim chậm.
+- **Có thể là tổn thương thận sau chụp:** tiểu ít hẳn đi.
+- **Đường huyết:** hạ đường huyết (vã mồ hôi, run, lú lẫn) hoặc tăng cao kéo dài.
+
+**Không tự uống lại metformin.** Chỉ dùng lại khi bác sĩ xác nhận kết quả eGFR sau chụp.
+
+---
+
+## Tự kiểm: Cổng A
+
+- **ĐÃ ĐẠT:**
+  - Cờ 🔴 đặt ở đầu.
+  - Mỗi cảnh báo có cơ chế, đề xuất và nguồn.
+  - Không bịa liều hay ngưỡng ngoài nhãn và guideline.
+  - Có xét nghiệm theo dõi kèm mốc.
+  - Có safety-netting.
+  - Không có PII.
+- **CÒN THIẾU:**
+  - Giá trị eGFR, tình trạng AKI hay mạn, lọc máu, đường cản quang, danh sách thuốc `[CẦN BỔ SUNG]`.
+  - PMID 36243226 và 31961246 chưa chạy `check_citation_retraction.py`, nên **chưa kiểm rút bài**.
+  - Phiên bản ACR Manual `[CẦN KIỂM CHỨNG]`.
+- **KẾT LUẬN:** Đạt tự kiểm ở mức đề xuất. Còn 🔴 cho đến khi bác sĩ xử lý metformin và bổ sung dữ kiện.
+
+---
+
+*Đây là rà soát hỗ trợ. Quyết định kê đơn thuộc về bác sĩ điều trị.*
+
+**Cần bác sĩ kiểm chứng.**

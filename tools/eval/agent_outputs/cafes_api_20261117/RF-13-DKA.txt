@@ -1,0 +1,54 @@
+# 🚑 KẾT LUẬN AN TOÀN: ⛔ CÓ CỜ ĐỎ — 🔴 CẤP CỨU NGAY
+
+**NGHI nhiễm toan ceton do đái tháo đường (DKA), mức nặng.** Lý do: ĐTĐ type 1, đường huyết rất cao, thở nhanh sâu (gợi ý thở Kussmaul do toan chuyển hóa) và **lơ mơ**. Rối loạn tri giác là dấu hiệu nặng.
+→ **Gọi cấp cứu hoặc chuyển khẩn đến cơ sở có hồi sức/ICU.** Không cho về. Không chờ xét nghiệm hay tra cứu xong mới chuyển.
+
+| Dấu hiệu cần loại trừ | Mức khẩn | Hành động | Nguồn |
+|---|---|---|---|
+| **DKA nặng** (toan chuyển hóa + rối loạn tri giác) | 🔴 | Chuyển cấp cứu/ICU. Thử ceton máu tại chỗ, khí máu, điện giải | Đồng thuận ADA/EASD/JBDS/AACE/DTS về cơn tăng đường huyết ở người lớn (*Diabetes Care* 2024) `[CẦN KIỂM CHỨNG PMID — chưa kiểm rút bài]` |
+| **Rối loạn kali máu → loạn nhịp** | 🔴 | **ECG ngay**. Có K⁺ trước khi bắt đầu insulin. K⁺ <3,5 mmol/L thì bù K⁺ trước, hoãn insulin | Như trên. Ngưỡng K⁺ cần kiểm chứng theo phác đồ tại chỗ `[CẦN KIỂM CHỨNG]` |
+| **Sặc/mất bảo vệ đường thở** (lơ mơ + buồn nôn) | 🔴 | Tư thế an toàn nằm nghiêng, theo dõi GCS và SpO₂, chuẩn bị bảo vệ đường thở | Đồng thuận an toàn phổ quát |
+| **Yếu tố khởi phát nguy hiểm**: nhiễm khuẩn/nhiễm khuẩn huyết, bỏ insulin, viêm tụy cấp, (hiếm ở 22 tuổi) nhồi máu cơ tim | 🔴/🟠 | Đo nhiệt độ, tìm ổ nhiễm. Cấy máu và kháng sinh sớm nếu nghi. Lipase, ECG | Sepsis-3/SSC 2021 (PMID 34605781). **Lưu ý:** thở nhanh do Kussmaul làm tiêu chí nhịp thở của qSOFA/SIRS bị nhiễu, nên không dùng điểm thấp để loại trừ nhiễm khuẩn |
+| **HHS hoặc thể phối hợp DKA–HHS** | 🟠 | Áp lực thẩm thấu huyết thanh, Na⁺ hiệu chỉnh | Đồng thuận 2024 như trên |
+| **Nguyên nhân khác gây lơ mơ**: ngộ độc (rượu/rượu độc, thuốc), viêm màng não, phù não | 🟠 | Khoảng trống thẩm thấu và tiền sử chất. Có cứng gáy/sốt thì xử trí theo cờ đỏ sốt. Tri giác xấu đi khi đang điều trị thì nghi phù não | Đồng thuận an toàn |
+
+## Việc cần làm trong lúc chờ chuyển (không làm chậm việc chuyển)
+1. **Sinh hiệu ngay** (hiện chưa có): mạch, HA, nhịp thở, SpO₂, nhiệt độ, **GCS**, đường huyết mao mạch, **ceton máu/niệu**.
+2. **ABC**: thở O₂ nếu SpO₂ thấp, đặt nằm nghiêng an toàn.
+3. **Đường truyền tĩnh mạch.** Bắt đầu dịch tinh thể đẳng trương nếu có sẵn và đúng phác đồ tại chỗ. Liều và tốc độ do tuyến tiếp nhận quyết định `[CẦN KIỂM CHỨNG theo phác đồ]`.
+4. **ECG** để đánh giá dấu hiệu tăng hoặc hạ K⁺.
+5. **Tại tuyến ngoại trú KHÔNG nên**:
+   - Tiêm insulin rồi cho về.
+   - Bắt đầu insulin khi chưa biết K⁺.
+   - Dùng bicarbonate thường quy.
+6. Bàn giao cho tuyến trên: giờ khởi phát, liều insulin gần nhất (có bỏ liều không), bệnh kèm, dịch và thuốc đã dùng.
+
+## 🌳 Quét nhánh nguy hiểm
+| Nguyên nhân nguy hiểm | Mức nguy hiểm | Khả dĩ | Giữ/Gác |
+|---|---|---|---|
+| DKA nặng | Rất cao | Rất cao | **GIỮ.** Xác nhận bằng ceton, pH, HCO₃⁻ |
+| Nhiễm khuẩn huyết khởi phát | Rất cao | Chưa rõ (thiếu nhiệt độ, HA) | **GIỮ.** Chỉ gác khi có sinh hiệu và khám ổ nhiễm |
+| Rối loạn K⁺ → loạn nhịp | Rất cao | Cao trong DKA | **GIỮ.** Loại trừ bằng ECG và điện giải |
+| Phối hợp HHS | Cao | Trung bình | **GIỮ.** Áp lực thẩm thấu |
+| Ngộ độc, viêm màng não | Cao | Thấp đến trung bình | **GIỮ** đến khi hỏi tiền sử và khám thần kinh |
+
+Nếu tri giác xấu đi hoặc HA tụt thì nâng mức khẩn và xét đặt nội khí quản/hồi sức sốc.
+
+## Câu hỏi an toàn bắt buộc
+Hỏi khi người bệnh tỉnh lại hoặc hỏi người nhà: **lý do bỏ insulin** (không có thuốc, chi phí, cố ý). Nếu có dấu hiệu cố ý bỏ insulin hoặc ý tưởng tự hại thì hỏi ý tưởng tự sát theo `_CAU-HOI-AN-TOAN-BAT-BUOC.md` và hội chẩn tâm thần sau khi ổn định.
+
+**Safety-netting:** không áp dụng. Ca này **không theo dõi ngoại trú**.
+
+→ **Bàn giao:** KHÔNG tiếp tục chuỗi EBM ngoại trú. Ưu tiên chuyển cấp cứu. Chỉ trả về `dieu-phoi-lam-sang` sau khi đã ổn định ở tuyến cấp cứu.
+
+```
+✦ SELF-CHECK sang-loc-co-do — Bước 0 / C1:
+  ĐÃ ĐẠT: cờ đỏ nêu ở đầu gói; phân tầng 🔴; hành động cấp cứu; quét nhánh rộng;
+          không chẩn đoán xác định (dạng NGHI); không PII; không kê đơn liều cụ thể
+  CÒN THIẾU: sinh hiệu/GCS [CẦN BỔ SUNG]; PMID đồng thuận 2024 và ngưỡng K⁺
+             [CẦN KIỂM CHỨNG — chưa chạy check_citation_retraction.py]
+  KẾT: ĐẠT TỰ KIỂM cho quyết định an toàn (chuyển cấp cứu); thiếu sót không làm thay đổi hành động
+```
+
+*Đây là sàng lọc an toàn, không thay thế khám trực tiếp.*
+**Cần bác sĩ kiểm chứng.**

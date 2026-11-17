@@ -1,0 +1,86 @@
+# ⛔ CHẶN: CHỐNG CHỈ ĐỊNH TUYỆT ĐỐI (🔴), không kê đơn ở dạng hiện tại
+
+**Nitrate (dùng hằng ngày) + sildenafil** là chống chỉ định. Lý do: hai thuốc cùng làm tăng cGMP nên cộng hưởng gây **tụt huyết áp nặng, khó hồi phục**, có thể dẫn đến ngất, nhồi máu cơ tim hoặc tử vong.
+
+- **Không có liều thấp an toàn.** "Kê liều thấp thôi", "uống cách giờ", "uống sau ăn" đều **không** khắc phục được chống chỉ định này.
+- **Đổi sang thuốc ức chế PDE5 khác cũng không giải quyết được.** Tadalafil, vardenafil và avanafil cùng chống chỉ định với nitrate.
+- Agent chỉ đề xuất. Quyết định thuộc bác sĩ (Cổng A). Đơn chưa được sửa.
+
+---
+
+**Đối chiếu thuốc:** 2 thuốc (1 đang dùng, 1 dự kiến).
+
+**Dữ kiện còn thiếu `[CẦN BỔ SUNG]`:**
+- Loại nitrate (isosorbide mononitrate/dinitrate, miếng dán, nitroglycerin ngậm khi cần) và **lý do dùng**.
+- Bệnh mạch vành: ổn định hay không, mức độ đau thắt ngực, phân suất tống máu.
+- Huyết áp nền.
+- Chỉ định sildenafil: rối loạn cương hay tăng áp động mạch phổi.
+- Thuốc khác đang dùng: chẹn alpha, hạ áp, chất ức chế CYP3A4, riociguat.
+- eGFR, chức năng gan, tuổi.
+
+### 🔴 NGHIÊM TRỌNG / CHỐNG CHỈ ĐỊNH: xử lý trước khi kê
+
+**1. Sildenafil + nitrate hữu cơ (mọi dạng, dùng đều hay thỉnh thoảng)**
+- **Cơ chế:** nitrate cho NO, làm tăng tạo cGMP. Ức chế PDE5 làm giảm phân hủy cGMP. Kết quả là giãn mạch hệ thống cộng hưởng và tụt huyết áp nặng.
+- **Đề xuất:** **không kê sildenafil khi bệnh nhân còn dùng nitrate.** Các hướng thay thế ở mục "Phương án" bên dưới.
+- **Nguồn:**
+  - Nhãn FDA VIAGRA®/REVATIO® (sildenafil), mục Contraindications: chống chỉ định với "nitric oxide donors, such as organic nitrates or organic nitrites in any form" và với chất kích thích guanylate cyclase (riociguat).
+  - Cheitlin MD et al. ACC/AHA Expert Consensus: Use of sildenafil in patients with cardiovascular disease. *Circulation* 1999;99:168–177. PMID 9884399 `[CẦN KIỂM CHỨNG PMID]`.
+  - Knuuti J et al. 2019 ESC Guidelines for chronic coronary syndromes. *Eur Heart J* 2020;41:407–477. DOI 10.1093/eurheartj/ehz425 `[CẦN KIỂM CHỨNG]`.
+
+**2. Đồ uống/hít "poppers" (amyl/alkyl nitrite)**
+Đây cũng là chất cho NO nên cùng chống chỉ định. Cần hỏi và dặn bệnh nhân (nhãn FDA, cùng mục trên).
+
+### 🟠 THẬN TRỌNG (áp dụng nếu sau này nitrate được ngưng và cân nhắc lại PDE5)
+
+- **Khoảng cách nitrate ↔ PDE5:** theo đồng thuận ACC/AHA, không dùng nitrate trong khoảng **24 giờ sau sildenafil** (khoảng **48 giờ sau tadalafil**) `[CẦN KIỂM CHỨNG theo guideline hiện hành]`.
+  - Thời gian "rửa thuốc" cần thiết sau khi **ngưng nitrate tác dụng kéo dài** trước khi bắt đầu PDE5 **chưa có ngưỡng chuẩn** `[CẦN KIỂM CHỨNG / hội chẩn tim mạch]`.
+- **Chẹn alpha** (doxazosin, tamsulosin…) và thuốc hạ áp khác: tăng nguy cơ hạ huyết áp tư thế. Cần rà lại khi có danh sách thuốc đầy đủ.
+- **Chất ức chế CYP3A4 mạnh** (ritonavir, clarithromycin, ketoconazole…): làm tăng nồng độ sildenafil. Liều chỉnh chỉ nêu theo nhãn thuốc `[CẦN KIỂM CHỨNG]`.
+- **Khả năng hoạt động tình dục về tim mạch:** người dùng nitrate hằng ngày thường có bệnh mạch vành có triệu chứng. Cần phân tầng nguy cơ trước khi khuyến khích hoạt động tình dục. Nguồn: Nehra A et al. Princeton III Consensus. *Mayo Clin Proc* 2012;87(8):766–778. PMID 22862865 `[CẦN KIỂM CHỨNG PMID]`.
+
+### 🟡 LƯU Ý / THEO DÕI
+
+- **Bối cảnh Việt Nam:** nhiều "thuốc cường dương thảo dược", thực phẩm chức năng hoặc hàng xách tay bị **trộn lẫn sildenafil/tadalafil không ghi nhãn**. Cần dặn rõ bệnh nhân **không tự mua** các sản phẩm này khi đang dùng nitrate.
+- Rối loạn cương có thể là dấu hiệu bệnh tim mạch tiến triển. Cần rà lại mức kiểm soát yếu tố nguy cơ (huyết áp, lipid, đường huyết, hút thuốc).
+
+---
+
+## Phương án để bác sĩ cân nhắc (có nguồn, bác sĩ quyết)
+
+1. **Đánh giá lại chỉ định nitrate (hội chẩn tim mạch).**
+   - Nếu nitrate dùng hằng ngày không còn thật sự cần thiết, hoặc có thể thay bằng thuốc chống đau thắt ngực khác (chẹn beta, chẹn kênh calci, ranolazine…), thì sau khi ngưng nitrate có thể xét lại PDE5.
+   - Thời gian rửa thuốc và phân tầng nguy cơ tim mạch cần thống nhất với bác sĩ tim mạch `[CẦN KIỂM CHỨNG]`.
+   - Nguồn: ESC 2019 CCS; Princeton III.
+2. **Giữ nitrate và dùng phương án không phải PDE5 cho rối loạn cương:**
+   - dụng cụ hút chân không;
+   - alprostadil tiêm thể hang hoặc đặt niệu đạo, chuyển chuyên khoa tiết niệu/nam học.
+   - Các phương án này không có tương tác cơ chế cGMP với nitrate, nhưng **vẫn cần đánh giá khả năng chịu đựng hoạt động tình dục về tim mạch** (Princeton III) `[CẦN KIỂM CHỨNG chi tiết liều/chống chỉ định theo nhãn]`.
+3. **Nếu chỉ định sildenafil là tăng áp động mạch phổi (Revatio):** vẫn chống chỉ định với nitrate. Cần hội chẩn chuyên khoa tim phổi.
+
+## Safety-netting (dặn bệnh nhân)
+
+- **Không dùng** sildenafil hoặc bất kỳ "thuốc tăng cường sinh lý" nào khi đang dùng nitrate.
+- Nếu **đã lỡ uống cả hai** và thấy choáng váng, ngất, vã mồ hôi, đau ngực: **gọi cấp cứu 115 ngay**, nằm và kê chân cao.
+- Khi đến cấp cứu vì đau ngực, **phải báo nhân viên y tế** là đã uống thuốc nhóm PDE5 và thời điểm uống. Không được tự ngậm nitroglycerin trong khoảng thời gian đó.
+- Tái khám tim mạch theo lịch để đánh giá lại phác đồ chống đau thắt ngực.
+
+---
+
+**Ghi chú kiểm chứng:** chưa kiểm rút bài các PMID/DOI trên vì công cụ `check_citation_retraction.py` không chạy được trong phiên này. Cần tra trước khi đưa vào hồ sơ. Không gán mức GRADE vì nguồn chống chỉ định là nhãn thuốc và đồng thuận chuyên gia.
+
+```
+✦ SELF-CHECK ke-don-an-toan — Cổng A:
+  ĐÃ ĐẠT: cờ CHẶN 🔴 ở đầu output · cơ chế + nguồn (nhãn FDA, ACC/AHA, ESC) ·
+          không bịa liều (khoảng thời gian/rửa thuốc gắn [CẦN KIỂM CHỨNG]) ·
+          phương án thay thế có nguồn · safety-netting · không PII ·
+          không tự sửa đơn (đề xuất, bác sĩ quyết) · cổng thai kỳ/tâm thần không kích hoạt
+          (nếu bệnh nhân nữ dùng cho tăng áp động mạch phổi → rà lại cổng S2)
+  CÒN THIẾU: [CẦN BỔ SUNG] loại nitrate/chỉ định, danh sách thuốc đầy đủ, HA, eGFR/gan;
+             kiểm rút bài PMID chưa chạy công cụ
+  KẾT: ĐẠT TỰ KIỂM ở mức cảnh báo chống chỉ định; rà toàn diện cần dữ kiện bổ sung
+```
+
+*Đây là rà soát hỗ trợ; quyết định kê đơn thuộc về bác sĩ điều trị.*
+
+**Cần bác sĩ kiểm chứng.**

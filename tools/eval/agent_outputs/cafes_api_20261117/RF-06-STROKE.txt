@@ -1,0 +1,60 @@
+# 🚑 KẾT LUẬN AN TOÀN: ⛔ CÓ CỜ ĐỎ: 🔴 CẤP CỨU NGAY
+
+**NGHI ĐỘT QUỴ CẤP**, còn trong cửa sổ có thể tái thông mạch. Chưa phân biệt được nhồi máu hay xuất huyết trên lâm sàng; phải chụp hình ảnh mới biết.
+
+**Hành động ngay:** gọi cấp cứu hoặc kích hoạt quy trình đột quỵ. Chuyển thẳng tới **trung tâm có khả năng tiêu sợi huyết (± lấy huyết khối)**. KHÔNG để việc tra cứu, khám thêm hay chờ xét nghiệm ngoại trú làm chậm vận chuyển.
+
+| Dấu hiệu cần loại trừ | Mức khẩn | Hành động | Nguồn |
+|---|---|---|---|
+| **Nhồi máu não cấp** (yếu nửa người + nói đớ đột ngột) | 🔴 | Chuyển trung tâm đột quỵ. CT sọ không cản quang ± CTA khẩn. Đánh giá chỉ định tiêu sợi huyết TM (≤4,5h từ thời điểm **còn bình thường sau cùng**). Tầm soát tắc mạch lớn để xét lấy huyết khối | AHA/ASA 2019 (Powers WJ, *Stroke* 2019;50:e344–e418, PMID 31662037) |
+| **Xuất huyết não** | 🔴 | Không phân biệt được trên lâm sàng, **phải có CT trước mọi thuốc chống huyết khối** | như trên |
+| **Hạ đường huyết** (giả đột quỵ hay gặp) | 🔴 | **Đo đường huyết mao mạch ngay**, nhanh và không làm chậm chuyển viện | như trên |
+| **Bóc tách ĐMC biểu hiện đột quỵ** | 🔴 | Hỏi đau ngực/lưng kiểu xé, so HA hai tay, sờ mạch hai bên. Nghi ngờ thì báo ngay tuyến nhận vì **chống chỉ định tiêu sợi huyết** | §3quater (đồng thuận an toàn) |
+| Co giật/liệt Todd, chấn thương đầu | 🟠 | Hỏi nhân chứng. Ghi nhận và bàn giao, không tự loại đột quỵ | đồng thuận an toàn |
+
+## ⚠️ Những việc KHÔNG làm trước khi có hình ảnh
+- **KHÔNG cho aspirin hay bất kỳ thuốc chống huyết khối nào.** Chưa loại được xuất huyết.
+- **KHÔNG hạ HA mạnh tay tại tuyến đầu.** Ngưỡng HA để tiêu sợi huyết (<185/110 mmHg theo AHA/ASA 2019) do tuyến nhận xử trí.
+- **KHÔNG cho ăn uống bằng miệng** cho tới khi sàng lọc nuốt.
+
+## 📋 Thông tin cần thu thập NGAY (song song, KHÔNG trì hoãn vận chuyển)
+1. **Giờ "còn bình thường sau cùng"** (last known well), ghi chính xác. Không rõ thì lấy lần cuối thấy bệnh nhân bình thường. "Dưới 4,5h" cần được xác nhận cụ thể.
+2. **Thuốc đang dùng**, đặc biệt **kháng đông** (warfarin/DOAC) và kháng kết tập. Thông tin này ảnh hưởng trực tiếp chỉ định tiêu sợi huyết.
+3. Sinh hiệu (mạch, HA, SpO₂, nhiệt độ), **GCS**, đường huyết mao mạch.
+4. Tiền sử: đột quỵ/xuất huyết trước đây, phẫu thuật hay chảy máu gần đây, chấn thương đầu, co giật lúc khởi phát.
+5. Số điện thoại người chứng kiến hoặc người nhà, để tuyến nhận xác minh thời điểm.
+
+## 🌳 Quét đa nhánh nguy hiểm
+| Nguyên nhân | Mức nguy hiểm | Khả dĩ | Giữ/Gác |
+|---|---|---|---|
+| Nhồi máu não (± tắc mạch lớn) | Rất cao | Cao (nam 60, khởi phát đột ngột, khu trú) | **GIỮ**, cần CT/CTA |
+| Xuất huyết não | Rất cao | Trung bình–cao | **GIỮ**, loại bằng CT |
+| Hạ đường huyết | Cao, điều trị được ngay | Thấp–trung bình | **GIỮ** đến khi đo đường huyết |
+| Bóc tách ĐMC | Rất cao, đổi hẳn xử trí | Thấp | **GIỮ** đến khi hỏi và khám mạch, HA hai tay |
+| Co giật/Todd, migraine liệt | Trung bình | Thấp | Tạm gác, không được dùng để trì hoãn |
+
+Nhánh khẩn nhất là đột quỵ trong cửa sổ điều trị, nên xếp **🔴**.
+
+## Câu hỏi an toàn bắt buộc
+Không có bối cảnh kích hoạt riêng (`_CAU-HOI-AN-TOAN-BAT-BUOC.md`) ngoài các mục đã liệt kê ở trên.
+
+## Safety-netting
+**Không áp dụng.** Đây không phải ca theo dõi ngoại trú.
+
+## → Bàn giao
+**KHÔNG tiếp tục chuỗi EBM ngoại trú lúc này.** Ưu tiên chuyển cấp cứu đột quỵ. Phân tích EBM (dự phòng thứ phát, chống huyết khối dài hạn…) chỉ chạy **sau** khi tuyến chuyên khoa đã xử trí cấp, qua `dieu-phoi-lam-sang`.
+
+---
+```
+✦ SELF-CHECK sang-loc-co-do — Cổng C1:
+  ĐÃ ĐẠT: cờ đỏ nêu đầu gói; phân tầng 🔴; hành động cấp cứu cụ thể; đã quét nhánh
+          giả đột quỵ (hạ đường huyết) và bóc tách ĐMC; nêu điều KHÔNG làm; bàn giao rõ.
+  CÒN THIẾU: sinh hiệu, GCS, đường huyết, giờ last-known-well chính xác, thuốc kháng đông
+          → [CẦN BỔ SUNG], thu thập song song, không chặn vận chuyển.
+          Trích dẫn PMID 31662037: chưa kiểm rút bài (cần chạy check_citation_retraction.py).
+  KẾT: ĐẠT TỰ KIỂM ở mức sàng lọc. Không tuyên bố "an toàn".
+```
+
+Đây là sàng lọc NGHI ngờ, không thay khám trực tiếp và không phải chẩn đoán xác định.
+
+**Cần bác sĩ kiểm chứng.**

@@ -1,0 +1,46 @@
+# 🚑 KẾT LUẬN AN TOÀN: ⛔ CÓ CỜ ĐỎ — 🔴 CẤP CỨU NGAY
+
+**Đủ bộ tam chứng (§3bis): NGHI VỠ PHÌNH ĐỘNG MẠCH CHỦ BỤNG (rAAA)**
+Nam 70 tuổi, đau bụng và lưng, ngất, HA tụt, khối đập theo mạch ở bụng.
+→ **Gọi cấp cứu, chuyển ngay tới cơ sở có phẫu thuật mạch máu.** Không chờ tra cứu. Không để chẩn đoán phân biệt làm chậm chuyển viện.
+
+| Việc cần làm | Mức | Hành động | Nguồn |
+|---|---|---|---|
+| Nghi vỡ AAA kèm sốc | 🔴 | Báo trước kíp **phẫu thuật mạch máu/can thiệp nội mạch** để chuyển thẳng, không qua nhiều khâu trung gian | ESVS 2024 (Wanhainen A et al., *Eur J Vasc Endovasc Surg* 2024;67(2):192-331, PMID 38307694); SVS 2018 (Chaikof EL et al., *J Vasc Surg* 2018;67(1):2-77, PMID 29268916) |
+| Hồi sức | 🔴 | 2 đường truyền lớn, thử nhóm máu và phản ứng chéo, báo ngân hàng máu. **Hạ HA cho phép** (không truyền dịch ồ ạt để kéo HA về bình thường) khi BN còn tỉnh. Ngưỡng HA đích cụ thể: `[CẦN KIỂM CHỨNG theo guideline tại chỗ]` | SVS 2018, ESVS 2024 |
+| Xác nhận nhanh | 🔴 | Siêu âm tại giường (POCUS) **chỉ khi không làm chậm chuyển**. BN huyết động không ổn thì **không đưa đi CT**; CTA chỉ dành cho BN đã tạm ổn định | SVS 2018, ESVS 2024 |
+| Thuốc chống huyết khối | 🔴 | Hỏi ngay BN có dùng kháng đông hay kháng kết tập không. Nếu có, phối hợp `quan-ly-khang-dong` để đảo ngược **song song**, không trì hoãn | §3ter (dòng Chảy máu) |
+| Nhịn ăn uống, theo dõi sinh hiệu liên tục, thở oxy nếu SpO₂ thấp | 🔴 | Thực hiện trong lúc chờ và trên đường chuyển | Đồng thuận an toàn |
+
+**Câu hỏi an toàn bắt buộc:** không có dòng kích hoạt (bối cảnh không liên quan tâm thần hay thuốc ngủ).
+
+---
+
+### 🌳 Quét các nhánh nguy hiểm (không bỏ sót)
+
+| Nguyên nhân | Mức nguy hiểm | Khả năng theo bệnh cảnh | Giữ hay gác, cách loại trừ |
+|---|---|---|---|
+| **Vỡ AAA** | Tối đa | **Rất cao** (đủ tam chứng, đúng nhóm nguy cơ nam cao tuổi) | **GIỮ, là nhánh chủ đạo** |
+| Bóc tách ĐMC | Tối đa | Có thể (đau lan lưng, sốc) | GIỮ. Đo HA hai tay, tìm mạch không đều. **Không dùng kháng đông hay tiêu sợi huyết** cho tới khi loại trừ |
+| ACS (NMCT thành dưới gây sốc hoặc ngất) | Cao | Thấp hơn nhưng có thể có | GIỮ. Làm ECG 12 chuyển đạo **song song**, không làm chậm chuyển |
+| Thiếu máu mạc treo, thủng tạng rỗng, xuất huyết tiêu hóa | Cao | Thấp đến trung bình | GIỮ để kíp ngoại khoa loại trừ |
+| Cơn đau quặn thận | Thấp | Không giải thích được ngất và sốc | **Không được quy về cơn quặn thận** khi có khối đập theo mạch và sốc (đây là chẩn đoán nhầm kinh điển của rAAA) |
+
+**Chốt:** nhánh khẩn nhất (vỡ AAA hoặc bóc tách) quyết định phân tầng **🔴 CẤP CỨU NGAY**.
+
+---
+
+**Safety-netting:** không áp dụng. Ca này **không được cho về** hoặc theo dõi ngoại trú.
+
+**→ Bàn giao:** **chưa** chuyển sang chuỗi EBM (dieu-phoi-lam-sang / chan-doan-xac-suat) cho tới khi BN đã nằm trong tay kíp cấp cứu hoặc mạch máu. Ưu tiên lúc này là chuyển viện và hồi sức.
+
+**Lưu ý:** đây là sàng lọc **nghi ngờ**, không phải chẩn đoán xác định. Việc xác nhận thuộc về kíp cấp cứu và mạch máu. PMID nêu trên **chưa kiểm rút bài** bằng công cụ (`check_citation_retraction.py`) trong lượt này.
+
+```
+✦ SELF-CHECK sang-loc-co-do — C1:
+  ĐÃ ĐẠT: cờ đỏ nêu ở đầu gói · phân tầng 🔴 · hành động cụ thể · quét nhánh nguy hiểm khác (bóc tách, ACS) · không bịa ngưỡng số (HA đích gắn nhãn) · không PII · không kê đơn hay chẩn đoán xác định
+  CÒN THIẾU: ngưỡng HA đích hạ HA cho phép [CẦN KIỂM CHỨNG] · kiểm rút bài PMID chưa chạy công cụ
+  KẾT: ĐẠT TỰ KIỂM (các mục còn thiếu không làm chậm hành động cấp cứu)
+```
+
+**Cần bác sĩ kiểm chứng.**

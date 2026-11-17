@@ -1,0 +1,73 @@
+# 🚑 KẾT LUẬN AN TOÀN: ⛔ CÓ CỜ ĐỎ: 🔴 CẤP CỨU NGAY
+
+**NGHI XOẮN TINH HOÀN** cho tới khi loại trừ được. Đây là cấp cứu ngoại khoa có cửa sổ thời gian. Ca này đang **ở trong cửa sổ <6 giờ**, giai đoạn khả năng cứu tinh hoàn cao nhất. **Không trì hoãn chuyển viện vì chờ xét nghiệm, siêu âm hay tra cứu.**
+
+**Hành động ngay:**
+1. **Chuyển cấp cứu hoặc gọi Tiết niệu/Ngoại trực ngay.** Ghi rõ **giờ khởi phát đau** để tính thời gian thiếu máu.
+2. **Nhịn ăn uống hoàn toàn**, chuẩn bị cho khả năng mổ thám sát.
+3. Giảm đau. Đo sinh hiệu (mạch, HA, nhiệt độ). Thiếu sinh hiệu **không phải lý do để chờ**.
+4. **Siêu âm Doppler bìu chỉ làm khi KHÔNG làm chậm phẫu thuật.** Nghi ngờ lâm sàng cao thì có thể mổ thám sát mà không cần siêu âm. Doppler còn tưới máu cũng **không loại trừ hẳn** xoắn (xoắn không hoàn toàn hoặc xoắn gián đoạn).
+5. Tháo xoắn bằng tay (nếu có) chỉ do chuyên khoa làm và **chỉ là biện pháp tạm thời**, không thay phẫu thuật cố định.
+
+---
+
+### Bảng cờ đỏ
+
+| Dấu hiệu cần loại trừ | Mức khẩn | Hành động | Nguồn |
+|---|---|---|---|
+| **Xoắn tinh hoàn**: đau dữ dội đột ngột, sưng, thường kèm buồn nôn/nôn, tinh hoàn nằm cao/ngang, mất phản xạ da bìu | 🔴 | Chuyển cấp cứu + hội chẩn Tiết niệu/Ngoại ngay; mổ thám sát nếu nghi cao | EAU Guidelines (Paediatric Urology, mục xoắn tinh hoàn); thang **TWIST** (Barbosa JA et al., *J Urol* 2013): **đã kiểm định chủ yếu ở trẻ em, áp cho người lớn cần thận trọng** `[CẦN KIỂM CHỨNG PMID]` |
+| **Hoại thư Fournier**: sưng đỏ lan nhanh, đau vượt mức so với khám, sốt, lạo xạo dưới da, nhiễm độc toàn thân; nguy cơ cao ở ĐTĐ, nghiện rượu, suy giảm miễn dịch | 🔴 | Kháng sinh phổ rộng + cắt lọc ngoại khoa khẩn; đánh giá nhiễm khuẩn huyết (qSOFA **và** SIRS, xem §3ter) | Đồng thuận an toàn ngoại khoa `[CẦN KIỂM CHỨNG nguồn cụ thể]` |
+| **Thoát vị bẹn–bìu nghẹt**: khối phồng bẹn không đẩy lên được, nôn, bí trung đại tiện | 🔴 | Ngoại khoa cấp cứu | Đồng thuận ngoại khoa |
+| **Chấn thương/vỡ tinh hoàn** (nếu có tiền sử va chạm) | 🔴/🟠 | Siêu âm + Tiết niệu khẩn | Đồng thuận |
+| **Đau lan xuống bìu từ nguyên nhân ngoài bìu**: sỏi niệu quản; phình ĐMC bụng (hiếm ở 30 tuổi) | 🟠 | Khám bụng/hông lưng, tổng phân tích nước tiểu | Đồng thuận |
+| Viêm mào tinh hoàn–tinh hoàn cấp (khởi phát từ từ hơn, sốt, tiểu buốt, tiết dịch niệu đạo) | 🟠 | **Chỉ chẩn đoán sau khi đã loại xoắn**, không phải chẩn đoán mặc định | Đồng thuận an toàn |
+
+> ⚠️ **Bẫy hay gặp:** "sưng đỏ" ở nam 30 tuổi dễ bị quy ngay là viêm mào tinh hoàn rồi kê kháng sinh cho về. Với đau **đột ngột, dữ dội, <6 giờ**, xoắn tinh hoàn phải được loại trừ trước. Sai theo hướng này có thể dẫn tới **mất tinh hoàn**.
+
+---
+
+### 🌳 Quét rộng nguyên nhân nguy hiểm
+
+| Nguyên nhân nguy hiểm | Mức nguy hiểm | Khả dĩ theo bệnh cảnh | Giữ/Gác (cách loại trừ) |
+|---|---|---|---|
+| Xoắn tinh hoàn | Rất cao (mất tinh hoàn, phụ thuộc thời gian) | **Cao**: đột ngột, dữ dội, <6 giờ | **GIỮ.** Loại bằng khám chuyên khoa ± Doppler ± mổ thám sát |
+| Hoại thư Fournier | Rất cao (tử vong) | Thấp–trung bình: có "đỏ", chưa rõ sốt, nhiễm độc hay bệnh nền | **GIỮ** đến khi có sinh hiệu, bệnh nền và khám da tầng sinh môn |
+| Thoát vị nghẹt | Cao | Chưa rõ: cần khám vùng bẹn | **GIỮ** |
+| Xoắn phần phụ tinh hoàn | Thấp | Có thể | Gác tạm. Chỉ chẩn đoán sau khi đã loại xoắn tinh hoàn |
+| Viêm mào tinh hoàn | Trung bình | Có thể | Gác tạm. **Không** dùng làm chẩn đoán mặc định |
+
+Nhánh khẩn nhất (xoắn tinh hoàn) quyết định phân tầng **🔴**. Nếu xuất hiện thêm sốt cao, tụt HA hoặc da hoại tử, mở lại ngay nhánh Fournier/nhiễm khuẩn huyết.
+
+---
+
+### Câu hỏi cần hỏi nhanh (hỏi song song khi chuyển, không trì hoãn chuyển)
+- **Giờ khởi phát chính xác**, và có bị đánh thức khi đang ngủ không.
+- Buồn nôn/nôn? Đã từng có cơn đau tương tự rồi tự hết không (gợi ý xoắn gián đoạn)?
+- Sốt, tiểu buốt, tiết dịch niệu đạo, quan hệ tình dục không an toàn gần đây?
+- Chấn thương? Khối phồng vùng bẹn?
+- ĐTĐ, suy giảm miễn dịch, nghiện rượu (nguy cơ Fournier)?
+
+**Câu hỏi an toàn bắt buộc** (`_CAU-HOI-AN-TOAN-BAT-BUOC.md`): bối cảnh này không kích hoạt câu hỏi tâm thần/tự sát. Không áp dụng.
+
+**Safety-netting:** **Không áp dụng phương án theo dõi ngoại trú** cho ca này. Phải chuyển khẩn. Nếu vì lý do nào đó bệnh nhân từ chối hoặc chậm chuyển: giải thích rõ nguy cơ mất tinh hoàn tăng theo từng giờ, ghi nhận vào hồ sơ, và yêu cầu đến cấp cứu ngay.
+
+**→ Bàn giao:** CHƯA chuyển sang chuỗi EBM chẩn đoán/điều trị. Ưu tiên chuyển cấp cứu/Tiết niệu trước. Sau khi đã loại trừ xoắn và Fournier mới trả quyền cho `dieu-phoi-lam-sang` / `chan-doan-xac-suat`.
+
+---
+
+```
+✦ SELF-CHECK sang-loc-co-do — Bước 0 / Hạng mục C1:
+  ĐÃ ĐẠT: đã sàng cờ đỏ theo hội chứng bìu cấp; phân tầng 🔴; hành động + ngưỡng chuyển
+          nêu ở đầu gói; quét rộng (ToT) không cắt nhánh nguy hiểm; không chẩn đoán xác định,
+          không kê đơn; không PII.
+  CÒN THIẾU: sinh hiệu chưa có [CẦN BỔ SUNG]; PMID cho EAU/TWIST/Fournier chưa tra
+             [CẦN KIỂM CHỨNG]; chưa chạy check_citation_retraction.py, nên ở trạng thái
+             "chưa kiểm rút bài". Ghi chú: hội chứng bìu cấp chưa có dòng riêng trong
+             §3ter/§3quater, nên đề xuất bổ sung bảng.
+  KẾT: ĐẠT TỰ KIỂM cho mục tiêu an toàn (cờ đỏ đã nêu, không trì hoãn xử trí);
+       trích dẫn còn [CẦN KIỂM CHỨNG], không ảnh hưởng quyết định chuyển cấp cứu.
+```
+
+*Đây là sàng lọc an toàn, không thay khám trực tiếp và không phải chẩn đoán xác định.*
+
+**Cần bác sĩ kiểm chứng.**

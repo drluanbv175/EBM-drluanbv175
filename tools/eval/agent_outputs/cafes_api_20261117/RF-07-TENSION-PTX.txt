@@ -1,0 +1,72 @@
+# 🚑 KẾT LUẬN AN TOÀN: ⛔ CÓ CỜ ĐỎ: 🔴 CẤP CỨU NGAY
+
+**Nghi TRÀN KHÍ MÀNG PHỔI ÁP LỰC (tension pneumothorax).** Ca này có ba dấu: khó thở đột ngột, đau ngực kiểu màng phổi một bên và lệch khí quản. Lệch khí quản là dấu hiệu **muộn**, báo trung thất đã bị đẩy, nên bệnh nhân có thể trụy tuần hoàn bất cứ lúc nào.
+
+> Tràn khí áp lực là **chẩn đoán lâm sàng**. KHÔNG chờ X-quang hay CT nếu bệnh nhân đã có dấu sốc hoặc thiếu oxy.
+
+---
+
+## ⚡ Hành động NGAY (song song, không tuần tự)
+
+| # | Việc làm | Ghi chú |
+|---|---|---|
+| 1 | **Gọi cấp cứu 115 / chuyển cấp cứu khẩn** | Không cho bệnh nhân tự đi |
+| 2 | **Đo sinh hiệu ngay**: mạch, HA, nhịp thở, SpO₂, tri giác | Hiện **chưa có sinh hiệu**, nên chưa thể tuyên bố "ổn định" |
+| 3 | Oxy lưu lượng cao, để bệnh nhân ngồi, mắc monitor, lập đường truyền | |
+| 4 | **Khám nhanh bên đau**: rì rào phế nang, gõ ngực, tĩnh mạch cổ | Gõ **vang** + mất rì rào ở bên khí quản bị đẩy ra xa → tràn khí áp lực. Gõ **đục** → tràn máu/tràn dịch khối lượng lớn (xem bảng dưới) |
+| 5 | **Nếu có tụt HA, SpO₂ thấp hoặc lơ mơ, và cơ sở có năng lực:** giải áp kim (hoặc mở ngực bằng ngón tay) ở bên tổn thương, sau đó **dẫn lưu màng phổi** | ATLS 10th ed. (2018) cho người lớn: khoang liên sườn 4–5, phía trước đường nách giữa. Vị trí khoang LS 2 đường giữa đòn có tỷ lệ thất bại cao hơn ở thành ngực dày `[CẦN KIỂM CHỨNG theo phác đồ cơ sở]` |
+| 6 | **Tránh thông khí áp lực dương trước khi giải áp** | Có thể làm tràn khí áp lực nặng nhanh |
+| 7 | **KHÔNG dùng kháng đông hay tiêu sợi huyết** cho tới khi loại trừ tràn khí, tràn máu và bóc tách ĐMC | Xem bảng chẩn đoán phân biệt |
+
+---
+
+## 🌳 Quét rộng nguyên nhân nguy hiểm (không bỏ sót)
+
+| Nguyên nhân nguy hiểm | Mức nguy hiểm | Khả dĩ theo bệnh cảnh | Giữ/Gác và cách loại trừ |
+|---|---|---|---|
+| **Tràn khí màng phổi áp lực** | 🔴 Tử vong nhanh | **Cao nhất.** Khớp cả 3 dấu, nhất là lệch khí quản | **GIỮ, ƯU TIÊN #1.** Khám lâm sàng, siêu âm tại giường (mất dấu trượt màng phổi) nếu có sẵn và không làm chậm |
+| **Tràn máu / tràn dịch màng phổi khối lượng lớn** | 🔴 | Trung bình. Cũng gây lệch khí quản ra xa bên tổn thương | **GIỮ.** Phân biệt bằng gõ **đục**. Hỏi chấn thương, ung thư. Xử trí bằng dẫn lưu, giải áp kim không giải quyết |
+| **Thuyên tắc phổi** | 🔴 | Trung bình. Đau màng phổi + khó thở đột ngột rất khớp, nhưng **không giải thích lệch khí quản** | **GIỮ** nếu đã loại tràn khí/tràn dịch. Wells/PERC, CTPA |
+| **Hội chứng vành cấp** | 🔴 | Thấp–trung bình. Nam 50 tuổi, đau thiếu điển hình vẫn không loại được | **GIỮ.** ECG 12 chuyển đạo ≤10 phút (AHA/ACC 2021, Gulati, *Circulation* 2021, PMID 34709879) |
+| **Bóc tách ĐMC** | 🔴 | Thấp. Cần hỏi đau xé lan sau lưng, chênh HA hai tay >20 mmHg, mất mạch một bên | **GIỮ** đến khi hỏi và khám xong. Nếu nghi: CT ĐMC cản quang, **cấm kháng đông** |
+| **Xẹp phổi / xẹp thùy lớn** | 🟠 | Thấp. Khí quản lệch **về phía** bên tổn thương, ngược chiều tràn khí | Gác nếu khí quản lệch ra xa |
+
+**Câu hỏi then chốt:** khí quản lệch **về phía nào so với bên đau?**
+- **Ra xa bên đau** → tràn khí áp lực, tràn máu hoặc tràn dịch lớn: 🔴 giải áp hoặc dẫn lưu.
+- **Về phía bên đau** → xẹp phổi. Vẫn là 🔴 vì khó thở đột ngột, nhưng cơ chế khác.
+
+**Bổ sung khi có thể, không trì hoãn xử trí:** tiền sử chấn thương ngực, thủ thuật gần đây (đặt catheter TM trung tâm, chọc dò, thở máy); hút thuốc, COPD hoặc bệnh phổi nền (ở tuổi 50 thường là tràn khí **thứ phát**); ung thư; đang dùng kháng đông.
+
+---
+
+## Nguồn neo
+
+- **ATLS** (American College of Surgeons), 10th ed., 2018: tràn khí áp lực là chẩn đoán lâm sàng, giải áp không chờ hình ảnh. Vị trí giải áp người lớn: khoang LS 4–5 phía trước đường nách giữa.
+- **BTS Guideline for Pleural Disease** (Roberts ME et al., *Thorax* 2023; Suppl 3). `[CẦN KIỂM CHỨNG PMID: chưa tra trực tiếp, không trích số từ trí nhớ]`
+- AHA/ACC 2021 Chest Pain Guideline, PMID 34709879. `[chưa kiểm rút bài bằng check_citation_retraction.py]`
+
+---
+
+**Câu hỏi an toàn bắt buộc:** không kích hoạt trong bệnh cảnh này.
+
+**Safety-netting:** **KHÔNG áp dụng.** Đây là ca 🔴, **không cho về ngoại trú** dưới bất kỳ hình thức nào.
+
+**→ Bàn giao:** **CHƯA chuyển sang chuỗi EBM.** Chỉ trả quyền cho `dieu-phoi-lam-sang` hoặc `chan-doan-xac-suat` **sau khi** bệnh nhân đã được giải áp/dẫn lưu hoặc đã ổn định huyết động và hô hấp tại tuyến cấp cứu. Nếu loại được tràn khí và tràn dịch, chuyển nhánh nghi thuyên tắc phổi/ACS.
+
+---
+
+```
+✦ SELF-CHECK sang-loc-co-do — Bước 0:
+  ĐÃ ĐẠT: kết luận cờ đỏ ở đầu gói; phân tầng 🔴; hành động cấp cứu cụ thể;
+          quét rộng ≥5 nguyên nhân nguy hiểm, giữ cả nhánh hiếm (bóc tách);
+          cảnh báo xung đột xử trí (kháng đông, thông khí áp lực dương);
+          nêu thiếu sinh hiệu → không tuyên bố ổn định; không PII; không bịa ngưỡng số.
+  CÒN THIẾU: sinh hiệu thật; hướng lệch khí quản; kết quả gõ/nghe phổi [CẦN BỔ SUNG];
+             PMID BTS 2023 [CẦN KIỂM CHỨNG]; chưa chạy check_citation_retraction.py.
+  KẾT: ĐẠT TỰ KIỂM cho mục đích sàng lọc an toàn. Các thiếu sót còn lại phụ thuộc
+       khám thực tế, không làm thay đổi phân tầng 🔴.
+```
+
+⚠️ Đây là sàng lọc **NGHI ngờ**, không phải chẩn đoán xác định, và không thay khám trực tiếp.
+
+**Cần bác sĩ kiểm chứng.**

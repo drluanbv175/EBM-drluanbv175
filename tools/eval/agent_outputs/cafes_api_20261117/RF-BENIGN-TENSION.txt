@@ -1,0 +1,54 @@
+# 🚑 SÀNG LỌC CỜ ĐỎ — Bước 0
+
+## KẾT LUẬN AN TOÀN: ✅ Chưa thấy cờ đỏ rõ, nhưng CHƯA khẳng định an toàn
+Bệnh cảnh nghiêng về đau đầu nguyên phát lành tính: người trẻ, đau ê ẩm 2 bên, không sốt, không dấu thần kinh khu trú, vẫn đi làm được. Tuy vậy còn **thiếu sinh hiệu** và **chưa hỏi đủ** một số cờ đỏ độc lập, nên phân tầng tạm là **🟡 theo dõi + safety-netting**. Mức này có thể nâng lên ngay nếu một mục dưới đây dương tính.
+
+## Cần xác nhận NGAY trước khi bàn giao
+| Hỏi/khám | Nếu (+) thì nghĩ tới | Mức khẩn nếu (+) | Nguồn |
+|---|---|---|---|
+| **Khởi phát đột ngột, đạt đỉnh trong <5 phút ("sét đánh")** | Xuất huyết dưới nhện | 🔴 CT sọ khẩn + cấp cứu | NICE CG150; Ottawa SAH Rule (Kane, *AFP* 2023, PMID 37843947) |
+| **Cứng gáy, rối loạn tri giác, ban xuất huyết** (dù không sốt) | Viêm màng não | 🔴 | NICE CG150 |
+| Nặng lên khi ho, rặn hoặc gắng sức; nặng khi nằm; đau làm thức giấc; nôn vọt; nhìn mờ hoặc nhìn đôi | Tăng áp lực nội sọ / tổn thương choán chỗ | 🔴/🟠 hình ảnh sọ | NICE CG150 |
+| Chấn thương đầu gần đây | Máu tụ nội sọ | 🔴/🟠 | NICE CG150 |
+| Suy giảm miễn dịch/HIV, tiền sử ung thư, đang dùng kháng đông | Nhiễm trùng thần kinh trung ương, di căn, chảy máu nội sọ | 🟠–🔴 | NICE CG150 |
+| Người cùng nhà/cùng nơi làm việc cũng đau đầu; dùng bếp than, máy phát hoặc sưởi trong phòng kín | **Ngộ độc CO** | 🔴 | Đồng thuận an toàn `[CẦN KIỂM CHỨNG nguồn]` |
+| **Đo HA, nhiệt độ, mạch, khám đáy mắt** (phù gai) | THA cấp cứu, tăng áp lực nội sọ, sốt ẩn | Theo kết quả | NICE CG150 |
+| Đau khác hẳn kiểu đau đầu thường gặp của bệnh nhân, hoặc tăng dần liên tục | Đau đầu thứ phát | 🟠 | Khung SNNOOP10 (Do TP, *Neurology* 2019, PMID 30587518 `[CẦN KIỂM CHỨNG — chưa kiểm rút bài]`) |
+
+**Câu hỏi an toàn bắt buộc** (`_CAU-HOI-AN-TOAN-BAT-BUOC.md`): chưa kích hoạt, vì bệnh án không ghi mất ngủ, vô vọng hay đòi thuốc ngủ. Nếu khai thác thấy căng thẳng hoặc mất ngủ kèm cảm giác vô vọng, phải hỏi ý tưởng tự sát trước khi kê thuốc.
+
+## 🌳 Quét đa nhánh nguy hiểm
+| Nguyên nhân nguy hiểm | Mức nguy hiểm | Khả năng theo bệnh cảnh hiện có | Giữ/Gác |
+|---|---|---|---|
+| Xuất huyết dưới nhện | Rất cao | Thấp (đau ê ẩm, 3 ngày, sinh hoạt bình thường) | **GIỮ** cho tới khi xác nhận không khởi phát sét đánh |
+| Viêm màng não | Rất cao | Thấp (không sốt, không dấu thần kinh) | Tạm gác. Mở lại nếu có cứng gáy hoặc sốt |
+| Ngộ độc CO | Cao | Chưa đánh giá | **GIỮ**, hỏi phơi nhiễm |
+| Tăng áp lực nội sọ / khối choán chỗ | Cao | Thấp | Tạm gác. Mở lại nếu đau thức giấc, nôn, phù gai |
+| THA cấp cứu | Trung bình–cao | Chưa đo HA | **GIỮ** đến khi có HA |
+
+## Safety-netting (nếu cho theo dõi ngoại trú)
+Quay lại **NGAY** hoặc gọi cấp cứu nếu xuất hiện:
+- đau đầu dữ dội đột ngột;
+- sốt hoặc cứng gáy;
+- lú lẫn, ngủ gà, co giật;
+- yếu hoặc tê nửa người, nói khó, nhìn đôi hoặc mất thị lực;
+- nôn liên tục;
+- đau tăng dần không đáp ứng thuốc giảm đau thông thường.
+
+**Tái khám sau ~1 tuần** nếu không đỡ. Dặn tránh lạm dụng thuốc giảm đau.
+
+→ **Bàn giao:** khi các mục ở bảng "Cần xác nhận" đều âm tính và sinh hiệu bình thường, ca an toàn để tiếp tục EBM qua `chan-doan-xac-suat`, nhánh đau đầu nguyên phát (nghĩ nhiều đau đầu căng cơ), rồi trả quyền cho `dieu-phoi-lam-sang`.
+
+---
+```
+✦ SELF-CHECK sang-loc-co-do — Bước 0:
+  ĐÃ ĐẠT: đối chiếu danh sách không-được-bỏ-sót của đau đầu (§3quater), phân tầng 🟡 có điều kiện,
+          ToT giữ các nhánh nguy hiểm, safety-netting + mốc tái khám, câu hỏi an toàn đã xét, không PII.
+  CÒN THIẾU: sinh hiệu (HA, nhiệt độ, mạch), đáy mắt, kiểu khởi phát, phơi nhiễm CO → [CẦN BỔ SUNG từ bác sĩ];
+             PMID 30587518 chưa chạy check_citation_retraction.py → "chưa kiểm rút bài".
+  KẾT: CHƯA tuyên bố "an toàn". Chỉ bàn giao EBM sau khi bổ sung các mục trên.
+```
+
+*Đây là sàng lọc nghi ngờ, không thay thế khám trực tiếp.*
+
+**Cần bác sĩ kiểm chứng.**

@@ -1,0 +1,75 @@
+# 🚑 KẾT LUẬN AN TOÀN: ⛔ CÓ CỜ ĐỎ — 🔴 CẤP CỨU ĐƯỜNG THỞ NGAY
+
+Sốt, khó nuốt, chảy nước dãi và ngồi chồm ra trước (tư thế kiềng ba chân) gợi ý **NGHI VIÊM NẮP THANH QUẢN CẤP (viêm thượng thanh môn)** hoặc **nhiễm trùng sâu vùng cổ**. Bệnh nhân có nguy cơ **tắc nghẽn đường thở hoàn toàn, đột ngột, bất cứ lúc nào**.
+
+Đây là chẩn đoán **NGHI ngờ**, chưa phải chẩn đoán xác định. Tuy vậy, mọi hành động ở dưới phải làm **NGAY**, không chờ tra cứu hay xét nghiệm.
+
+---
+
+## ⚡ HÀNH ĐỘNG NGAY (theo thứ tự)
+
+| # | Việc PHẢI làm | Việc TUYỆT ĐỐI TRÁNH |
+|---|---|---|
+| 1 | **Gọi cấp cứu / chuyển khẩn** đến nơi có đội kiểm soát đường thở (gây mê và tai mũi họng) | ❌ **KHÔNG đè lưỡi, KHÔNG khám họng** bằng dụng cụ, vì có thể gây co thắt và tắc nghẽn hoàn toàn |
+| 2 | **Để bệnh nhân ở tư thế tự chọn** (ngồi chồm ra trước), giữ bình tĩnh | ❌ **KHÔNG cho nằm ngửa** |
+| 3 | Cho thở O₂ **nếu bệnh nhân chịu được** mà không kích động | ❌ **KHÔNG làm trẻ hoảng sợ hay khóc**: không tách khỏi cha mẹ, không lấy máu hay đặt đường truyền trước khi đường thở được kiểm soát (ở trẻ em) |
+| 4 | Có nhân viên **đi kèm liên tục**, chuẩn bị sẵn dụng cụ kiểm soát đường thở khi vận chuyển | ❌ **KHÔNG cho đi chụp X-quang cổ một mình**. Chẩn đoán hình ảnh không được làm chậm việc kiểm soát đường thở |
+| 5 | Đo sinh hiệu ngay khi có thể mà không gây kích động: SpO₂, nhịp thở, mạch, huyết áp, tri giác | ❌ **KHÔNG cho về nhà**, không hẹn tái khám |
+
+---
+
+## 🌳 Quét rộng các nguyên nhân nguy hiểm, không được bỏ sót
+
+| Nguyên nhân nguy hiểm | Mức nguy hiểm | Khả năng theo bệnh cảnh | Giữ/Gác và cách phân biệt |
+|---|---|---|---|
+| **Viêm nắp thanh quản cấp** | 🔴 Rất cao (tắc đường thở) | **Cao nhất**: đủ "4D" kinh điển (khó nuốt, chảy dãi, suy hô hấp, giọng thay đổi) và tư thế kiềng ba chân | **GIỮ.** Xác nhận bằng nội soi ống mềm do tai mũi họng làm **trong môi trường có sẵn khả năng kiểm soát đường thở** |
+| **Áp xe sau họng / cạnh họng** | 🔴 Cao | Có thể, nhất là ở trẻ nhỏ; thường kèm cứng cổ hoặc đau khi xoay cổ | **GIỮ.** Chụp cắt lớp vùng cổ **chỉ khi** đường thở đã ổn định |
+| **Áp xe quanh amidan** | 🟠 đến 🔴 | Có thể ở thanh thiếu niên và người lớn: khít hàm, giọng "ngậm hạt thị", lưỡi gà lệch | **GIỮ.** Đánh giá khi đường thở an toàn |
+| **Viêm mô tế bào sàn miệng (Ludwig)** | 🔴 Cao | Nếu có sưng cứng vùng dưới hàm hoặc sàn miệng, lưỡi bị đẩy lên, tiền sử nhiễm trùng răng | **GIỮ.** Hỏi và nhìn vùng cổ, dưới hàm (không đè lưỡi) |
+| **Viêm khí quản do vi khuẩn** | 🔴 Cao | Ít khả năng hơn: thường ho nhiều và thở rít, ít chảy dãi | Tạm gác, nhưng mở lại nếu có thở rít hoặc ho ông ổng |
+| **Bạch hầu** (bối cảnh Việt Nam) | 🔴 Cao, kèm nguy cơ lây và độc tố tim | Cần hỏi: **tiêm chủng chưa đủ**, giả mạc trắng xám, cổ bạnh | **GIỮ cho tới khi hỏi tiền sử tiêm chủng.** Nếu nghi: cách ly và báo y tế dự phòng |
+| **Dị vật đường thở hoặc thực quản** | 🔴 | Ít khả năng hơn khi có sốt, nhưng cần hỏi về hóc hoặc nuốt dị vật | Hỏi tiền sử |
+| **Phù mạch / phản vệ** | 🔴 | Thấp, vì có sốt (gợi ý nhiễm trùng) | Tạm gác. Mở lại nếu khởi phát đột ngột sau dùng thuốc hoặc ăn, kèm mề đay hoặc tụt huyết áp |
+| **Nhiễm khuẩn huyết** đi kèm | 🔴 | Cần đánh giá | Khi có sinh hiệu, xét **CẢ qSOFA ≥2 LẪN SIRS ≥2** (không chỉ dùng qSOFA). Ưu tiên đường thở trước |
+
+**Nhánh quyết định mức khẩn:** viêm nắp thanh quản / nhiễm trùng sâu vùng cổ gây tắc đường thở → **🔴**.
+
+---
+
+## ❓ Thông tin còn thiếu (hỏi song song, KHÔNG được làm chậm việc chuyển viện)
+
+- **Tuổi.** Trẻ em hay người lớn sẽ thay đổi cách tiếp cận. Ở trẻ em, ngưỡng chuyển viện thấp hơn và càng phải tránh gây kích động.
+- **Sinh hiệu:** SpO₂, nhịp thở, mạch, huyết áp, tri giác.
+- **Thở rít** khi nghỉ? **Giọng nói** thay đổi (bị nghẹt, như ngậm vật nóng)? Tím tái, li bì?
+- Diễn tiến **nhanh trong vài giờ** hay kéo dài nhiều ngày?
+- **Tiêm chủng** Hib và bạch hầu? Suy giảm miễn dịch? Đái tháo đường?
+- Khít hàm, sưng cổ hoặc sàn miệng, nhiễm trùng răng gần đây, có hóc dị vật không?
+
+**Có bất kỳ dấu hiệu nào sau đây thì tình trạng đã nguy kịch:** thở rít, tím tái, SpO₂ giảm, li bì hoặc lơ mơ, mệt lả. Khi đó cần gọi kíp kiểm soát đường thở **ngay lập tức**.
+
+---
+
+## Bàn giao
+
+- **Chưa bàn giao cho các bước EBM** (chẩn đoán xác suất, kê đơn) cho tới khi **đường thở được bảo đảm** tại tuyến cấp cứu.
+- Kháng sinh, corticoid và thủ thuật dẫn lưu thuộc thẩm quyền tuyến cấp cứu, tai mũi họng và gây mê. Agent này **không kê đơn**.
+- Sau khi đường thở ổn định, chuyển cho `dieu-phoi-lam-sang` / `chan-doan-xac-suat`.
+
+**Safety-netting:** không áp dụng, vì đây là ca **🔴 không được cho về**.
+
+**Nguồn:** Các nguyên tắc trên, gồm bộ "4D", tư thế kiềng ba chân, không đè lưỡi, không cho nằm ngửa và kiểm soát đường thở trước chẩn đoán hình ảnh, là **đồng thuận an toàn phổ quát** trong cấp cứu tai mũi họng và nhi khoa. Agent chưa gắn PMID cụ thể `[CẦN KIỂM CHỨNG nguồn guideline]`. Không có PMID nào được trích, nên chưa cần kiểm tra bài bị rút.
+
+---
+
+```
+✦ SELF-CHECK sang-loc-co-do — Bước 0:
+  ĐÃ ĐẠT: nêu cờ đỏ ở đầu gói; phân tầng 🔴; hành động cụ thể (làm/tránh);
+          quét rộng ≥3 nguyên nhân nguy hiểm, giữ các nhánh chưa loại trừ; xét
+          sepsis bằng cả qSOFA lẫn SIRS; tính bối cảnh Việt Nam (bạch hầu); không bịa
+          ngưỡng hay PMID; không có thông tin định danh bệnh nhân.
+  CÒN THIẾU: [CẦN BỔ SUNG] tuổi, sinh hiệu, thở rít, tiền sử tiêm chủng;
+             nguồn guideline cụ thể [CẦN KIỂM CHỨNG].
+  KẾT: ĐẠT TỰ KIỂM, xếp 🔴. Thông tin thiếu KHÔNG làm thay đổi hành động: vẫn chuyển cấp cứu ngay.
+```
+
+**Cần bác sĩ kiểm chứng.**

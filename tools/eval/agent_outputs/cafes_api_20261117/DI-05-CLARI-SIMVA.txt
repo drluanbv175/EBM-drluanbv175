@@ -1,0 +1,97 @@
+# 🔴 CẢNH BÁO NGHIÊM TRỌNG: CHỐNG CHỈ ĐỊNH, cần xử lý trước khi kê
+
+**Clarithromycin + simvastatin là chống chỉ định theo nhãn simvastatin.** Không kê đồng thời, kể cả liều simvastatin thấp hơn hay đợt kháng sinh ngắn. Agent chỉ đề xuất, bác sĩ quyết định và không tự sửa đơn.
+
+---
+
+**Đối chiếu thuốc:** 2 thuốc được nêu.
+
+**Dữ kiện còn thiếu `[CẦN BỔ SUNG]`:**
+- Chỉ định của clarithromycin (viêm phổi, H. pylori, nhiễm khuẩn hô hấp trên, hay khác).
+- Liều simvastatin chính xác (40 hay 80 mg).
+- Tuổi.
+- eGFR/CrCl.
+- Bệnh mạch vành, QTc.
+- Thuốc dùng kèm, đặc biệt amlodipine, diltiazem, verapamil, amiodarone, colchicine, thuốc kháng đông.
+- Phụ nữ tuổi sinh đẻ hay không.
+
+## 🔴 1. Simvastatin + clarithromycin: nguy cơ tiêu cơ vân
+
+**Cơ chế:**
+- Clarithromycin ức chế mạnh CYP3A4 theo cơ chế bất hoạt enzyme.
+- Simvastatin chuyển hoá bước đầu chủ yếu qua CYP3A4, nên phơi nhiễm simvastatin acid tăng nhiều lần. Mức tăng cụ thể: `[CẦN KIỂM CHỨNG]`.
+- Hậu quả: bệnh cơ, tiêu cơ vân, suy thận cấp.
+- Nguy cơ phụ thuộc liều, nên liều cao càng nặng.
+
+**Nguồn:**
+- Nhãn FDA Zocor (simvastatin): chống chỉ định với thuốc ức chế CYP3A4 mạnh, có tên clarithromycin. Nếu không tránh được clarithromycin thì **phải tạm ngừng simvastatin trong suốt đợt điều trị**.
+- FDA Drug Safety Communication (06/2011) về hạn chế simvastatin 80 mg. URL: `[CẦN KIỂM CHỨNG]`.
+- Patel AM et al., *Ann Intern Med* 2013;158(12):869-76, PMID 23778904. Nghiên cứu đoàn hệ dân số ở người cao tuổi: kê clarithromycin cùng statin chuyển hoá qua CYP3A4 làm tăng nhập viện vì tiêu cơ vân và suy thận cấp.
+
+**ĐỀ XUẤT (theo thứ tự ưu tiên):**
+
+**A. Đổi kháng sinh nếu chỉ định cho phép.** Đây là phương án ưu tiên. Lựa chọn thay thế phụ thuộc chỉ định:
+- Viêm phổi cộng đồng ngoại trú hoặc nhiễm khuẩn hô hấp: cân nhắc amoxicillin hoặc doxycycline (đều thuộc nhóm Access của WHO AWaRe) theo guideline của chỉ định đó.
+- Cần nhóm macrolide: azithromycin ức chế CYP3A4 yếu và không nằm trong danh sách chống chỉ định của nhãn simvastatin. Vẫn còn nguy cơ QT và có ca báo cáo bệnh cơ hiếm gặp `[CẦN KIỂM CHỨNG]`. Azithromycin thuộc nhóm Watch.
+- H. pylori: cân nhắc phác đồ 4 thuốc có bismuth, không chứa clarithromycin. Tỷ lệ kháng clarithromycin cao cũng là lý do đổi. Đối chiếu Maastricht VI hoặc ACG 2024 `[CẦN KIỂM CHỨNG theo dữ liệu kháng tại chỗ]`.
+
+**B. Nếu bắt buộc dùng clarithromycin:**
+- **Tạm ngừng simvastatin** trong suốt đợt kháng sinh (theo nhãn).
+- Thời điểm dùng lại sau đợt: `[CẦN KIỂM CHỨNG]`. Do ức chế theo cơ chế bất hoạt enzyme, CYP3A4 cần vài ngày để hồi phục.
+- Ngừng statin ngắn ngày thường chấp nhận được. Riêng bệnh nhân vừa có hội chứng vành cấp thì cần bác sĩ cân nhắc.
+
+**C. Không nên thay bằng atorvastatin liều cao trong đợt này.**
+- Atorvastatin cũng chuyển hoá qua CYP3A4. Nhãn FDA yêu cầu thận trọng khi liều trên 20 mg cùng clarithromycin.
+- Nếu cần duy trì statin trong đợt kháng sinh thì rosuvastatin hoặc pravastatin ít phụ thuộc CYP3A4. Liều cụ thể theo nhãn: `[CẦN KIỂM CHỨNG]`.
+
+## 🟠 2. Bản thân simvastatin "liều cao"
+
+- Nếu là **80 mg**: FDA hạn chế mức liều này. Không khởi đầu và không tăng lên 80 mg. Chỉ duy trì ở người đã dùng ổn định từ 12 tháng trở lên mà không có bệnh cơ.
+- Thử nghiệm SEARCH so sánh 80 mg với 20 mg cho thấy bệnh cơ tăng ở liều 80 mg (SEARCH Collaborative Group, *Lancet* 2010;376:1658-69, PMID 21067805).
+- **Cơ hội tối ưu hoá lâu dài** (không phụ thuộc đợt kháng sinh): nếu cần statin cường độ cao, cân nhắc chuyển sang atorvastatin hoặc rosuvastatin theo ACC/AHA hoặc ESC. Bác sĩ quyết định.
+
+## 🟠 3. Clarithromycin ở bệnh nhân bệnh tim
+
+- Người dùng simvastatin liều cao nhiều khả năng có bệnh mạch vành.
+- FDA Drug Safety Communication (02/2018) cảnh báo tăng nguy cơ tử vong tim mạch dài hạn khi dùng clarithromycin ở bệnh nhân bệnh tim. Dữ liệu từ thử nghiệm CLARICOR (PMID: `[CẦN KIỂM CHỨNG]`).
+- Đây là lý do thứ hai ủng hộ đổi kháng sinh.
+- Kèm theo: nguy cơ kéo dài QT, nên kiểm tra QTc và rà thuốc gây kéo dài QT dùng kèm.
+
+## 🟡 4. Lưu ý và theo dõi
+
+- **Rà thêm tương tác qua CYP3A4 và P-gp của clarithromycin** với thuốc dùng kèm, đặc biệt:
+  - colchicine (🔴 khi suy thận hoặc suy gan),
+  - thuốc chẹn kênh canxi (hạ huyết áp, suy thận cấp ở người cao tuổi),
+  - DOAC hoặc warfarin (chảy máu).
+- **Chỉnh liều clarithromycin theo thận**: nhãn khuyến cáo giảm liều khi CrCl dưới 30 mL/phút. Cần creatinin `[CẦN BỔ SUNG]`.
+- **Nếu là phụ nữ tuổi sinh đẻ**: hỏi khả năng có thai. Statin nên ngừng khi có thai. Clarithromycin chỉ dùng khi không có lựa chọn thay thế, đối chiếu nhãn và LactMed `[CẦN KIỂM CHỨNG]`.
+- **Xét nghiệm**: không cần CK thường quy. Định lượng CK và creatinin nếu có triệu chứng cơ.
+
+**Kháng sinh:** cần xác nhận có thực sự cần kháng sinh không. Clarithromycin thuộc nhóm Watch (WHO AWaRe), nên ưu tiên nhóm Access nếu chỉ định cho phép.
+
+## Safety-netting (dặn bệnh nhân)
+
+Ngừng thuốc và đi khám ngay nếu có một trong các dấu hiệu:
+- đau, yếu hoặc chuột rút cơ không rõ nguyên nhân,
+- nước tiểu sẫm màu như nước trà,
+- tiểu ít,
+- hồi hộp, ngất hoặc choáng.
+
+Tái khám sau đợt kháng sinh để quyết định thời điểm dùng lại statin.
+
+---
+**Kiểm rút bài:** PMID 23778904 và 21067805 **chưa kiểm rút bài**. Cần chạy:
+`python medical-ebm-automation/tools/check_citation_retraction.py --pmid 23778904 21067805`
+
+```
+✦ SELF-CHECK ke-don-an-toan (Cổng A):
+  ĐÃ ĐẠT: gắn cờ 🔴 ở đầu; cơ chế, đề xuất thay thế và nguồn cho từng cảnh báo;
+          không bịa liều hay ngưỡng (gắn [CẦN KIỂM CHỨNG]); AWaRe; safety-netting;
+          cơ hội tối ưu hoá statin; không PII
+  CÒN THIẾU: chỉ định kháng sinh, liều statin chính xác, eGFR, thuốc dùng kèm,
+             tình trạng thai kỳ [CẦN BỔ SUNG]; chưa kiểm rút bài cho 2 PMID
+  KẾT: ĐẠT TỰ KIỂM với điều kiện bổ sung dữ kiện. Đơn bị CHẶN cho tới khi
+       bác sĩ chọn phương án A hoặc B.
+```
+
+*Đây là rà soát hỗ trợ; quyết định kê đơn thuộc về bác sĩ điều trị.* **Cần bác sĩ kiểm chứng.**

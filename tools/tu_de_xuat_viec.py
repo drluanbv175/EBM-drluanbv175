@@ -1386,6 +1386,64 @@ def giac_quan_api_claude(tep: Path | None = None) -> list[tuple[int, str, str, s
     return []
 
 
+def giac_quan_cafes_agent_an_toan(goc: Path | None = None) -> list[tuple[int, str, str, str]]:
+    """CAFÉ-S — ĐO THẬT ĐỘI AGENT AN TOÀN (17/11/2026, bác sĩ duyệt).
+
+    `tools/eval/cafes_suite.py --api` (~3 USD, Opus 5.5) đo THẬT agent sàng cờ đỏ + rà đơn trên 32 ca, lưu kết quả và
+    VÂN TAY sha256 của từng tệp agent vào `tools/eval/agent_outputs/cafes_api_*/_ket_qua.json`. Giác quan chỉ ĐỌC — không
+    gọi API, chi phí bằng 0:
+      • lượt gần nhất TRƯỢT ca critical ⇒ 👤 ưu tiên 1 (agent an toàn bỏ sót cấp cứu / chống chỉ định);
+      • còn ca critical chưa đo được ⇒ 👤 ưu tiên 2 (không được đọc là «đạt»);
+      • tệp agent đã ĐỔI so với vân tay lúc đo ⇒ 👤 ưu tiên 2 — kết quả cũ không còn nói về agent hiện tại; đo lại tốn tiền
+        nên là quyết định của bác sĩ (ước trước bằng --uoc-tinh, miễn phí).
+    Danh sách agent lấy từ CHÍNH bản ghi (không viết cứng — BH20). Chưa có lượt đo / bản ghi thiếu vân tay ⇒ giác quan chết
+    (⚪), không bao giờ là «agent ổn»."""
+    _SO_GIAC_QUAN["chay"] += 1
+    nhan = ["", "CAFÉ-S agent an toàn"]
+    goc = goc or REPO
+    hop_le = []
+    for p in (goc / "tools" / "eval" / "agent_outputs").glob("cafes_api_*/_ket_qua.json"):
+        try:
+            d = json.loads(p.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        if isinstance(d, dict) and d.get("luc"):
+            hop_le.append((str(d["luc"]), str(p), d))
+    if not hop_le:
+        _ghi_chet(nhan, "chưa có lượt đo thật nào có thời điểm")
+        return []
+    luc, duong, d = max(hop_le)
+    thu_muc = Path(duong).parent.name
+    viec: list[tuple[int, str, str, str]] = []
+    bc = d.get("bao_cao") or {}
+    if bc.get("CRITICAL_GATE") == "FAIL":
+        truot = [r.get("case_id") for r in d.get("ket_qua") or [] if r.get("critical") and r.get("pass") is False]
+        viec.append((1, "👤", f"CAFÉ-S {luc[:10]}: agent an toàn TRƯỢT {len(truot)} ca critical ({', '.join(map(str, truot[:4]))})"
+                              f" — đọc đầu ra ở tools/eval/agent_outputs/{thu_muc}/, sửa agent rồi đo lại",
+                     "python3 tools/eval/cafes_suite.py --uoc-tinh"))
+    elif bc.get("CRITICAL_GATE") == "KHÔNG ĐỦ ĐO":
+        viec.append((2, "👤", f"CAFÉ-S {luc[:10]}: còn ca critical CHƯA ĐO ĐƯỢC — không được đọc là đạt; đo lại",
+                     "python3 tools/eval/cafes_suite.py --uoc-tinh"))
+    vt = d.get("van_tay_agent")
+    if not isinstance(vt, dict) or not vt:
+        _ghi_chet(nhan, f"lượt đo {thu_muc} không có vân tay agent")
+        return viec
+    doi = []
+    for ten, h in sorted(vt.items()):
+        try:
+            hien = hashlib.sha256((goc / ".claude" / "agents" / f"{ten}.md").read_bytes()).hexdigest()
+        except OSError:
+            doi.append(f"{ten} (mất tệp)")
+            continue
+        if hien != h:
+            doi.append(ten)
+    if doi:
+        viec.append((2, "👤", f"Agent an toàn đã ĐỔI kể từ lượt đo CAFÉ-S {luc[:10]}: {', '.join(doi)} — kết quả đo cũ không còn"
+                              " nói về agent hiện tại; ước chi phí (miễn phí) rồi đo lại bằng --api (~3 USD)",
+                     "python3 tools/eval/cafes_suite.py --uoc-tinh"))
+    return viec
+
+
 def giac_quan_agent_lech(goc_agents: Path, mea_agents: Path) -> list[tuple[int, str, str]]:
     """Agent `.claude/agents/*.md` của repo GỐC phải trùng từng byte bản ở repo Y KHOA (PM-15, kiểm toàn diện 02/10/2026).
 
@@ -2178,6 +2236,9 @@ def main() -> int:
 
     # ⑦r SỨC KHOẺ API CLAUDE (17/11/2026): lượt gọi gần nhất lỗi ⇒ luật kiểm lạc chủ đề đang không chạy — xem docstring.
     de_xuat += giac_quan_api_claude()  # đúng khuôn (ưu tiên, nhãn 👤, mô tả, lệnh)
+
+    # ⑦s CAFÉ-S AGENT AN TOÀN (17/11/2026): lượt đo thật trượt critical, hoặc agent đã đổi so với vân tay lúc đo — xem docstring.
+    de_xuat += giac_quan_cafes_agent_an_toan()  # đúng khuôn (ưu tiên, nhãn 👤, mô tả, lệnh)
 
     # ⑦j CHỦ ĐỀ 0 ỨNG VIÊN NHIỀU LƯỢT LIỀN (03/10/2026): «0 ứng viên ≠ không có chứng cứ mới» — xem docstring.
     _viec_0, _tt_0 = giac_quan_chu_de_0_lien(DASH, SAN_LUONG_GIAM_SAT)

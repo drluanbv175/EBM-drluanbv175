@@ -1,0 +1,49 @@
+# 🚑 KẾT LUẬN AN TOÀN: ⛔ CÓ CỜ ĐỎ: 🔴 CẤP CỨU NGAY
+
+**NGHI BÓC TÁCH ĐỘNG MẠCH CHỦ CẤP** cho đến khi chứng minh khác.
+
+Bệnh cảnh có **2 nhóm cờ đỏ độc lập theo ADD-RS**:
+- **Đặc điểm đau nguy cơ cao:** đau kiểu xé, lan ra sau lưng.
+- **Khám nguy cơ cao:** chênh huyết áp hai tay.
+
+ADD-RS ≥2 nghĩa là nguy cơ cao. Cần **chụp hình ảnh ngay**, không dùng D-dimer để loại trừ.
+
+| Dấu hiệu cần loại trừ | Mức khẩn | Hành động | Nguồn |
+|---|---|---|---|
+| **Bóc tách ĐMC** (xé, lan lưng, chênh HA hai tay) | 🔴 | Gọi cấp cứu, chuyển ngay tới cơ sở có **ngoại tim mạch**. **CT động mạch chủ có cản quang khẩn.** Bệnh nhân huyết động không ổn: siêu âm tim tại giường (TTE/TEE) | 2022 ACC/AHA Aortic Disease Guideline (Isselbacher, *Circulation* 2022, PMID 36322642) |
+| **⛔ CẤM trước khi loại trừ bóc tách** | 🔴 | **KHÔNG** dùng kháng đông (heparin), tiêu sợi huyết, kháng kết tập tiểu cầu liều nạp. Có thể gây tử vong nếu thực chất là bóc tách | Như trên; agent §3quater |
+| ACS đồng thời (bóc tách lan vào lỗ vành, hay gặp động mạch vành phải, gây ST chênh lên thành dưới) | 🔴 | **ECG 12 chuyển đạo ≤10 phút.** ST chênh lên **chưa đủ** để kích hoạt tiêu sợi huyết khi còn nghi bóc tách | 2021 AHA/ACC Chest Pain (PMID 34709879) |
+| Biến chứng: chèn ép tim, vỡ, đột quỵ, thiếu máu chi/tạng | 🔴 | Khám nhanh: HA, mạch 4 chi, tĩnh mạch cổ, tiếng tim mờ, âm thổi hở chủ mới, dấu thần kinh khu trú. **Tụt HA ở đây gợi ý chèn ép tim/vỡ**, không hạ áp | Đồng thuận an toàn |
+| Phình ĐMC bụng vỡ (nam 65) | 🔴 | Sờ khối đập theo mạch ở bụng. CT có thể quét cả ngực-bụng | USPSTF 2019 (PMID 31821437) |
+| Thuyên tắc phổi, tràn khí màng phổi áp lực | 🟠 | Đánh giá SpO₂, rì rào phế nang hai bên, phù chân một bên | Đồng thuận |
+
+## Việc làm ngay tại phòng khám (trong lúc chờ chuyển)
+1. **Gọi cấp cứu (115).** Không cho tự đi xe.
+2. **Đo đủ sinh hiệu**: HA **cả hai tay** (ghi rõ mức chênh, ngưỡng gợi ý >20 mmHg), mạch, SpO₂, tri giác. Mắc monitor nếu có.
+3. Đặt đường truyền tĩnh mạch. Bệnh nhân nằm yên.
+4. **Thông tin cho tuyến nhận:** theo guideline, kiểm soát **nhịp trước** (chẹn beta truyền tĩnh mạch, mục tiêu nhịp <60/phút), **rồi HA** (mục tiêu tâm thu khoảng 100–120 mmHg), kèm giảm đau opioid. **Không dùng giãn mạch đơn độc trước chẹn beta** vì gây nhịp nhanh phản xạ. Đây là xử trí của tuyến cấp cứu/tim mạch, **không phải đơn kê của agent này**. Liều cụ thể cần bác sĩ quyết.
+
+## 🌳 Quét nhánh nguy hiểm
+| Nguyên nhân | Nguy hiểm | Khả dĩ | Giữ/Gác |
+|---|---|---|---|
+| Bóc tách ĐMC | Rất cao | **Cao** (đủ đặc điểm kinh điển) | **GIỮ: nhánh quyết định 🔴** |
+| ACS | Rất cao | Trung bình (có thể đồng thời) | GIỮ: ECG |
+| Vỡ phình ĐMC bụng | Rất cao | Thấp–TB | GIỮ: khám bụng, CT |
+| Thuyên tắc phổi / tràn khí MP | Cao | Thấp | GIỮ: loại nhanh bằng lâm sàng |
+
+## Thông tin còn thiếu
+Cần bổ sung: sinh hiệu cụ thể, thời điểm khởi phát, dấu thần kinh, tiền sử (tăng HA, Marfan/bệnh van ĐMC, phình đã biết, phẫu thuật/can thiệp ĐMC gần đây, cocaine), **thuốc đang dùng (kháng đông/kháng kết tập?)**. Thiếu các dữ liệu này **không làm hạ mức khẩn**.
+
+**Safety-netting:** không áp dụng, vì **không cho về**.
+**→ Bàn giao:** chưa chạy chuỗi EBM tiếp. Ưu tiên chuyển cấp cứu. Chỉ quay lại `dieu-phoi-lam-sang` sau khi đã có hình ảnh loại trừ/xác nhận.
+
+```
+✦ SELF-CHECK sang-loc-co-do — BƯỚC 0:
+  ĐÃ ĐẠT: cờ đỏ nêu đầu gói; phân tầng 🔴; hành động + điều CẤM; quét nhánh nguy hiểm; nguồn kèm PMID
+  CÒN THIẾU: sinh hiệu/tiền sử [CẦN BỔ SUNG]; PMID chưa kiểm rút bài bằng check_citation_retraction.py
+  KẾT: ĐẠT TỰ KIỂM (mức khẩn không phụ thuộc phần còn thiếu)
+```
+
+Đây là sàng lọc **nghi ngờ**, không phải chẩn đoán xác định, và không thay khám trực tiếp.
+
+**Cần bác sĩ kiểm chứng.**

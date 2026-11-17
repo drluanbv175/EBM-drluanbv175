@@ -1,0 +1,73 @@
+# 🚑 KẾT LUẬN AN TOÀN: ⛔ CÓ CỜ ĐỎ: 🔴 CẤP CỨU NGAY
+
+**Nghi hạ đường huyết NẶNG (mức 3)**: rối loạn tri giác kèm đường huyết rất thấp ở người đang dùng thuốc hạ đường. Cần xử trí ngay, không chờ tra cứu.
+
+## 1. Hành động ngay (song song, không tuần tự)
+
+| Việc | Chi tiết | Ghi chú an toàn |
+|---|---|---|
+| **KHÔNG cho ăn/uống đường** khi đang lơ mơ | Nguy cơ sặc/hít | Chỉ cho đường uống khi tỉnh, nuốt an toàn |
+| **Có đường truyền → dextrose TM** | Thường dùng 25 g dextrose (D50 50 mL), hoặc D10 chia liều/truyền ở người cao tuổi (ít viêm tĩnh mạch) `[CẦN KIỂM CHỨNG liều theo phác đồ cơ sở]` | Không trì hoãn glucose để chờ xét nghiệm khác |
+| **Chưa có đường truyền → glucagon** | 1 mg tiêm bắp/dưới da, hoặc glucagon xịt mũi 3 mg `[CẦN KIỂM CHỨNG]` | Kém hiệu quả nếu suy kiệt/nhịn ăn kéo dài/rượu (cạn glycogen gan) |
+| **Thử lại đường huyết sau ~15 phút** | Lặp lại xử trí nếu vẫn thấp. Tỉnh lại thì cho carbohydrate tác dụng kéo dài | Duy trì truyền glucose nếu tái phát |
+| **Sinh hiệu đầy đủ** | Mạch, HA, nhịp thở, SpO₂, **nhiệt độ**, GCS | Xem mục 2 (sepsis/hạ thân nhiệt) |
+| **Gọi cấp cứu / chuyển viện** | Không xử trí xong rồi cho về | Xem mục 3 |
+
+> **Thiamine:** nếu nghi suy dinh dưỡng hoặc nghiện rượu, cân nhắc thiamine, nhưng **không được trì hoãn glucose** vì lý do này `[CẦN KIỂM CHỨNG]`.
+
+## 2. Nguyên nhân nguy hiểm phải quét (cây quét rộng, không cắt nhánh vì hiếm)
+
+| Nguyên nhân / bối cảnh | Mức nguy hiểm | Khả dĩ | Giữ/Gác và cách loại trừ |
+|---|---|---|---|
+| **Hạ đường huyết do sulfonylurea** (glibenclamide, gliclazide, glimepiride…) | 🔴 Rất cao: **tái phát kéo dài nhiều giờ đến ngày** | Cao ở người 70 tuổi | **GIỮ.** Hỏi tên thuốc, liều, thời điểm uống cuối, có uống nhầm/quá liều không. Tái phát dù đã truyền glucose thì cân nhắc **octreotide** theo chuyên khoa `[CẦN KIỂM CHỨNG]` |
+| **Insulin tác dụng kéo dài** / quá liều insulin | 🔴 Cao | Trung bình | **GIỮ.** Hỏi loại insulin, liều, giờ tiêm, có nhầm bút/liều không |
+| **Suy thận cấp/mạn tiến triển** (giảm thải SU/insulin) | 🔴 | Cao ở người cao tuổi | **GIỮ.** Creatinine/eGFR, điện giải |
+| **Nhiễm khuẩn huyết** (vừa thúc đẩy hạ đường vừa gây lơ mơ) | 🔴 | Có thể | **GIỮ.** Xét **cả qSOFA và SIRS**. Lưu ý **hạ thân nhiệt <36°C** cũng là tiêu chí SIRS, người già có thể không sốt |
+| **Tương tác thuốc mới** (vd clarithromycin, fluoroquinolone, fluconazole, co-trimoxazole với SU) | 🟠 | Có thể | **GIỮ.** Rà toàn bộ đơn thuốc gần đây `[CẦN KIỂM CHỨNG từng cặp]` |
+| **Ăn uống kém / nôn / tiêu chảy** | 🟠 | Thường gặp | Hỏi người nhà |
+| **Nguyên nhân thần kinh đồng thời** (đột quỵ, xuất huyết nội sọ, co giật) | 🔴 | Thấp đến trung bình | **GIỮ cho đến khi tri giác hồi phục.** Hạ đường có thể giả dấu khu trú (liệt nửa người). **Đã bình đường mà không tỉnh hoặc còn dấu khu trú thì chụp CT sọ khẩn và đánh giá đột quỵ** |
+| Rượu, suy thượng thận, suy gan | 🟠 | Thấp | Hỏi tiền sử, đánh giá theo diễn tiến |
+
+**Quay lui:** sau khi điều chỉnh glucose, nếu tri giác không cải thiện hoặc sinh hiệu xấu đi, mở lại ngay nhánh thần kinh và nhánh sepsis, đồng thời nâng mức khẩn.
+
+## 3. Ngưỡng chuyển tuyến / nhập viện
+
+- 🔴 **Bắt buộc theo dõi nội viện**, không cho về sau khi tỉnh, nếu có bất kỳ yếu tố sau:
+  - Do **sulfonylurea** hoặc **insulin tác dụng kéo dài**.
+  - Tri giác không hồi phục hoàn toàn.
+  - Suy thận.
+  - Nghi nhiễm trùng.
+  - Không có người theo dõi.
+  - Hạ đường tái phát.
+- Thời gian theo dõi với SU thường **≥24 giờ** `[CẦN KIỂM CHỨNG theo phác đồ]`.
+- **Safety-netting cho về: KHÔNG áp dụng** ở bước này. Ca này không thuộc diện theo dõi ngoại trú.
+
+## 4. Nguồn neo (kiểm trước khi đưa vào kết luận)
+
+- **ADA Standards of Care, Section 6 "Glycemic Goals and Hypoglycemia"** (bản hiện hành). Định nghĩa mức 1 <70 mg/dL (3,9 mmol/L), mức 2 <54 mg/dL (3,0 mmol/L), **mức 3 = biến cố nặng có rối loạn tri giác/thể chất cần người khác hỗ trợ, không phụ thuộc ngưỡng số**. `[CẦN KIỂM CHỨNG PMID của bản năm áp dụng]`
+- **International Hypoglycaemia Study Group**, *Diabetes Care* 2017. Phân mức hạ đường huyết. `[CẦN KIỂM CHỨNG PMID, chạy check_citation_retraction.py trước khi trích]`
+- Liều dextrose/glucagon/octreotide nêu trên là thực hành thông dụng, **chưa neo nguồn cụ thể**. Cần đối chiếu phác đồ cấp cứu của cơ sở.
+
+## 5. Bàn giao
+
+Chưa bàn giao cho chuỗi EBM, vì còn cờ đỏ đang xử trí.
+
+- Sau khi **ổn định, tỉnh hoàn toàn, đã loại nguyên nhân thần kinh/sepsis**: trả `dieu-phoi-lam-sang`.
+- Sau đó chuyển `ke-don-an-toan` để:
+  - **Rà lại thuốc hạ đường**: cân nhắc ngừng/đổi SU, chỉnh liều theo eGFR.
+  - **Nới mục tiêu HbA1c** cho người cao tuổi có hạ đường nặng.
+  - **Rà tương tác thuốc.**
+
+```
+✦ SELF-CHECK sang-loc-co-do — Bước 0:
+  ĐÃ ĐẠT: nêu cờ đỏ ở đầu gói; phân tầng 🔴; hành động cấp cứu cụ thể;
+          quét rộng nguyên nhân nguy hiểm (SU, insulin, suy thận, sepsis+SIRS hạ thân nhiệt,
+          tương tác thuốc, nguyên nhân thần kinh); ngưỡng nhập viện; không PII.
+  CÒN THIẾU: sinh hiệu đầy đủ, tên/liều thuốc hạ đường, chức năng thận, trị số đường huyết cụ thể
+             [CẦN BỔ SUNG]; PMID nguồn ADA/IHSG và liều thuốc [CẦN KIỂM CHỨNG].
+  KẾT: ĐẠT TỰ KIỂM cho mục tiêu an toàn bước 0. Các mục [CẦN…] không làm chậm xử trí cấp cứu.
+```
+
+Agent sàng lọc an toàn không thay khám trực tiếp, không chẩn đoán xác định.
+
+**Cần bác sĩ kiểm chứng.**
