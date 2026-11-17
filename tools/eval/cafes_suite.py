@@ -368,6 +368,39 @@ def _cac_loi_cau_hinh() -> tuple:
             anthropic.BadRequestError, anthropic.NotFoundError)
 
 
+NGUON_NHAT_KY = "cafes_suite"
+
+
+def ghi_suc_khoe_luot(agent: "ClaudeAPIAgent | None" = None, loi: BaseException | None = None) -> None:
+    """Ghi sức khoẻ lượt `--api` cho giác quan hòm việc (17/11/2026) — qua `tools/nhat_ky_api_claude.py`.
+
+    Có ≥1 lượt gọi trả về ⇒ ok (khoá sống) · thiếu khoá ⇒ skipped · lỗi xác thực/quyền/tham số của SDK ⇒ error ·
+    mọi lượt đều lỗi API (429/5xx/mạng) ⇒ error · thiếu SDK / thiếu tệp agent là lỗi PHÍA MÁY ⇒ không ghi."""
+    import importlib.util
+    try:
+        spec = importlib.util.spec_from_file_location(
+            "_nhat_ky_api_claude", os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                                                "nhat_ky_api_claude.py"))
+        nk = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(nk)
+    except (OSError, ImportError, AttributeError):
+        return
+    if loi is not None:
+        if "ANTHROPIC_API_KEY" in str(loi):
+            nk.ghi("skipped", str(loi), 0, NGUON_NHAT_KY)
+        elif isinstance(loi.__cause__, _cac_loi_cau_hinh()):
+            nk.ghi("error", str(loi), 0, NGUON_NHAT_KY)
+        return
+    if agent is None:
+        return
+    if agent.so_luot > 0:
+        nk.ghi("ok", "", agent.so_luot, NGUON_NHAT_KY)
+        return
+    loi_api = [x["khong_do"] for x in agent.nhat_ky if "lỗi API" in str(x.get("khong_do", ""))]
+    if loi_api:
+        nk.ghi("error", loi_api[0], 0, NGUON_NHAT_KY)
+
+
 class ClaudeAPIAgent:
     """Gọi Claude API với tệp .md của agent làm system prompt.
 
@@ -583,7 +616,9 @@ def main():
             res = run_test_suite(agent, TEST_CASES)
         except CauHinhSai as e:
             print(f"⛔ {e}")
+            ghi_suc_khoe_luot(loi=e)
             return 2
+        ghi_suc_khoe_luot(agent=agent)
         rep = cafes_report(res)
         _print(rep, res, f"CAFÉ-S SUITE — Claude API ({MODEL_CAFES}, effort {args.effort})")
         print(f"Đã lưu đầu ra thô + vân tay agent: {luu_luot_do(thu_muc, agent, TEST_CASES, res, rep, luc_bat_dau, args.effort)}"

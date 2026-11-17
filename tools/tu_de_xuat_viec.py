@@ -1418,6 +1418,9 @@ _VIEC_API = {
                        "cd medical-ebm-automation && python -m app.integrations.cli soap --transcript <tệp.txt>"),
     "image_reading": ("đọc ảnh ECG/X-quang",
                       "cd medical-ebm-automation && python -m app.integrations.cli image <ảnh> --modality ecg --consent"),
+    # 17/11/2026: hai công cụ chạy tay ở repo gốc ghi qua tools/nhat_ky_api_claude.py.
+    "quet_lac_chu_de_kho": ("quét lạc chủ đề toàn kho (Batch API)", "python3 tools/quet_lac_chu_de_kho.py"),
+    "cafes_suite": ("bộ đo CAFÉ-S agent an toàn", "python3 tools/eval/cafes_suite.py --uoc-tinh"),
 }
 
 

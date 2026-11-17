@@ -172,6 +172,22 @@ def ghi_bao_cao(cham: list, goc: Path, batch_id: str, chi_phi: float, ngay: str)
     return md, js
 
 
+NGUON_NHAT_KY = "quet_lac_chu_de_kho"
+
+
+def ghi_suc_khoe(trang_thai: str, ly_do: str = "", so_muc: int = 0) -> None:
+    """Ghi sức khoẻ lượt gọi cho giác quan hòm việc (17/11/2026) — qua `tools/nhat_ky_api_claude.py`, nguồn
+    `quet_lac_chu_de_kho`. Thiếu mô-đun ghi (cây cũ) thì bỏ qua: nhật ký không bao giờ được làm vỡ lượt quét."""
+    try:
+        spec = importlib.util.spec_from_file_location("_nhat_ky_api_claude", Path(__file__).resolve().parent /
+                                                      "nhat_ky_api_claude.py")
+        nk = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(nk)
+    except (OSError, ImportError, AttributeError):
+        return
+    nk.ghi(trang_thai, ly_do, so_muc, NGUON_NHAT_KY)
+
+
 def main(argv: list[str] | None = None, client=None, ngu=time.sleep) -> int:
     ap = argparse.ArgumentParser(description="Quét lạc chủ đề toàn kho dashboard (Batch API)")
     ap.add_argument("--ap-dung", action="store_true", help="gửi batch thật (TỐN TIỀN — chạy khô trước)")
@@ -201,6 +217,7 @@ def main(argv: list[str] | None = None, client=None, ngu=time.sleep) -> int:
         khoa = os.getenv("ANTHROPIC_API_KEY", "") or C._khoa_tu_kho()
         if not khoa:
             print("⛔ Thiếu ANTHROPIC_API_KEY (biến môi trường lẫn kho bí mật).")
+            ghi_suc_khoe("skipped", "Thiếu ANTHROPIC_API_KEY (biến môi trường lẫn kho bí mật)")
             return 2
         try:
             import anthropic
@@ -218,18 +235,30 @@ def main(argv: list[str] | None = None, client=None, ngu=time.sleep) -> int:
         except (OSError, ValueError, KeyError):
             pass
     else:
-        b = client.messages.batches.create(requests=[{"custom_id": k, "params": tham_so(C, y["prompt"])}
-                                                     for k, y in ma_theo_id.items()])
+        try:
+            b = client.messages.batches.create(requests=[{"custom_id": k, "params": tham_so(C, y["prompt"])}
+                                                         for k, y in ma_theo_id.items()])
+        except Exception as e:  # noqa: BLE001 — 401/403/429/mạng: dừng gọn, ghi cho hòm việc, không văng traceback
+            return _dung_loi_api("gửi batch", e)
         batch_id = b.id
         trang_thai.parent.mkdir(parents=True, exist_ok=True)
         trang_thai.write_text(json.dumps({"batch_id": batch_id, "luc": _dt.datetime.now().isoformat(timespec="seconds"),
                                           "tep_theo_id": {k: y["tep"] for k, y in ma_theo_id.items()}},
                                          ensure_ascii=False, indent=1), encoding="utf-8", newline="\n")
         print(f"  Đã gửi batch {batch_id} ({len(ma_theo_id)} yêu cầu). Gián đoạn thì chạy lại: --tiep {batch_id}")
-    if not cho_xong(client, batch_id, nghi=a.nghi, ngu=ngu):
+    try:
+        xong = cho_xong(client, batch_id, nghi=a.nghi, ngu=ngu)
+        ket = doc_ket_qua(client, batch_id) if xong else {}
+    except Exception as e:  # noqa: BLE001 — cùng lý do: lỗi kênh API giữa chừng; batch đã gửi thì --tiep lấy lại
+        return _dung_loi_api(f"theo dõi batch {batch_id} (chạy lại: --tiep {batch_id})", e)
+    if not xong:
         print(f"⛔ Batch chưa xong sau trần chờ — chạy lại sau: --tiep {batch_id}")
         return 2
-    ket = doc_ket_qua(client, batch_id)
+    if any(k.get("loai") == "succeeded" for k in ket.values()):
+        ghi_suc_khoe("ok", "", sum(len(y["muc"]) for y in ma_theo_id.values()))
+    else:
+        loai_loi = sorted({str(k.get("loi") or k.get("loai") or "?") for k in ket.values()}) or ["không có kết quả"]
+        ghi_suc_khoe("error", "Batch không có yêu cầu nào thành công: " + ", ".join(loai_loi))
     cham = [cham_mot(C, y, ket.get(k, {"loai": "khong_co_ket_qua"})) for k, y in ma_theo_id.items()]
     chi_phi = sum(k.get("vao", 0) * GIA_BATCH["vao"] + k.get("ra", 0) * GIA_BATCH["ra"] for k in ket.values()) / 1e6
     md, _ = ghi_bao_cao(cham, goc, batch_id, chi_phi, _dt.date.today().strftime("%Y%m%d"))
@@ -241,6 +270,13 @@ def main(argv: list[str] | None = None, client=None, ngu=time.sleep) -> int:
     print(f"  Báo cáo: {md.as_posix()}")
     print("Cần bác sĩ kiểm chứng.")
     return 1 if loi else 0
+
+
+def _dung_loi_api(buoc: str, e: Exception) -> int:
+    ly_do = f"Gọi Batch API thất bại khi {buoc}: {type(e).__name__}: {str(e)[:150]}"
+    print(f"⛔ {ly_do}")
+    ghi_suc_khoe("error", ly_do)
+    return 2
 
 
 if __name__ == "__main__":
