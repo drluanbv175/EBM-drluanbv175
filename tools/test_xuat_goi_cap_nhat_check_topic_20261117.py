@@ -15,6 +15,7 @@ from __future__ import annotations
 import importlib.util
 import io
 import os
+import pathlib
 import sys
 import unittest
 from contextlib import redirect_stdout
@@ -90,6 +91,9 @@ class ThieuKhoaThiBoQuaEm(unittest.TestCase):
         with _tf.NamedTemporaryFile("w", suffix=".env", delete=False, encoding="utf-8") as _f:
             _f.write("# kho rỗng dành cho bộ kiểm\n")
             ctr.KHO_BI_MAT = _f.name
+        # Vỏ bọc GHI nhật ký sức khoẻ vào thư mục nhà; chốt tuyệt đối không được đụng tệp thật.
+        cu_nk = ctr.NHAT_KY_API
+        ctr.NHAT_KY_API = str(pathlib.Path(_f.name).with_suffix(".nk.json"))
         try:
             # tầng trong: nêu lỗi RÕ TÊN BIẾN còn thiếu, không nuốt im
             with self.assertRaises(ctr.TopicCheckError) as ngu_canh:
@@ -111,6 +115,7 @@ class ThieuKhoaThiBoQuaEm(unittest.TestCase):
             self.assertEqual(kq["status"], "skipped")
             self.assertIn("ANTHROPIC_API_KEY", kq["message"])
         finally:
+            ctr.NHAT_KY_API = cu_nk
             ctr.KHO_BI_MAT = cu_kho
             if cu is not None:
                 os.environ["ANTHROPIC_API_KEY"] = cu
@@ -232,6 +237,10 @@ class LoiSDKKhongDuocLOT(unittest.TestCase):
         if not ctr_path.exists():
             self.skipTest("⚪ không có check_topic_relevance.py ở cây này")
         self.ctr = _nap_module("_ctr_loi", ctr_path)
+        import tempfile as _tf2
+        with _tf2.NamedTemporaryFile("w", suffix=".nk.json", delete=False, encoding="utf-8") as _f2:
+            _f2.write("{}")
+        self.ctr.NHAT_KY_API = _f2.name   # không ghi vào nhật ký THẬT ở thư mục nhà
 
     def _dashboard_gia(self) -> str:
         import tempfile
