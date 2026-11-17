@@ -425,7 +425,12 @@ def _chay_cong(py: str, dash: Path, co_online: bool, result: dict) -> tuple[int 
         result["cong_liem_chinh"] = "THIẾU TOOL"
         return None, False, 1
 
-    co = ["--online"] if co_online else []
+    # --check-topic đi KÈM --online (17/11/2026): cổng kỹ thuật không bắt được item LẠC CHỦ ĐỀ
+    # (dashboard Tim mạch từng lọt 8/20 mục sản/nhi/hô hấp/thận — chỉ đọc tay mới thấy). Cờ này
+    # từng để «opt-in» nên dây chuyền hằng ngày KHÔNG BAO GIỜ truyền ⇒ công cụ coi như không tồn
+    # tại (doctrine §6.4). Chỉ CẢNH BÁO, không vào `errors` nên không đổi mã thoát; thiếu khoá API
+    # thì in rõ «BỎ QUA — thiếu ANTHROPIC_API_KEY» thay vì im lặng. Ngoại tuyến KHÔNG gọi (cần mạng).
+    co = ["--online", "--check-topic"] if co_online else []
     if co_online:
         print("① Cổng liêm chính (--online)…")
     else:

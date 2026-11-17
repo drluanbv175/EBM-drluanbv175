@@ -103,18 +103,58 @@ def build_prompt(dashboard_topic: str, items: List[Dict[str, str]]) -> str:
     return "\n".join(lines)
 
 
+# Kho bí mật của bác sĩ nằm NGOÀI OneDrive (doctrine §5). Để thành hằng số để bộ kiểm trỏ sang
+# tệp giả, không bao giờ đụng kho thật.
+KHO_BI_MAT = os.path.join(os.path.expanduser("~"), ".ebm-secrets", "medical-ebm-automation.env")
+
+
+def _khoa_tu_kho(ten: str = "ANTHROPIC_API_KEY", kho: Optional[str] = None) -> str:
+    """Đọc MỘT khoá từ kho bí mật khi biến môi trường vắng mặt.
+
+    VÌ SAO (17/11/2026): tool này trước chỉ đọc `os.getenv`, nên khoá cất trong kho KHÔNG tới được
+    nó — lượt lịch, hook và mọi lượt chạy không qua shell có `export` sẽ lặng lẽ bỏ qua kiểm chủ đề,
+    đúng kiểu âm tính giả mà doctrine cấm. Thứ tự lấy khoá theo §5: biến môi trường OS → kho secrets.
+    Không dùng python-dotenv để khỏi thêm phụ thuộc cho một tool skill đi kèm bản phát hành.
+    Mọi lỗi đọc đều nuốt: thiếu khoá là «bỏ qua êm», không bao giờ làm hỏng dây chuyền xuất gói.
+    KHÔNG BAO GIỜ in giá trị khoá ra đâu cả.
+
+    DÒNG CUỐI THẮNG (sửa 17/11/2026 sau một lượt hỏng thật): kho được ghi kiểu NỐI THÊM, nên khi
+    bác sĩ ghi lại khoá mới mà dòng cũ còn đó, lấy dòng ĐẦU sẽ dùng đúng cái khoá hỏng vừa thay —
+    im lặng và rất khó đoán. `load_dotenv` mà repo y khoa dùng cũng để giá trị sau đè giá trị
+    trước, nên lấy dòng cuối là khớp hành vi đã có chứ không phải luật mới."""
+    duong = kho or KHO_BI_MAT
+    gia_tri = ""
+    try:
+        with open(duong, "r", encoding="utf-8", errors="replace") as fh:
+            for dong in fh:
+                dong = dong.strip()
+                if not dong or dong.startswith("#") or "=" not in dong:
+                    continue
+                k, _, v = dong.partition("=")
+                if k.strip() == ten:
+                    v = v.strip().strip("'\"")
+                    if v:
+                        gia_tri = v          # không return sớm: dòng sau đè dòng trước
+    except OSError:
+        pass
+    if gia_tri:
+        return gia_tri
+    return ""
+
+
 def call_claude(prompt: str, *, model: Optional[str] = None, max_tokens: int = 2000) -> str:
     """Gọi Claude API. Đúng khuôn mẫu claude_llm() trong app/integrations/ambient_scribe.py."""
-    key = os.getenv("ANTHROPIC_API_KEY", "")
+    key = os.getenv("ANTHROPIC_API_KEY", "") or _khoa_tu_kho()
     if not key:
         raise TopicCheckError(
-            "Thiếu ANTHROPIC_API_KEY — đặt trong .env (ngoài OneDrive) để bật kiểm chủ đề."
+            "Thiếu ANTHROPIC_API_KEY — đặt trong biến môi trường hoặc kho bí mật ngoài OneDrive "
+            "để bật kiểm chủ đề."
         )
     try:
         import anthropic  # type: ignore
     except ImportError as exc:  # pragma: no cover - phụ thuộc môi trường
         raise TopicCheckError("Chưa cài SDK: `pip install anthropic`.") from exc
-    mdl = model or os.getenv("TOPIC_CHECK_MODEL", "claude-sonnet-4-6")
+    mdl = model or os.getenv("TOPIC_CHECK_MODEL", "claude-sonnet-5-5")
     client = anthropic.Anthropic(api_key=key)
     resp = client.messages.create(  # pragma: no cover - cần mạng + key
         model=mdl, max_tokens=max_tokens,
@@ -169,6 +209,13 @@ def check_dashboard_topic_relevance(html_path: str) -> Dict:
         verdicts = parse_verdicts(raw)
     except TopicCheckError as exc:
         return {"status": "skipped", "message": str(exc)}
+    except Exception as exc:  # noqa: BLE001
+        # Lỗi TỪ SDK/mạng (401 khoá sai, hết hạn mức, timeout, DNS…) trước đây LỌT ra ngoài: chạy
+        # tay thì văng traceback, chạy trong cổng thì rơi vào `except Exception` của verify_dashboard
+        # nên thành cảnh báo khó đọc. Đo thật 17/11/2026: khoá sai ⇒ `AuthenticationError 401`.
+        # Nay quy về một mối «error» như mọi nhánh khác. KHÔNG nuốt im: cổng vẫn in cảnh báo.
+        # `Exception` không bắt KeyboardInterrupt/SystemExit nên Ctrl-C vẫn dừng được.
+        return {"status": "error", "message": f"{type(exc).__name__}: {str(exc)[:200]}"}
 
     off_topic = [
         {"id": iid, "title": next((it["title"] for it in items if it["id"] == iid), ""),

@@ -309,7 +309,7 @@ class ClaudeAPIAgent:
         sys_path = os.path.join(self.agents_dir, f"{agent_name}.md")
         system = open(sys_path, encoding="utf-8").read() if os.path.exists(sys_path) else ""
         msg = self.client.messages.create(
-            model="claude-opus-4-8", max_tokens=1500,
+            model="claude-opus-5-5", max_tokens=1500,
             system=system, messages=[{"role": "user", "content": prompt}],
         )
         return "".join(b.text for b in msg.content if getattr(b, "type", "") == "text")
