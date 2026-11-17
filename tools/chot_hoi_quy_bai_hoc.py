@@ -12010,6 +12010,107 @@ def bh179_va_nguon_toi_ban_chay_moi_tool_day_chuyen():
     return True, "bản chạy tụt hậu được tự vá (luật c theo đúng tệp) · dòng riêng được giữ · phạm vi trùng BH11 · tu_sua_chua gọi mỗi phiên"
 
 
+def bh180_goi_api_khong_cat_cut_khong_nuot_khong_do_sai():
+    """17/11 — đo thật: cổng kiểm lạc chủ đề gọi Sonnet 5.5 với max_tokens=2000, không đặt effort; thinking luôn
+    bật và ăn CHUNG ngân sách với JSON phán quyết ⇒ dashboard Suy tim 83 mục: stop_reason=max_tokens ở 2000/2000,
+    JSON cụt (116/303 dashboard có ≥ 40 mục). Tệ hơn: JSON hỏng quy về «skipped» như thiếu khoá ⇒ cảm biến ⑦r im
+    lặng; `verify_dashboard` chỉ đọc off_topic nên mục «uncertain» bị nuốt, vẫn in «đều khớp». Bộ CAFÉ-S `--api`
+    (đo đội agent lâm sàng) cùng họ: max_tokens=1500 trên Opus 5.5, thiếu tệp agent thì lặng lẽ đo model trần,
+    ca không đo được bị tính trượt. Kiểm HÀNH VI ngoại tuyến bằng SDK giả: model hiện hành gọi max_tokens ≥ 16000
+    kèm effort; cụt ⇒ «error»; mục không chắc được báo; CAFÉ-S dừng khi thiếu agent, ca cụt là ⚪ và cổng critical
+    còn ca chưa đo thì KHÔNG báo PASS. Bộ vàng 19 mục: 18/19 ở cả cấu hình cũ lẫn mới — hạ effort không làm kém."""
+    import os
+    import shutil
+    import subprocess
+    import tempfile as _tf
+    import types as _ty
+    nguon = REPO / "sync/skills/cap-nhat-chung-cu-y-khoa/tools"
+    ghi: list = []
+
+    def _sdk(stop, text):
+        class _M:
+            def create(self, **kw):
+                ghi.append(kw)
+                return _ty.SimpleNamespace(stop_reason=stop, stop_details=None,
+                                           content=[_ty.SimpleNamespace(type="text", text=text)])
+
+        class _Cli:
+            def __init__(self, api_key=None):
+                self.messages = _M()
+                self.beta = _ty.SimpleNamespace(messages=_M())
+        m = _ty.ModuleType("anthropic")
+        m.Anthropic = _Cli
+        return m
+
+    sdk_cu = sys.modules.get("anthropic")
+    env_cu = {k: os.environ.pop(k, None) for k in ("ANTHROPIC_API_KEY", "TOPIC_CHECK_MODEL", "TOPIC_CHECK_EFFORT")}
+    d = Path(_tf.mkdtemp())
+    try:
+        if str(nguon) not in sys.path:
+            sys.path.insert(0, str(nguon))
+        ctr = _nap(nguon / "check_topic_relevance.py", "_bh180_ctr")
+        ctr.KHO_BI_MAT = str(d / "vang.env")
+        ctr.NHAT_KY_API = str(d / "nk.json")
+        html = d / "dash.html"
+        html.write_text("<html><script>const DATA = { meta: { question: 'Chủ đề thử' }, items: [ { id: 'ITEM-1', "
+                        "title: 'Bài thử', action: '' } ], summary: { conclusion: 'x', doNow: [], dontDo: [], "
+                        "redFlags: [] } };</script></html>", encoding="utf-8")
+        os.environ["ANTHROPIC_API_KEY"] = "khoa-gia"
+        sys.modules["anthropic"] = _sdk("max_tokens", '{"ITEM-1": {"verd')
+        kq = ctr._cham_chu_de(str(html))
+        if (ghi[-1].get("max_tokens") or 0) < 16000 or "effort" not in (ghi[-1].get("output_config") or {}):
+            return False, f"cổng kiểm chủ đề gọi max_tokens={ghi[-1].get('max_tokens')} / thiếu effort — thinking ăn ngân sách, JSON cụt"
+        if kq.get("status") != "error":
+            return False, f"kết quả cụt ra «{kq.get('status')}» thay vì «error» — cảm biến ⑦r sẽ im lặng"
+        # verify_dashboard không nuốt «uncertain»
+        for ten in ("verify_dashboard.py", "dashboard_content_audit.py"):
+            if (nguon / ten).exists():
+                shutil.copy2(nguon / ten, d / ten)
+        (d / "check_topic_relevance.py").write_text(
+            "def check_dashboard_topic_relevance(p):\n    return {'status': 'ok', 'topic': 'T', 'total_items': 2,"
+            " 'off_topic': [], 'uncertain': ['ITEM-2']}\n", encoding="utf-8")
+        r = subprocess.run([sys.executable, "-B", str(d / "verify_dashboard.py"), str(html), "--check-topic"],
+                           capture_output=True, text=True, encoding="utf-8", timeout=120, cwd=str(d),
+                           env=dict(os.environ, PYTHONIOENCODING="utf-8"))
+        ra = r.stdout + r.stderr
+        if "KHÔNG CHẮC" not in ra or "đều khớp chủ đề" in ra:
+            return False, "verify_dashboard nuốt mục «uncertain» — vẫn in «đều khớp» (báo xanh giả)"
+        # CAFÉ-S
+        cafes = _nap(REPO / "tools/eval/cafes_suite.py", "_bh180_cafes")
+        (d / "a.md").write_text("agent", encoding="utf-8")
+        cli = _ty.SimpleNamespace(beta=_ty.SimpleNamespace(messages=_ty.SimpleNamespace(
+            create=lambda **kw: (ghi.append(kw), _ty.SimpleNamespace(stop_reason="max_tokens", stop_details=None,
+                                                                    content=[], usage=None))[1])))
+        ag = cafes.ClaudeAPIAgent(str(d), client=cli)
+        try:
+            ag.generate("x", "khong-co")
+            return False, "CAFÉ-S thiếu tệp agent mà vẫn chạy — đo model trần"
+        except cafes.CauHinhSai:
+            pass
+        try:
+            ag.generate("x", "a")
+            return False, "CAFÉ-S nhận câu trả lời cụt như kết quả thật"
+        except cafes.KhongDoDuoc:
+            pass
+        if (ghi[-1].get("max_tokens") or 0) < 16000:
+            return False, f"CAFÉ-S gọi Opus 5.5 với max_tokens={ghi[-1].get('max_tokens')} — cụt, chấm trượt oan"
+        bc = cafes.cafes_report([{"case_id": "A", "critical": True, "pass": None}])
+        if bc["CRITICAL_GATE"] == "PASS" or bc["ca_trượt"]:
+            return False, f"ca critical CHƯA ĐO bị báo {bc['CRITICAL_GATE']} / tính trượt — «không đo được» bị gộp"
+    finally:
+        shutil.rmtree(d, ignore_errors=True)
+        if sdk_cu is None:
+            sys.modules.pop("anthropic", None)
+        else:
+            sys.modules["anthropic"] = sdk_cu
+        for k, v in env_cu.items():
+            if v is None:
+                os.environ.pop(k, None)
+            else:
+                os.environ[k] = v
+    return True, "cổng chủ đề max 16000 + effort, cụt ⇒ error, báo mục không chắc · CAFÉ-S dừng khi thiếu agent, ca cụt là ⚪"
+
+
 BAI_HOC = [
     ("BH01", "12/08", "Cổng không được `return` sớm che luật item", bh01_khong_return_som),
     ("BH02", "12/08", "Parser giữ nguyên giá trị có nháy kép", bh02_parser_giu_nguyen_nhay_kep),
@@ -12177,6 +12278,7 @@ BAI_HOC = [
     ("BH174", "30/10", "Trần watchlist không giết lượt quét (53 chủ đề từng vượt trần 50 ⇒ gói tuần chết, 0 alert, `--topic` chết theo, orchestrator chẩn đoán sai): watchlist thật qua được bộ quét, trần chỉ áp lượt toàn danh sách, vượt trần có alert, nhịp khoá cho lượt quá 30 phút, công cụ đồng bộ qua được bản đích tụt hậu", bh174_tran_watchlist_khong_giet_luot_quet),
     ("BH178", "03/11", "Bộ lọc loại thiết kế của bộ quét nhận «Consensus Statement» (DESIGN thiếu loại đồng thuận hiện hành của PubMed ⇒ 792 bản ghi/36 tháng trên 58 chủ đề bị tầng guideline loại im lặng; đường dự phòng Europe PMC cùng lỗ)", bh178_design_nhan_consensus_statement),
     ("BH179", "17/11", "Vá ở nguồn tới được bản CHẠY của MỌI tool dây chuyền (PR #402 gộp mà `EBM-Dashboards/tools/check_topic_relevance.py` kẹt bản cũ ⇒ cổng kiểm lạc chủ đề trơ; BH11 đỏ mà chỉ surveillance_scan có đường tự vá): công cụ đồng bộ tự dò mọi tool, luật (c) theo đúng tệp, giữ dòng riêng, phạm vi trùng BH11, tu_sua_chua gọi --ap-dung", bh179_va_nguon_toi_ban_chay_moi_tool_day_chuyen),
+    ("BH180", "17/11", "Gọi API Claude không cắt cụt, không nuốt, không đo sai (cổng kiểm lạc chủ đề max_tokens=2000 ⇒ dashboard 83 mục cụt ở 2000/2000, JSON hỏng quy về «skipped» nên hòm việc im lặng, «uncertain» bị nuốt; CAFÉ-S max_tokens=1500, thiếu agent thì đo model trần): max ≥ 16000 + effort, cụt ⇒ error, báo mục không chắc, ca cụt là ⚪", bh180_goi_api_khong_cat_cut_khong_nuot_khong_do_sai),
     ("BH122", "27/09", "Chu trình chứng cứ không kéo 🔴 «rút bỏ hẳn» cho ca đính-chính-bị-rút bác sĩ đã ký", bh122_chu_trinh_khong_ra_do_gia_cho_dinh_chinh_da_ky),
     ("BH150", "02/10", "Làn trình duyệt có người: FDA 401 là mã chặn bot; máy mở trang, bác sĩ tự xác nhận, máy ghi bằng chứng; lô không dừng vì chặn bot; Scopus/WoS/DynaMed chỉ thành ứng viên khi xác minh được", bh150_lan_trinh_duyet_co_nguoi_chan_bot_va_tai_khoan_bac_si),
     ("BH123", "27/09", "Sổ xác minh nhận bằng chứng trình duyệt thật cho miền chặn kiểm tự động, đúng như cổng", bh123_so_xac_minh_nhan_bang_chung_trinh_duyet_nhu_cong),

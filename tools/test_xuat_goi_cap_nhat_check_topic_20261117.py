@@ -211,12 +211,14 @@ class GoiAPIDungKhoaVaDungModel(unittest.TestCase):
         class _Msgs:
             def create(self, **kw):
                 ghi.update(kw)
-                return types.SimpleNamespace(content=[types.SimpleNamespace(text="OK")])
+                return types.SimpleNamespace(stop_reason="end_turn", content=[types.SimpleNamespace(text="OK")])
 
         class _Cli:
+            # Từ 17/11 model hiện hành đi kênh beta (để có `fallbacks`); model khác đi kênh thường.
             def __init__(self, api_key=None):
                 ghi["api_key"] = api_key
                 self.messages = _Msgs()
+                self.beta = types.SimpleNamespace(messages=_Msgs())
 
         gia = types.ModuleType("anthropic")
         gia.Anthropic = _Cli

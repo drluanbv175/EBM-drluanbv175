@@ -27,6 +27,7 @@ import json
 import os
 import re
 import sys
+from pathlib import Path
 
 # Windows: stdout mặc định cp1252 giết print() tiếng Việt — ép UTF-8 (chốt BH55/R4)
 import sys as _sys_r4
@@ -142,7 +143,15 @@ def run_test_suite(agent, test_cases: list) -> list:
     """Chạy từng ca qua agent → CHẤM ngay → trả kết quả có verdict (pass/fail)."""
     results = []
     for case in test_cases:
-        output = agent.generate(case["prompt"], agent_name=case.get("agent"))
+        try:
+            output = agent.generate(case["prompt"], agent_name=case.get("agent"))
+        except KhongDoDuoc as e:
+            # «Không đo được» ≠ «trượt» ≠ «đạt» (CLAUDE.md §0.2): pass=None, không tính vào đạt/trượt.
+            results.append({
+                "case_id": case["case_id"], "agent": case.get("agent"), "critical": case["critical"],
+                "pass": None, "detail": f"⚪ KHÔNG ĐO ĐƯỢC — {e}", "output_preview": "",
+            })
+            continue
         scored = score_case(output, case["pass_criteria"])
         results.append({
             "case_id": case["case_id"],
@@ -157,21 +166,33 @@ def run_test_suite(agent, test_cases: list) -> list:
 
 def cafes_report(results: list) -> dict:
     """Tổng hợp pass-rate + CỔNG CRITICAL (mọi ca critical phải pass)."""
+    # VÁ 17/11/2026 — BA trạng thái: pass True (đạt) · False (trượt) · None (KHÔNG ĐO ĐƯỢC: cụt, từ chối,
+    # lỗi API). Ca không đo được không bao giờ được tính là đạt — cổng critical còn ca chưa đo thì KHÔNG
+    # được báo PASS («không đo được» ≠ «ổn»), cũng không bị đếm là trượt («không đo được» ≠ «có vấn đề»).
+    # Khi mọi ca đều đo được, kết quả TRÙNG KHÍT bản cũ.
     total = len(results)
-    passed = sum(1 for r in results if r["pass"])
+    da_do = [r for r in results if r["pass"] is not None]
+    khong_do = [r["case_id"] for r in results if r["pass"] is None]
+    passed = sum(1 for r in da_do if r["pass"])
     crit = [r for r in results if r["critical"]]
-    crit_pass = sum(1 for r in crit if r["pass"])
-    critical_gate = (crit_pass == len(crit))  # 100% critical
-    fails = [r["case_id"] for r in results if not r["pass"]]
+    crit_pass = sum(1 for r in crit if r["pass"] is True)
+    if any(r["pass"] is False for r in crit):
+        cong = "FAIL"
+    elif any(r["pass"] is None for r in crit):
+        cong = "KHÔNG ĐỦ ĐO"
+    else:
+        cong = "PASS"
+    fails = [r["case_id"] for r in results if r["pass"] is False]
     return {
         "tổng_ca": total,
         "đạt": passed,
-        "pass_rate": round(100 * passed / total, 1) if total else 0.0,
+        "pass_rate": round(100 * passed / len(da_do), 1) if da_do else 0.0,
         "critical_tổng": len(crit),
         "critical_đạt": crit_pass,
-        "CRITICAL_GATE": "PASS" if critical_gate else "FAIL",
-        "suite_verdict": "PASS" if (critical_gate and passed == total) else "FAIL",
+        "CRITICAL_GATE": cong,
+        "suite_verdict": "FAIL" if fails else ("KHÔNG ĐỦ ĐO" if khong_do else "PASS"),
         "ca_trượt": fails,
+        "ca_không_đo_được": khong_do,
     }
 
 
@@ -299,26 +320,155 @@ class CachedAgent:
         raise NotImplementedError  # gán theo case_id trong vòng chạy (xem main --cached)
 
 
+class KhongDoDuoc(Exception):
+    """MỘT ca không đo được (cắt cụt, model từ chối, lỗi API còn lại sau khi SDK tự thử lại) — ca đó
+    nhận pass=None, không tính vào đạt hay trượt."""
+
+
+class CauHinhSai(Exception):
+    """Lỗi làm CẢ LƯỢT vô nghĩa (thiếu khoá, khoá sai, thiếu tệp agent, tham số bị API từ chối) — dừng ngay."""
+
+
+MODEL_CAFES = "claude-opus-5-5"
+BETA_DU_PHONG = "server-side-fallback-2026-07-01"
+# Giá Claude Opus 5.5, USD / 1 triệu token (tài liệu Claude API, đọc 17/11/2026). Ghi cache 5 phút = 1,25 × vào.
+GIA_OPUS_55 = {"vao": 4.00, "ghi_cache": 5.00, "doc_cache": 0.20, "ra": 20.00}
+# Giả định token RA mỗi ca khi ƯỚC TÍNH (thinking + trả lời ở effort high) — chưa đo được trước khi chạy.
+RA_GIA_DINH = (1000, 4000)
+CTR_NGUON = Path(__file__).resolve().parents[2] / "sync" / "skills" / "cap-nhat-chung-cu-y-khoa" / "tools" / "check_topic_relevance.py"
+
+
+def _khoa_api(kho: str | None = None) -> str:
+    """Khoá API: biến môi trường trước, rồi kho bí mật — dùng CHÍNH `_khoa_tu_kho` của cổng kiểm chủ đề (một
+    nguồn sự thật, luật «dòng cuối thắng»). Trước 17/11 `Anthropic()` chỉ đọc biến môi trường ⇒ trên máy bác
+    sĩ (khoá chỉ nằm trong kho) `--api` chết ngay — cùng họ lỗi #402."""
+    k = os.getenv("ANTHROPIC_API_KEY", "")
+    if k or not CTR_NGUON.exists():
+        return k
+    import importlib.util
+    if str(CTR_NGUON.parent) not in sys.path:
+        sys.path.insert(0, str(CTR_NGUON.parent))   # check_topic_relevance nhập verify_dashboard cạnh nó
+    spec = importlib.util.spec_from_file_location("_ctr_cho_cafes", CTR_NGUON)
+    m = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = m
+    spec.loader.exec_module(m)
+    return m._khoa_tu_kho(kho=kho)
+
+
+def _cac_loi_cau_hinh() -> tuple:
+    """Lỗi SDK làm hỏng MỌI ca như nhau ⇒ dừng cả lượt, không chấm tiếp (bắt theo lớp, không khớp chuỗi)."""
+    try:
+        import anthropic
+    except ImportError:
+        return ()
+    return (anthropic.AuthenticationError, anthropic.PermissionDeniedError,
+            anthropic.BadRequestError, anthropic.NotFoundError)
+
+
 class ClaudeAPIAgent:
-    """Gọi Claude API với file .md agent làm system prompt. Cần ANTHROPIC_API_KEY + sdk anthropic."""
-    def __init__(self, agents_dir: str):
-        import anthropic  # noqa: F401  (chỉ import khi dùng)
-        self.client = __import__("anthropic").Anthropic()
+    """Gọi Claude API với tệp .md của agent làm system prompt.
+
+    VÁ 17/11/2026: (1) khoá từ biến môi trường HOẶC kho bí mật; (2) thiếu tệp agent ⇒ DỪNG — trước đây
+    lặng lẽ chạy model TRẦN không system prompt, tức đo sai thứ cần đo; (3) max_tokens 1500 → 16000: trên
+    Opus 5.5 thinking luôn bật và ăn CHUNG max_tokens (đo thật cổng kiểm chủ đề 17/11: cụt ở 2000/2000), cụt
+    giữa câu trả lời sẽ bị chấm TRƯỢT oan; (4) kiểm stop_reason TRƯỚC khi đọc: cụt / từ chối ⇒ KHÔNG ĐO ĐƯỢC;
+    (5) effort đặt TƯỜNG MINH (mặc định của Opus 5.5 là medium); (6) cache system prompt — 21 ca dùng chung
+    một agent; (7) dự phòng khi model từ chối (`fallbacks: "default"`, beta); (8) cộng usage để in chi phí THẬT.
+    """
+
+    def __init__(self, agents_dir: str, effort: str = "high", client=None):
+        if client is None:
+            import anthropic
+            khoa = _khoa_api()
+            if not khoa:
+                raise CauHinhSai("Thiếu ANTHROPIC_API_KEY (biến môi trường lẫn kho bí mật) — không chạy được --api.")
+            client = anthropic.Anthropic(api_key=khoa)
+        self.client = client
         self.agents_dir = agents_dir
+        self.effort = effort
+        self.usage = {"vao": 0, "ghi_cache": 0, "doc_cache": 0, "ra": 0}
+        self.so_luot = 0
+
+    def _system(self, agent_name: str) -> str:
+        p = os.path.join(self.agents_dir, f"{agent_name}.md")
+        if not os.path.exists(p):
+            raise CauHinhSai(f"Không thấy tệp agent {p} — chạy tiếp là đo model TRẦN, không phải agent.")
+        with open(p, encoding="utf-8") as f:
+            return f.read()
+
+    def _cong_usage(self, u) -> None:
+        self.so_luot += 1
+        if u is None:
+            return
+        self.usage["vao"] += getattr(u, "input_tokens", 0) or 0
+        self.usage["ghi_cache"] += getattr(u, "cache_creation_input_tokens", 0) or 0
+        self.usage["doc_cache"] += getattr(u, "cache_read_input_tokens", 0) or 0
+        self.usage["ra"] += getattr(u, "output_tokens", 0) or 0
+
+    def chi_phi_usd(self) -> float:
+        """Chi phí theo giá Opus 5.5. Lượt được dự phòng chuyển sang model khác tính theo giá model đó — số này là xấp xỉ."""
+        return sum(self.usage[k] * GIA_OPUS_55[k] for k in self.usage) / 1e6
+
     def generate(self, prompt: str, agent_name: str = "") -> str:
-        sys_path = os.path.join(self.agents_dir, f"{agent_name}.md")
-        system = open(sys_path, encoding="utf-8").read() if os.path.exists(sys_path) else ""
-        msg = self.client.messages.create(
-            model="claude-opus-5-5", max_tokens=1500,
-            system=system, messages=[{"role": "user", "content": prompt}],
-        )
-        return "".join(b.text for b in msg.content if getattr(b, "type", "") == "text")
+        system = self._system(agent_name)
+        try:
+            msg = self.client.beta.messages.create(
+                model=MODEL_CAFES, max_tokens=16000,
+                output_config={"effort": self.effort},
+                betas=[BETA_DU_PHONG], fallbacks="default",
+                system=[{"type": "text", "text": system, "cache_control": {"type": "ephemeral"}}],
+                messages=[{"role": "user", "content": prompt}],
+            )
+        except _cac_loi_cau_hinh() as e:
+            raise CauHinhSai(f"{type(e).__name__}: {str(e)[:160]} — dừng cả lượt.") from e
+        except Exception as e:  # noqa: BLE001 — 429/5xx/mạng còn lại SAU khi SDK tự thử lại: chỉ ca này không đo được
+            raise KhongDoDuoc(f"lỗi API {type(e).__name__}: {str(e)[:120]}") from e
+        self._cong_usage(getattr(msg, "usage", None))
+        if msg.stop_reason == "max_tokens":
+            raise KhongDoDuoc("câu trả lời bị CẮT CỤT ở max_tokens")
+        if msg.stop_reason == "refusal":
+            nhom = getattr(getattr(msg, "stop_details", None), "category", None)
+            raise KhongDoDuoc(f"model từ chối (nhóm {nhom or 'không rõ'}), kể cả sau dự phòng")
+        return "".join(getattr(b, "text", "") or "" for b in msg.content if getattr(b, "type", "") == "text")
+
+
+def uoc_tinh_chi_phi(agents_dir: str, test_cases: list, client) -> dict:
+    """Ước tính chi phí lượt --api bằng `messages.count_tokens` — MIỄN PHÍ, không sinh token nào.
+
+    Token VÀO đếm thật (có system prompt của agent); token RA là GIẢ ĐỊNH `RA_GIA_DINH` mỗi ca vì chưa đo được
+    trước khi chạy. Có cache: mỗi agent ghi system prompt một lần, các ca sau đọc từ cache."""
+    he_thong: dict = {}
+    vao_tong = 0
+    phan_rieng = 0
+    for c in test_cases:
+        ten = c["agent"]
+        with open(os.path.join(agents_dir, f"{ten}.md"), encoding="utf-8") as f:
+            md = f.read()
+        if ten not in he_thong:
+            he_thong[ten] = [client.messages.count_tokens(model=MODEL_CAFES, system=md,
+                                                          messages=[{"role": "user", "content": "."}]).input_tokens, 0]
+        n = client.messages.count_tokens(model=MODEL_CAFES, system=md,
+                                         messages=[{"role": "user", "content": c["prompt"]}]).input_tokens
+        he_thong[ten][1] += 1
+        vao_tong += n
+        phan_rieng += max(n - he_thong[ten][0], 0)
+    g = GIA_OPUS_55
+    khong_cache = vao_tong * g["vao"] / 1e6
+    co_cache = (sum(ns * g["ghi_cache"] + ns * (so - 1) * g["doc_cache"] for ns, so in he_thong.values())
+                + phan_rieng * g["vao"]) / 1e6
+    ra = tuple(len(test_cases) * r * g["ra"] / 1e6 for r in RA_GIA_DINH)
+    return {
+        "so_ca": len(test_cases), "token_vao": vao_tong,
+        "system_theo_agent": {k: v[0] for k, v in he_thong.items()},
+        "vao_khong_cache_usd": khong_cache, "vao_co_cache_usd": co_cache,
+        "ra_usd": ra, "tong_usd": (co_cache + ra[0], co_cache + ra[1]),
+    }
 
 
 def _print(report: dict, results: list, tieu_de: str):
     print(f"\n=== {tieu_de} ===")
     for r in results:
-        flag = "✅" if r["pass"] else "🔴"
+        flag = "⚪" if r["pass"] is None else ("✅" if r["pass"] else "🔴")
         c = " [CRITICAL]" if r["critical"] else ""
         print(f"  {flag} {r['case_id']}{c} — {r['detail']}")
     print(json.dumps(report, ensure_ascii=False, indent=2))
@@ -327,7 +477,12 @@ def _print(report: dict, results: list, tieu_de: str):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--cached", default=None, help="thư mục chứa <case_id>.txt đã sinh sẵn")
-    ap.add_argument("--api", action="store_true", help="gọi Claude API thật (cần key)")
+    ap.add_argument("--api", action="store_true", help="gọi Claude API thật (TỐN TIỀN — chạy --uoc-tinh trước)")
+    ap.add_argument("--uoc-tinh", action="store_true",
+                    help="ước tính chi phí lượt --api bằng count_tokens (MIỄN PHÍ, không sinh token)")
+    ap.add_argument("--effort", default="high", choices=["low", "medium", "high", "xhigh", "max"],
+                    help="effort cho lượt --api (mặc định high: sàng cờ đỏ/rà đơn là việc cần suy luận kỹ;"
+                         " Opus 5.5 tự mặc định medium nên phải đặt tường minh)")
     _default_agents_dir = os.environ.get("EBM_AGENTS_DIR") or os.path.normpath(
         os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", ".claude", "agents"))
     ap.add_argument("--agents-dir", default=_default_agents_dir,
@@ -335,11 +490,40 @@ def main():
                           "ghi đè bằng biến môi trường EBM_AGENTS_DIR hoặc --agents-dir)")
     args = ap.parse_args()
 
+    if args.api or args.uoc_tinh:
+        thieu = sorted({c["agent"] for c in TEST_CASES
+                        if not os.path.exists(os.path.join(args.agents_dir, f"{c['agent']}.md"))})
+        if thieu:
+            print(f"⛔ Thiếu tệp agent trong {args.agents_dir}: {thieu} — chạy là đo model TRẦN, dừng.")
+            return 2
+    if args.uoc_tinh:
+        khoa = _khoa_api()
+        if not khoa:
+            print("⛔ Thiếu ANTHROPIC_API_KEY — count_tokens miễn phí nhưng vẫn phải xác thực.")
+            return 2
+        import anthropic
+        u = uoc_tinh_chi_phi(args.agents_dir, TEST_CASES, anthropic.Anthropic(api_key=khoa))
+        print(f"ƯỚC TÍNH lượt --api ({u['so_ca']} ca, {MODEL_CAFES}, effort {args.effort}) — count_tokens, MIỄN PHÍ")
+        print(f"  System prompt từng agent (token): {u['system_theo_agent']}  · cache có hiệu lực từ 512 token")
+        print(f"  Token vào (đếm thật): {u['token_vao']:,} → {u['vao_khong_cache_usd']:.3f} USD không cache · "
+              f"{u['vao_co_cache_usd']:.3f} USD có cache")
+        print(f"  Token ra (GIẢ ĐỊNH {RA_GIA_DINH[0]:,}–{RA_GIA_DINH[1]:,}/ca): "
+              f"{u['ra_usd'][0]:.2f}–{u['ra_usd'][1]:.2f} USD")
+        print(f"  TỔNG ước tính: {u['tong_usd'][0]:.2f}–{u['tong_usd'][1]:.2f} USD. Chạy thật: --api")
+        return 0
     if args.api:
-        agent = ClaudeAPIAgent(args.agents_dir)
-        res = run_test_suite(agent, TEST_CASES)
-        _print(cafes_report(res), res, "CAFÉ-S SUITE — Claude API")
-        return
+        try:
+            agent = ClaudeAPIAgent(args.agents_dir, effort=args.effort)
+            res = run_test_suite(agent, TEST_CASES)
+        except CauHinhSai as e:
+            print(f"⛔ {e}")
+            return 2
+        _print(cafes_report(res), res, f"CAFÉ-S SUITE — Claude API ({MODEL_CAFES}, effort {args.effort})")
+        u = agent.usage
+        print(f"Chi phí THẬT (giá Opus 5.5, xấp xỉ): ~{agent.chi_phi_usd():.3f} USD — {agent.so_luot} lượt gọi · "
+              f"vào {u['vao']:,} · ghi cache {u['ghi_cache']:,} · đọc cache {u['doc_cache']:,} · ra {u['ra']:,} token")
+        print("Cần bác sĩ kiểm chứng.")
+        return 0
     if args.cached:
         class _C:
             def generate(self, prompt, agent_name=""):
@@ -354,7 +538,7 @@ def main():
                         "critical": case["critical"], "pass": scored["pass"],
                         "detail": scored["detail"], "output_preview": out[:160]})
         _print(cafes_report(res), res, f"CAFÉ-S SUITE — cached {args.cached}")
-        return
+        return 0
 
     # Mặc định: SELF-TEST harness (offline)
     res_ok = run_test_suite(MockAgent(), TEST_CASES)
@@ -379,7 +563,8 @@ def main():
     print("\n✅ HARNESS TỰ KIỂM ĐẠT: PASS cho agent đúng; FAIL cho agent bỏ sót (RF-03);"
           " FAIL cho agent PHỦ ĐỊNH cấp cứu/CCĐ (RF-01/DI-01) — vá dương-tính-giả 2026-06-16.")
     print("Cần bác sĩ kiểm chứng.")
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())
