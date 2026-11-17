@@ -1,0 +1,52 @@
+# 🚑 KẾT LUẬN AN TOÀN: ⛔ CÓ CỜ ĐỎ, mức 🔴 CẤP CỨU NGAY
+
+**NGHI viêm màng não do não mô cầu / nhiễm khuẩn huyết não mô cầu.** Cần **kháng sinh sớm và chuyển cấp cứu ngay**. KHÔNG chờ xét nghiệm, chọc dịch não tủy hay chẩn đoán hình ảnh trước khi xử trí.
+
+Ca này có 3 cờ đỏ độc lập, mỗi cờ đã đủ để kích hoạt 🔴:
+- sốt kèm **cứng gáy** (§3ter),
+- **ban xuất huyết** (§3ter),
+- sốt, **nhức đầu** và cứng gáy (§3quater).
+
+| Dấu hiệu cần loại trừ | Mức khẩn | Hành động | Nguồn |
+|---|---|---|---|
+| Nhiễm khuẩn huyết / viêm màng não do não mô cầu | 🔴 | **Gọi cấp cứu, chuyển viện khẩn.** Nếu ở tuyến cơ sở và việc chuyển có thể chậm: tiêm kháng sinh đường tiêm ngay (benzylpenicillin TB/TM, hoặc ceftriaxone), miễn là **không làm chậm việc chuyển**. Tránh penicillin nếu có tiền sử phản vệ với penicillin | NICE NG240 (2024) *Bacterial meningitis and meningococcal disease* `[CẦN KIỂM CHỨNG câu chữ/liều cụ thể]` |
+| Viêm màng não do vi khuẩn khác (phế cầu, ***Streptococcus suis***, cần hỏi tiền sử ăn tiết canh/thịt lợn sống, tiếp xúc lợn) | 🔴 | Tại viện: cấy máu **trước kháng sinh nhưng không để chậm kháng sinh**. Kháng sinh kinh nghiệm theo phác đồ (ceftriaxone ± vancomycin). Cân nhắc dexamethasone khi nghi viêm màng não vi khuẩn, nhưng không dùng thường quy khi bệnh cảnh là nhiễm khuẩn huyết não mô cầu đơn thuần | IDSA, Tunkel 2004 (PMID 15494903); ESCMID, van de Beek 2016 (PMID 27062097) `[CẦN KIỂM CHỨNG chi tiết phác đồ]` |
+| Sốc nhiễm khuẩn | 🔴 | Đo ngay **mạch, HA, nhịp thở, SpO₂, GCS, thời gian đổ đầy mao mạch, nhiệt độ**. Xét qSOFA **và** SIRS. Có tụt HA, chi lạnh, da nổi vân tím hoặc đau chân thì phải hồi sức dịch và oxy ngay | Sepsis-3, Singer 2016; SSC 2021 (PMID 34605781) |
+| Sốt xuất huyết Dengue (bối cảnh VN) / Rickettsia / Leptospira | 🔴 (giữ nhánh) | **KHÔNG để chẩn đoán phân biệt làm chậm kháng sinh.** Cứng gáy cùng ban xuất huyết ưu tiên xử trí như nhiễm khuẩn. Loại trừ song song tại viện (NS1/IgM, công thức máu) | Đồng thuận an toàn |
+| Bệnh máu ác tính / giảm tiểu cầu kèm xuất huyết nội sọ | 🔴 (giữ nhánh) | Công thức máu, đông máu khẩn. CT sọ nếu có dấu thần kinh khu trú hoặc rối loạn tri giác | Đồng thuận an toàn |
+
+## ⚠️ Lưu ý thao tác tại chỗ
+- **Ấn kính lên ban.** Ban không mất khi ấn (xuất huyết thật) càng củng cố nghi ngờ. Nhưng **dù ban có mất khi ấn, vẫn giữ mức 🔴** vì bệnh nhân đã có sốt và cứng gáy. Ban lan nhanh hoặc hoại tử gợi ý nhiễm khuẩn huyết tối cấp.
+- **Hoãn chọc dịch não tủy** nếu có sốc, rối loạn đông máu, ban xuất huyết lan rộng, dấu tăng áp nội sọ/thần kinh khu trú, hoặc GCS giảm. Kháng sinh **không chờ** chọc dịch.
+- **Phòng hộ giọt bắn** cho nhân viên: khẩu trang y tế, cách ly.
+
+## 🌳 Quét nhánh nguy hiểm (không cắt nhánh nào)
+
+| Nguyên nhân | Nguy hiểm | Khả dĩ | Giữ/Gác |
+|---|---|---|---|
+| Não mô cầu | Rất cao | **Cao** (tuổi 18 cùng tam chứng và ban) | **GIỮ, xử trí ngay** |
+| *S. suis* / phế cầu | Rất cao | Trung bình (hỏi dịch tễ) | GIỮ, kháng sinh kinh nghiệm phủ được |
+| Dengue / Rickettsia / Leptospira | Cao | Trung bình (bối cảnh VN) | GIỮ, loại trừ song song |
+| Máu ác tính kèm xuất huyết nội sọ | Rất cao | Thấp | GIỮ, công thức máu và đông máu |
+
+## 🏥 Y tế công cộng (sau khi ổn định bước cấp cứu)
+- Báo cáo bệnh truyền nhiễm theo quy định. Viêm màng não do não mô cầu thuộc nhóm B theo Luật Phòng, chống bệnh truyền nhiễm `[CẦN KIỂM CHỨNG văn bản hiện hành]`.
+- **Dự phòng hóa chất cho người tiếp xúc gần** (ciprofloxacin, rifampicin hoặc ceftriaxone theo hướng dẫn) `[CẦN KIỂM CHỨNG theo hướng dẫn BYT]`.
+
+**Safety-netting:** Không áp dụng, vì ca này **không được cho về**.
+
+**→ Bàn giao:** Chưa trả về chuỗi EBM. Chỉ chuyển `dieu-phoi-lam-sang` / `chan-doan-xac-suat` **sau khi** đã chuyển cấp cứu và dùng kháng sinh. Câu hỏi an toàn bắt buộc (`_CAU-HOI-AN-TOAN-BAT-BUOC.md`): bối cảnh này không kích hoạt.
+
+---
+```
+✦ SELF-CHECK sang-loc-co-do — Cổng C1:
+  ĐÃ ĐẠT: đối chiếu §3ter/§3quater; phân tầng 🔴; hành động cụ thể; giữ mọi nhánh nguy hiểm;
+          nêu nguồn kèm PMID khi có; không PII; không chẩn đoán xác định (dùng "NGHI").
+  CÒN THIẾU: sinh hiệu chưa có → [CẦN BỔ SUNG] để đánh giá sốc; liều/câu chữ NICE NG240 và
+             quy định báo cáo VN → [CẦN KIỂM CHỨNG]; chưa kiểm rút bài PMID 15494903, 27062097,
+             34605781 (chưa chạy check_citation_retraction.py).
+  KẾT: ĐẠT TỰ KIỂM cho mục đích cảnh báo cấp cứu. Các mục [CẦN…] không được làm chậm xử trí.
+```
+
+Đây là sàng lọc NGHI NGỜ, không thay khám trực tiếp.
+**Cần bác sĩ kiểm chứng.**

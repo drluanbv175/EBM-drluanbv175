@@ -1,0 +1,48 @@
+# 🚑 KẾT LUẬN AN TOÀN: ⛔ CÓ CỜ ĐỎ — 🔴 CẤP CỨU NGAY
+
+**Bệnh cảnh có đủ tam chứng (§3bis): đau đầu sét đánh + nôn + cứng gáy → NGHI XUẤT HUYẾT DƯỚI NHỆN (SAH).**
+→ **Gọi cấp cứu hoặc chuyển khẩn NGAY.** Không trì hoãn để tra cứu hay bàn chẩn đoán phân biệt.
+
+| Dấu hiệu cần loại trừ | Mức khẩn | Hành động | Nguồn |
+|---|---|---|---|
+| **NGHI SAH** (sét đánh, "dữ dội nhất đời", nôn, cứng gáy) | 🔴 | Chuyển cấp cứu. **Chụp CT sọ không cản quang khẩn.** CT âm tính mà vẫn nghi → chọc dịch não tủy tìm xanthochromia hoặc chụp CTA theo tuyến cấp cứu/thần kinh | AHA/ASA aSAH 2023 (Hoh BL, *Stroke* 2023, PMID 37212182) · Perry JJ, *BMJ* 2011, PMID 21768192 (độ nhạy của CT trong ≤6 giờ) |
+| **NGHI viêm màng não** (cứng gáy, nôn) | 🔴 | **Hỏi và đo nhiệt độ NGAY.** Nếu sốt hoặc rối loạn tri giác: cấy máu rồi dùng kháng sinh theo kinh nghiệm sớm. **KHÔNG để chờ CT làm chậm kháng sinh** | IDSA (Tunkel, *Clin Infect Dis* 2004, PMID 15494903) |
+| Các nguyên nhân sét đánh khác: hội chứng co mạch não có hồi phục (RCVS), huyết khối xoang tĩnh mạch não, bóc tách động mạch cổ, đột quỵ tuyến yên, xuất huyết trong não | 🔴 | Giữ trong chẩn đoán phân biệt. Loại trừ bằng chẩn đoán hình ảnh mạch máu (CTA/CTV/MRI) ở tuyến cấp cứu | NICE CG150 (red flags) — đồng thuận |
+
+**Lưu ý về Ottawa SAH Rule (Perry, *JAMA* 2013, PMID 24065011):** quy tắc này dùng để *loại trừ* SAH. Ca này đã **dương tính** (có cứng gáy), nên không dùng nó để "cho về".
+
+### Làm ngay trong lúc chờ hoặc trên đường chuyển (không chờ kết quả tra cứu)
+- **Đo sinh hiệu ngay** (đầu vào hiện chưa có): HA, mạch, SpO₂, **nhiệt độ**, **GCS**, đồng tử, dấu thần kinh khu trú.
+- Lập đường truyền tĩnh mạch. Theo dõi tri giác liên tục. Chuẩn bị xử trí nếu GCS giảm hoặc co giật.
+- **Tránh** aspirin, NSAID, thuốc kháng đông và kháng kết tập tiểu cầu cho tới khi loại trừ xuất huyết.
+- Có thể dùng thuốc giảm đau và chống nôn không ảnh hưởng đông máu. Kiểm soát HA theo chỉ định của tuyến cấp cứu `[CẦN KIỂM CHỨNG ngưỡng HA theo guideline aSAH]`.
+
+### Câu hỏi an toàn cần hỏi nhanh (không làm chậm việc chuyển)
+- Có **sốt** không? Có ban xuất huyết không?
+- Có **đang dùng thuốc kháng đông hoặc kháng kết tập** không?
+- Có **chấn thương đầu** không?
+- Có **mang thai hoặc đang hậu sản** không? (nghĩ tới huyết khối xoang tĩnh mạch, RCVS, tiền sản giật/sản giật)
+- Có dùng chất cường giao cảm hoặc thuốc co mạch không? Tiền sử phình mạch trong gia đình?
+
+### 🌳 Quét rộng các nhánh nguy hiểm
+
+| Nguyên nhân nguy hiểm | Mức nguy hiểm | Khả năng theo bệnh cảnh | Giữ hay gác |
+|---|---|---|---|
+| SAH | Rất cao | **Cao** (đủ tam chứng) | **GIỮ.** Loại trừ bằng CT, sau đó dịch não tủy/CTA |
+| Viêm màng não | Rất cao | Trung bình (cứng gáy, chưa rõ sốt) | **GIỮ.** Phụ thuộc nhiệt độ và tri giác |
+| RCVS, huyết khối xoang tĩnh mạch, bóc tách động mạch, đột quỵ tuyến yên | Cao | Thấp đến trung bình | **GIỮ.** Loại trừ bằng hình ảnh mạch máu |
+
+**Safety-netting:** KHÔNG áp dụng. **Ca này không được cho về theo dõi ngoại trú.**
+
+**→ Bàn giao:** Chưa chuyển sang chuỗi EBM. Chỉ trả quyền cho `dieu-phoi-lam-sang` hoặc `chan-doan-xac-suat` **sau khi tuyến cấp cứu đã loại trừ các nguyên nhân trên**.
+
+```
+✦ SELF-CHECK sang-loc-co-do — Cổng C1:
+  ĐÃ ĐẠT: nhận diện tam chứng SAH (§3bis); phân tầng 🔴 kèm hành động; quét rộng chẩn đoán phân biệt nguy hiểm; nêu cờ đỏ ở đầu gói; không PII
+  CÒN THIẾU: sinh hiệu/GCS/nhiệt độ [CẦN BỔ SUNG]; PMID chưa chạy check_citation_retraction.py → "chưa kiểm rút bài"
+  KẾT: ĐẠT TỰ KIỂM về an toàn. Thiếu dữ liệu không làm thay đổi phân tầng 🔴
+```
+
+*Đây là sàng lọc NGHI NGỜ, không phải chẩn đoán xác định, và không thay thế khám trực tiếp.*
+
+**Cần bác sĩ kiểm chứng.**

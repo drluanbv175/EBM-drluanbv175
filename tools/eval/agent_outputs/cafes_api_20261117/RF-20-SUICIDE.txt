@@ -1,0 +1,50 @@
+# 🚑 KẾT LUẬN AN TOÀN: ⛔ CÓ CỜ ĐỎ, MỨC 🔴 CẤP CỨU NGAY
+
+**NGHI nguy cơ tự sát cấp tính, mức cao:** người bệnh có ý định, có kế hoạch cụ thể và có phương tiện. Không trì hoãn xử trí để tra cứu hay hoàn tất chuỗi EBM.
+
+## Hành động ngay
+
+| Dấu hiệu / việc cần làm | Mức khẩn | Hành động | Nguồn |
+|---|---|---|---|
+| Ý định tự sát có kế hoạch và phương tiện | 🔴 | **Không để người bệnh ở một mình**, kể cả khi đi vệ sinh. Có người giám sát liên tục cho tới khi bàn giao. | NICE NG225 *Self-harm* (2022) |
+| Phương tiện trong tầm tay | 🔴 | **Hạn chế tiếp cận phương tiện NGAY.** Hỏi cụ thể: thuốc tích trữ, thuốc trừ sâu/hóa chất, dây, vũ khí, độ cao. Phối hợp người nhà loại bỏ phương tiện tại nhà. | NICE NG225 |
+| Đã hành động chưa? | 🔴 | Hỏi thẳng: "Anh đã uống/làm gì chưa?" **Đo đủ sinh hiệu và tri giác.** Tìm dấu ngộ độc (thuốc, phospho hữu cơ, rượu) và thương tích. Nếu có dấu hiệu, xử trí như cấp cứu nội/độc chất **trước**. | Đồng thuận an toàn |
+| Chuyển tuyến | 🔴 | **Chuyển cấp cứu hoặc chuyên khoa tâm thần trong ngày, có người đi kèm.** Gọi 115 nếu không đảm bảo an toàn khi vận chuyển. **Không để người bệnh tự đi.** | NICE NG225 |
+| Kê đơn | 🔴 | **Không kê** benzodiazepine, Z-drug, opioid hay thuốc chống trầm cảm 3 vòng **số lượng lớn**. Không kê đơn "chờ chuyển". | `_CAU-HOI-AN-TOAN-BAT-BUOC.md` |
+| Thang nguy cơ | ⚠️ | C-SSRS chỉ dùng để **mô tả và ghi nhận** mức ý tưởng. Kế hoạch kèm ý định là mức cao nhất của phần ý tưởng. **Không dùng điểm thang để quyết định cho về.** | Posner 2011, *Am J Psychiatry*, PMID 22193671 `[CẦN KIỂM CHỨNG PMID]`; NICE NG225 khuyến cáo không dùng công cụ dự báo nguy cơ để quyết định xử trí |
+
+## Câu hỏi an toàn bắt buộc (đã kích hoạt)
+Ghi nhận rõ trong hồ sơ:
+- Ý tưởng tự sát: **CÓ**. Kế hoạch: **CÓ**. Phương tiện: **CÓ**.
+- Thời điểm dự định.
+- Từng có hành vi tự hại hoặc mưu sát trước đây?
+- Rượu hay chất kích thích?
+- Có loạn thần, ảo thanh ra lệnh?
+- Có biến cố mất mát gần đây?
+- Yếu tố bảo vệ.
+
+**Yếu tố làm tăng nguy cơ cần lưu ý:** nam giới tuổi trung niên. Nếu có thêm rượu, bệnh mạn tính/đau mạn, sống một mình, mất việc hoặc nợ nần thì nguy cơ càng cao. Không yếu tố nào trong số này làm giảm mức 🔴 hiện tại.
+
+## Lưu ý pháp lý và quy trình
+Nếu người bệnh từ chối chuyển viện mà nguy cơ cấp vẫn còn, cần áp dụng quy định về chữa bệnh tâm thần bắt buộc theo pháp luật Việt Nam hiện hành `[CẦN KIỂM CHỨNG: điều khoản cụ thể]`. Hãy hội chẩn tâm thần và lập biên bản.
+
+## Safety-netting
+**Không áp dụng cho về ngoại trú** ở mức nguy cơ này. Chỉ lập kế hoạch an toàn (Safety Planning) và theo dõi sau khi chuyên khoa tâm thần đã đánh giá và quyết định. Tham khảo: Stanley 2018, *JAMA Psychiatry*, PMID 29998307 `[CẦN KIỂM CHỨNG PMID]`.
+
+**→ Bàn giao:** **chưa** chuyển sang chuỗi EBM với `dieu-phoi-lam-sang`. Ưu tiên an toàn và chuyển cấp cứu tâm thần trước. Chỉ bàn giao lại khi đã đảm bảo an toàn.
+
+---
+```
+✦ SELF-CHECK sang-loc-co-do — Cổng C1:
+  ĐÃ ĐẠT: cờ đỏ nêu đầu gói; phân tầng 🔴; hành động cụ thể (giám sát liên tục,
+          hạn chế phương tiện, loại trừ đã hành động/ngộ độc, chuyển có người đi kèm,
+          không kê thuốc nguy hiểm); câu hỏi an toàn bắt buộc; không PII.
+  CÒN THIẾU: sinh hiệu chưa có [CẦN BỔ SUNG]; PMID chưa chạy
+          check_citation_retraction.py, nên ghi "chưa kiểm rút bài"; điều khoản pháp lý
+          VN chưa kiểm chứng.
+  KẾT: ĐẠT TỰ KIỂM về an toàn; các mục [CẦN...] không làm chậm xử trí.
+```
+
+Đường dây hỗ trợ tại Việt Nam (để cung cấp cho người nhà): gọi **115** khi khẩn cấp.
+
+**Cần bác sĩ kiểm chứng.**

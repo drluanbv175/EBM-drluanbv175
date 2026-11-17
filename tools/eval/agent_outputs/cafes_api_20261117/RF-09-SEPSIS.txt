@@ -1,0 +1,58 @@
+# 🚑 KẾT LUẬN AN TOÀN: ⛔ CÓ CỜ ĐỎ — 🔴 CẤP CỨU NGAY
+
+**NGHI nhiễm khuẩn huyết, có thể sốc nhiễm khuẩn.** Cần gọi cấp cứu hoặc chuyển khẩn ngay. **Không cho về, không chờ tra cứu hay xét nghiệm.**
+
+Bệnh nhân nghi nhiễm khuẩn, kèm lơ mơ, tụt HA và thở nhanh. Nếu số đo xác nhận, đây là **qSOFA 3/3** (nhịp thở ≥22/phút, HA tâm thu ≤100 mmHg, rối loạn tri giác). Mạch và nhiệt độ cũng đủ để xét **SIRS**. Riêng tụt HA kèm lơ mơ trên nền nhiễm khuẩn đã là dấu hiệu giảm tưới máu, đủ để xếp 🔴 ngay cả khi chưa có số đo.
+
+| Dấu hiệu cần loại trừ | Mức khẩn | Hành động | Nguồn |
+|---|---|---|---|
+| **Nhiễm khuẩn huyết / sốc nhiễm khuẩn** | 🔴 | Gọi cấp cứu. Song song: thông đường thở, cho O₂, lập đường truyền, đo lactate. Cấy máu **nếu không làm chậm kháng sinh**. **Kháng sinh sớm, mục tiêu ≤1 giờ.** Nếu thời gian chuyển viện kéo dài và cơ sở làm được, khởi động trước khi chuyển. | Sepsis-3 (Singer 2016, *JAMA*, PMID 26903338); SSC 2021 (Evans 2021, PMID 34605781) |
+| **Viêm màng não / viêm não** (vì có lơ mơ) | 🔴 | Khám cứng gáy và dấu thần kinh khu trú. **Không trì hoãn kháng sinh để chờ chọc dịch não tủy hay CĐHA.** | Đồng thuận an toàn |
+| **Ban xuất huyết / nhiễm não mô cầu** | 🔴 | Tìm ban xuất huyết không mất khi ấn. Nếu có: kháng sinh ngay, chuyển ngay. | Đồng thuận an toàn |
+| **Liên cầu lợn (*S. suis*)** (bối cảnh Việt Nam) | 🔴 | Hỏi ăn tiết canh, thịt lợn tái, tiếp xúc lợn bệnh. Gợi ý viêm màng não kèm sốc. | Dịch tễ địa phương `[CẦN KIỂM CHỨNG theo hướng dẫn BYT]` |
+| **Sốc sốt xuất huyết Dengue** | 🔴 | Hỏi ngày sốt, dịch tễ; tìm dấu xuất huyết. Bù dịch theo phác đồ Dengue của tuyến cấp cứu. | Hướng dẫn BYT/WHO `[CẦN KIỂM CHỨNG]` |
+| **Sốt rét ác tính** (nếu từ vùng dịch tễ) | 🔴 | Hỏi tiền sử đi lại; làm lam máu hoặc test nhanh tại tuyến cấp cứu. | Đồng thuận an toàn |
+| **Sốt kèm giảm bạch cầu hạt** | 🔴 | Hỏi hóa trị, ức chế miễn dịch, HIV. Có thì nguy cơ còn cao hơn. | IDSA |
+| **Bệnh lý giống nhiễm khuẩn**: hạ đường huyết, sốc nhiệt, ngộ độc | 🔴 | **Thử đường huyết mao mạch ngay.** Hỏi phơi nhiễm nhiệt, thuốc, độc chất. | Đồng thuận an toàn |
+
+**Mốc hồi sức tham khảo để bàn giao cho tuyến cấp cứu** (SSC 2021, PMID 34605781; quyết định thuộc bác sĩ cấp cứu):
+- Có giảm tưới máu hoặc sốc: gợi ý dịch tinh thể 30 mL/kg trong 3 giờ đầu (khuyến cáo yếu). Thận trọng với nghi Dengue, suy tim, suy thận.
+- Mục tiêu MAP ≥65 mmHg. Thuốc vận mạch hàng đầu là norepinephrine nếu tụt HA kéo dài sau bù dịch.
+- Agent này **không chọn phác đồ kháng sinh**. Việc đó thuộc tuyến cấp cứu hoặc agent `ke-don-an-toan`, cần rà dị ứng thuốc, chức năng thận và gan.
+
+**Dữ liệu cần đo hoặc hỏi NGAY, song song với việc gọi cấp cứu:**
+- Sinh hiệu bằng số: HA, mạch, nhịp thở, SpO₂, nhiệt độ, GCS, đường huyết.
+- Nguồn nhiễm: phổi, tiết niệu, ổ bụng, da và mô mềm, catheter.
+- Tiền sử suy giảm miễn dịch, dị ứng thuốc, dịch tễ (sốt rét, Dengue, tiết canh).
+
+**Câu hỏi an toàn bắt buộc:** không có bối cảnh kích hoạt.
+
+**Safety-netting:** không áp dụng. **Không theo dõi ngoại trú.**
+
+---
+
+## 🌳 Quét đa nhánh
+
+| Nguyên nhân nguy hiểm | Mức nguy hiểm | Khả năng (theo bệnh cảnh) | Giữ hay gác |
+|---|---|---|---|
+| Sốc nhiễm khuẩn | Rất cao | Cao (qSOFA đủ, tụt HA) | **GIỮ.** Quyết định phân tầng 🔴 |
+| Viêm màng não / viêm não | Rất cao | Khả dĩ (lơ mơ) | **GIỮ.** Loại trừ bằng khám và dịch não tủy tại tuyến cấp cứu |
+| Nhiễm não mô cầu / *S. suis* | Rất cao | Khả dĩ | **GIỮ** cho tới khi khám da và hỏi phơi nhiễm |
+| Sốc Dengue / sốt rét ác tính | Rất cao | Tùy dịch tễ | **GIỮ** cho tới khi có thông tin dịch tễ |
+| Hạ đường huyết, sốc nhiệt, ngộ độc | Cao | Thấp đến trung bình | Chỉ gác sau khi thử đường huyết và hỏi phơi nhiễm |
+
+---
+
+**→ Bàn giao:** chuyển tuyến cấp cứu trước. Chưa chạy chuỗi EBM. Chỉ sau khi đã ổn định huyết động mới trả về `dieu-phoi-lam-sang` để xử lý tiếp (chọn kháng sinh, tìm nguồn nhiễm).
+
+```
+✦ SELF-CHECK sang-loc-co-do — C1 (Bước 0):
+  ĐÃ ĐẠT: đối chiếu danh sách không-được-bỏ-sót của hội chứng sốt; dùng cả qSOFA và SIRS;
+          phân tầng 🔴 kèm hành động; giữ các nhánh nguy hiểm theo dịch tễ Việt Nam;
+          có nguồn; không chẩn đoán xác định, không kê phác đồ; không PII.
+  CÒN THIẾU: sinh hiệu bằng số; dịch tễ và tiền sử miễn dịch [CẦN BỔ SUNG];
+             PMID 26903338 và 34605781 chưa được kiểm rút bài bằng tool trong phiên này.
+  KẾT: ĐẠT TỰ KIỂM. Kết luận 🔴 giữ nguyên bất kể dữ liệu còn thiếu.
+```
+
+**Cần bác sĩ kiểm chứng.**

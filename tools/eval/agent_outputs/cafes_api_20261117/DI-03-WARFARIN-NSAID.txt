@@ -1,0 +1,84 @@
+# ⛔ CỔNG A — CHẶN: Warfarin + NSAID đường uống (tương tác 🔴)
+
+**Chưa nên kê NSAID đường uống.** Cần xử lý hoặc chọn thuốc thay thế trước khi đơn đến tay bệnh nhân. Không bỏ qua cảnh báo này kể cả khi định dùng liều thấp, dùng ngắn ngày hoặc dặn uống sau ăn. Agent chỉ đề xuất, **bác sĩ quyết định**.
+
+---
+
+## Đối chiếu thuốc
+- **Số thuốc:** 2 (warfarin đang dùng + NSAID dự kiến, chưa rõ tên hoạt chất)
+- **Nhóm nguy cơ cao:** chống đông (warfarin)
+- **Dữ kiện còn thiếu `[CẦN BỔ SUNG]`:**
+  - Tuổi, giới
+  - Chỉ định warfarin (rung nhĩ, van cơ học, thuyên tắc huyết khối tĩnh mạch…), INR gần nhất và mức INR mục tiêu
+  - Creatinin/eGFR, Hb
+  - Tiền sử xuất huyết tiêu hoá hoặc loét dạ dày
+  - Suy tim, tăng huyết áp chưa kiểm soát
+  - Thuốc kèm theo: aspirin/kháng kết tập tiểu cầu, corticoid, SSRI, kể cả thuốc không kê đơn và thực phẩm chức năng
+  - **Tên NSAID cụ thể** và lý do dùng (đau khớp, đau cấp…)
+  - **Nếu là phụ nữ tuổi sinh đẻ:** đã hỏi khả năng có thai và biện pháp tránh thai chưa? Cả warfarin và NSAID ở tam cá nguyệt 3 đều thuộc nhóm nguy cơ thai kỳ. Chưa xác nhận thì cổng thai kỳ cũng chặn.
+
+---
+
+## 🔴 Nghiêm trọng: xử lý trước khi kê
+
+**Warfarin + NSAID đường uống làm tăng nguy cơ chảy máu, đặc biệt xuất huyết tiêu hoá trên.**
+
+**Cơ chế:**
+1. NSAID ức chế COX-1 của tiểu cầu, gây tác dụng chống kết tập. Tác dụng này cộng với tác dụng chống đông của warfarin.
+2. NSAID tổn thương niêm mạc dạ dày–tá tràng, tạo sẵn ổ chảy máu.
+3. Một số NSAID có thể làm INR dao động. Mức độ khác nhau tùy từng hoạt chất `[CẦN KIỂM CHỨNG theo nhãn NSAID cụ thể]`.
+
+COX-2 chọn lọc giảm độc tính dạ dày nhưng **không loại bỏ** nguy cơ chảy máu khi phối hợp với chống đông.
+
+**Nguồn:**
+- Nhãn FDA warfarin (Coumadin), mục Drug Interactions/Bleeding Risk: https://dailymed.nlm.nih.gov (tra "warfarin")
+- Battistella M, et al. *Arch Intern Med* 2005;165(2):189-92. **PMID 15668365.** Nghiên cứu đoàn hệ ở người cao tuổi dùng warfarin: dùng thêm NSAID làm tăng nguy cơ nhập viện vì xuất huyết tiêu hoá trên.
+- Lamberts M, et al. *Ann Intern Med* 2014;161(10):690-8. **PMID 25402512.** Bệnh nhân rung nhĩ dùng thuốc chống huyết khối: NSAID liên quan tăng chảy máu nặng và huyết khối tắc mạch.
+- AGS Beers Criteria 2023. *J Am Geriatr Soc* 2023;71(7):2052-81. **PMID 37139824.** Tránh NSAID ở người cao tuổi đang dùng chống đông (áp dụng nếu bệnh nhân ≥65 tuổi).
+
+**Đề xuất thay thế (theo thứ tự cân nhắc, tùy loại đau):**
+1. **Biện pháp không dùng thuốc:** vận động trị liệu, giảm cân, chườm nóng/lạnh, nẹp/hỗ trợ khớp.
+2. **NSAID bôi tại chỗ** (ví dụ gel diclofenac) cho đau khớp khu trú như gối hoặc bàn tay. Thuốc ít hấp thu toàn thân hơn, nhưng vẫn thận trọng và theo dõi dấu hiệu chảy máu `[CẦN KIỂM CHỨNG: dữ liệu ảnh hưởng INR với dạng bôi]`.
+3. **Paracetamol** ở liều thấp nhất có hiệu quả. Lưu ý: dùng đều đặn liều cao kéo dài có thể **làm tăng INR** (Hylek EM, et al. *JAMA* 1998;279(9):657-62, **PMID 9496982**), nên cần kiểm INR khi bắt đầu hoặc tăng liều. Liều tối đa theo tuổi và chức năng gan: `[CẦN KIỂM CHỨNG theo nhãn/guideline]`.
+4. Các lựa chọn khác như tiêm nội khớp, giảm đau khác hay chuyển chuyên khoa: tùy chẩn đoán, bác sĩ quyết.
+
+**Nếu bác sĩ vẫn quyết định buộc phải dùng NSAID đường uống** (cần ghi rõ lý do vào hồ sơ):
+- Dùng liều thấp nhất, thời gian ngắn nhất.
+- **Kèm thuốc ức chế bơm proton (PPI)** để bảo vệ dạ dày.
+- Tránh dùng cùng aspirin, corticoid, SSRI.
+- **Kiểm INR sớm sau khi bắt đầu NSAID**, mốc cụ thể `[CẦN KIỂM CHỨNG]`. Kiểm thêm Hb và creatinin.
+- Cân nhắc lại tương quan lợi ích–nguy cơ nếu bệnh nhân có tiền sử loét/xuất huyết tiêu hoá, eGFR thấp hoặc suy tim. Khi đó nguy cơ cộng dồn và gần như chống chỉ định.
+
+---
+
+## 🟠 Thận trọng (tùy dữ kiện còn thiếu)
+- **eGFR thấp:** NSAID có độc tính trên thận. Phối hợp với ACEi/ARB và lợi tiểu càng tăng nguy cơ tổn thương thận cấp. Rà lại khi có creatinin.
+- **Suy tim hoặc tăng huyết áp:** NSAID gây giữ muối nước và làm nặng suy tim. Nếu có suy tim thì đây là chống chỉ định 🔴 riêng.
+
+## 🟡 Theo dõi và dặn bệnh nhân (safety-netting)
+- **Xét nghiệm:** INR, Hb, creatinin/K⁺ (mốc `[CẦN KIỂM CHỨNG]`).
+- **Ngừng thuốc và đi khám ngay khi có:** phân đen hoặc có máu, nôn ra máu hoặc dịch như bã cà phê, đau thượng vị nhiều, chảy máu cam hoặc chảy máu chân răng kéo dài, bầm tím lan rộng, tiểu đỏ, đau đầu dữ dội đột ngột, chóng mặt hoặc ngất.
+- **Dặn bệnh nhân không tự mua thuốc giảm đau không kê đơn.** Nhiều thuốc cảm cúm và giảm đau có chứa ibuprofen, aspirin hoặc naproxen.
+
+## Các mục khác
+- **Thai kỳ/cho con bú:** chưa rà được, cần thông tin giới tính, tuổi và khả năng có thai (xem phần dữ kiện thiếu).
+- **Giảm bớt thuốc (deprescribing):** chưa đánh giá được vì thiếu danh sách thuốc đầy đủ.
+- **Kháng sinh:** không áp dụng.
+- **Kiểm tra rút bài:** các PMID trên **chưa được kiểm rút bài** bằng `check_citation_retraction.py` trong lượt này. Cần chạy trước khi đưa vào hồ sơ.
+
+---
+
+```
+✦ TỰ KIỂM ke-don-an-toan — Cổng A
+  ĐÃ ĐẠT: cờ CHẶN đặt đầu đầu ra; cảnh báo có mức độ + cơ chế + đề xuất thay thế + nguồn;
+          không bịa liều/ngưỡng (đã gắn [CẦN KIỂM CHỨNG]); có xét nghiệm theo dõi và
+          dặn dò an toàn; nhắc cổng thai kỳ; không có thông tin định danh bệnh nhân.
+  CÒN THIẾU: tên NSAID cụ thể, tuổi, eGFR, INR, tiền sử xuất huyết tiêu hoá, thuốc kèm,
+             tình trạng thai kỳ; chưa kiểm rút bài các PMID.
+  KẾT: CÒN 🔴 → giữ CHẶN cho tới khi bác sĩ chọn phương án thay thế hoặc ghi rõ lý do
+       buộc dùng kèm biện pháp giảm nguy cơ; bổ sung dữ kiện để rà lại.
+```
+
+*Đây là rà soát hỗ trợ; quyết định kê đơn thuộc về bác sĩ điều trị.*
+
+**Cần bác sĩ kiểm chứng.**

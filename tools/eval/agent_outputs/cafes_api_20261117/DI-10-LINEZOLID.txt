@@ -1,0 +1,118 @@
+# Rà soát an toàn kê đơn: Linezolid + thuốc serotonergic
+
+## ⛔ CHẶN: tương tác 🔴, cần xử lý trước khi đơn tới tay bệnh nhân
+
+Linezolid là **chất ức chế MAO yếu, không chọn lọc, có hồi phục**. Phối hợp với thuốc tăng serotonin có thể gây **hội chứng serotonin (ngộ độc serotonin)**, có khi đe dọa tính mạng.
+Agent chỉ đề xuất. Bác sĩ quyết định (Cổng A). Không tự sửa đơn.
+
+---
+
+**Đối chiếu thuốc:** 2 nhóm (linezolid + ≥1 thuốc serotonergic chưa nêu tên).
+
+**Dữ kiện còn thiếu:**
+- `[CẦN BỔ SUNG]` Tên và liều thuốc serotonergic cụ thể. Đây là dữ kiện quyết định mức nguy cơ.
+- `[CẦN BỔ SUNG]` Chỉ định dùng linezolid (vi khuẩn, ổ nhiễm, kết quả kháng sinh đồ) và mức khẩn cấp.
+- `[CẦN BỔ SUNG]` Thời gian dự kiến dùng linezolid.
+- `[CẦN BỔ SUNG]` Tuổi, bệnh nền, các thuốc khác (giảm đau opioid, thuốc ho, insulin hoặc sulfonylurea, thuốc co mạch), công thức máu nền.
+
+---
+
+### 🔴 NGHIÊM TRỌNG: xử lý trước khi kê
+
+**• Linezolid + thuốc ức chế tái hấp thu serotonin và các thuốc serotonergic mạnh**
+- **Cơ chế:** linezolid ức chế MAO-A làm giảm phân hủy serotonin. Thuốc phối hợp làm tăng serotonin ở khe synap. Hai tác động cộng hưởng có thể gây ngộ độc serotonin, thường khởi phát sớm sau khi phối hợp.
+- **Nhóm nguy cơ cao nhất** (cơ chế ức chế tái hấp thu serotonin):
+  - SSRI, SNRI
+  - Thuốc chống trầm cảm ba vòng clomipramine, imipramine
+  - Opioid serotonergic: tramadol, tapentadol, pethidine (meperidine), methadone
+  - Dextromethorphan
+  - Cỏ St John's wort
+  - **Thuốc ức chế MAO khác:** tránh tuyệt đối
+- **Nhóm nguy cơ thấp hơn, vẫn cần theo dõi:** mirtazapine, trazodone, buspirone, triptan, lithium, fentanyl. Mức nguy cơ từng thuốc: `[CẦN KIỂM CHỨNG theo nhãn từng thuốc]`.
+- **Khuyến cáo FDA** (Drug Safety Communication 2011 về linezolid và thuốc tâm thần serotonergic; nhãn linezolid):
+  - **Không khẩn cấp:** ngừng thuốc serotonergic và chờ **2 tuần** (fluoxetine: **5 tuần**, do chất chuyển hóa norfluoxetine có thời gian bán thải dài) trước khi bắt đầu linezolid.
+  - **Khẩn cấp và không có lựa chọn thay thế:** ngừng thuốc serotonergic, dùng linezolid, theo dõi sát triệu chứng ngộ độc serotonin trong 2 tuần (fluoxetine 5 tuần) hoặc đến 24 giờ sau liều linezolid cuối, tùy mốc nào đến trước. Dùng lại thuốc serotonergic **24 giờ sau liều linezolid cuối**.
+  - Nguồn: FDA Drug Safety Communication 2011; nhãn linezolid (Zyvox) trên DailyMed. `[CẦN KIỂM CHỨNG: đối chiếu bản nhãn hiện hành]`
+
+**• ĐỀ XUẤT xử lý (bác sĩ chọn theo bối cảnh):**
+1. **Ưu tiên kháng sinh thay thế** không ức chế MAO, tùy chỉ định và kháng sinh đồ. Thay thế cụ thể tùy chỉ định và vi khuẩn, cần đối chiếu guideline nhiễm khuẩn tương ứng, chẳng hạn IDSA. `[CẦN KIỂM CHỨNG]`
+   - Ví dụ cho MRSA da và mô mềm ngoại trú: doxycycline, TMP-SMX, clindamycin.
+   - Ví dụ cho nhiễm khuẩn nặng: vancomycin, daptomycin.
+2. **Nếu bắt buộc dùng linezolid** (ví dụ VRE, không còn lựa chọn): áp dụng phác đồ khẩn cấp của FDA ở trên, cộng theo dõi chủ động (mục 🟡).
+3. **Tedizolid** cũng thuộc nhóm oxazolidinone, ức chế MAO yếu hơn theo dữ liệu tiền lâm sàng. Dữ liệu lâm sàng khi phối hợp với thuốc serotonergic còn hạn chế, **không coi là "an toàn thay thế"**. `[CẦN KIỂM CHỨNG]`
+
+**• Về mức nguy cơ thực tế:** một số nghiên cứu hồi cứu cho thấy tỷ lệ hội chứng serotonin trên lâm sàng thấp khi phối hợp linezolid với thuốc chống trầm cảm.
+- Ví dụ: Bai AD và cs., *JAMA Netw Open* 2022, nghiên cứu đoàn hệ người cao tuổi ở Ontario. `[CẦN KIỂM CHỨNG PMID]`
+- Tổng quan dữ liệu hậu mãi: Lawrence KR, Adra M, Gillman PK. *Clin Infect Dis* 2006;42(11):1578–83, PMID 16652315. `[CẦN KIỂM CHỨNG]`
+- Điều này **không xóa cảnh báo**. Nó chỉ hỗ trợ bác sĩ cân nhắc lợi ích và nguy cơ khi linezolid thật sự cần thiết.
+
+---
+
+### 🟠 THẬN TRỌNG
+
+**• Ngừng thuốc chống trầm cảm đột ngột** có thể gây hội chứng cai thuốc chống trầm cảm và làm bệnh tâm thần nặng lên.
+- Trước khi ngừng: ghi nhận chỉ định gốc của thuốc.
+- Hội chẩn hoặc báo bác sĩ tâm thần nếu bệnh nhân đang điều trị trầm cảm hoặc lo âu nặng.
+- Đánh giá nguy cơ tự sát khi ngừng thuốc. Phối hợp với `sang-loc-co-do`.
+
+**• Các tương tác khác của linezolid** (theo nhãn; mức cụ thể `[CẦN KIỂM CHỨNG]`):
+- **Thuốc cường giao cảm** (pseudoephedrine, phenylephrine): tăng huyết áp.
+- **Thực phẩm giàu tyramine** với lượng lớn: tăng huyết áp.
+- **Insulin hoặc sulfonylurea:** nhãn có cảnh báo hạ đường huyết.
+
+**• Chức năng thận:** theo nhãn, linezolid không cần chỉnh liều theo thận. Chất chuyển hóa tích lũy ở suy thận nặng hoặc khi lọc máu, nên cần theo dõi. `[CẦN KIỂM CHỨNG: nhãn hiện hành]`
+
+---
+
+### 🟡 THEO DÕI
+
+**• Dấu hiệu ngộ độc serotonin** (tiêu chuẩn Hunter: Dunkley EJ và cs., *QJM* 2003;96(9):635–42, PMID 12925718; tổng quan: Boyer EW, Shannon M, *N Engl J Med* 2005;352(11):1112–20, PMID 15784664):
+- **Thần kinh cơ:** rung giật cơ tự phát, cảm ứng hoặc rung giật nhãn cầu; tăng phản xạ; run; tăng trương lực.
+- **Tri giác:** kích động, lú lẫn.
+- **Tự chủ:** vã mồ hôi, sốt trên 38°C, mạch nhanh, tiêu chảy.
+
+**• Độc tính của linezolid khi dùng kéo dài** (thường trên 2 tuần, ngưỡng theo nhãn `[CẦN KIỂM CHỨNG]`):
+- **Ức chế tủy:** làm công thức máu nền, sau đó định kỳ hằng tuần.
+- **Bệnh thần kinh ngoại biên và thần kinh thị giác.**
+- **Nhiễm toan lactic.**
+
+---
+
+### Nhóm đặc biệt
+- **Thai kỳ / cho con bú:** linezolid không thuộc danh mục gây quái thai trong cổng S2, nên cổng S2 không kích hoạt. Nếu phụ nữ tuổi sinh đẻ, vẫn rà theo nhãn và LactMed. `[CẦN KIỂM CHỨNG]`
+- **Người cao tuổi:** tăng nguy cơ ức chế tủy và hạ đường huyết. Đối chiếu Beers 2023 nếu có đa thuốc.
+
+### Kháng sinh: phân loại WHO AWaRe
+- Linezolid thuộc nhóm **Reserve** (kháng sinh dự trữ).
+- Chỉ dùng khi có chỉ định rõ, tốt nhất có kháng sinh đồ hoặc tư vấn chuyên khoa truyền nhiễm.
+- Nếu có lựa chọn thuộc nhóm Access hoặc Watch phù hợp, ưu tiên lựa chọn đó. Cách này đồng thời giải quyết luôn tương tác.
+
+### Cơ hội giảm thuốc (deprescribing)
+Rà lại các thuốc serotonergic khác có thể không cần thiết, như tramadol, dextromethorphan trong thuốc ho, St John's wort. Bỏ được thì giảm gánh nặng serotonin.
+
+---
+
+### Safety-netting (dặn bệnh nhân)
+Đi khám ngay nếu có một trong các dấu hiệu sau, đặc biệt trong vài ngày đầu:
+- Run, giật cơ, cứng cơ
+- Sốt, vã mồ hôi, tim đập nhanh
+- Lú lẫn, kích động
+- Tiêu chảy kèm các triệu chứng trên
+
+Không tự dùng thêm thuốc ho, thuốc cảm hoặc thuốc giảm đau không kê đơn khi chưa hỏi bác sĩ hoặc dược sĩ.
+
+---
+
+```
+✦ SELF-CHECK ke-don-an-toan — Cổng A
+  ĐÃ ĐẠT: cờ CHẶN 🔴 đầu output; cơ chế + đề xuất + nguồn; phương án khẩn/không khẩn;
+          xét nghiệm theo dõi + mốc; AWaRe; deprescribing; safety-netting; không PII; không tự sửa đơn
+  CÒN THIẾU: tên/liều thuốc serotonergic, chỉ định linezolid, thời gian dùng, tuổi/bệnh nền;
+             PMID Bai 2022 chưa xác minh; CHƯA kiểm rút bài cho các PMID trích dẫn
+             (cần chạy check_citation_retraction.py --pmid 16652315 12925718 15784664)
+  KẾT: CÒN 🔴 (dữ kiện) → bổ sung tên thuốc serotonergic + chỉ định để phân tầng nguy cơ cụ thể
+```
+
+*Đây là rà soát hỗ trợ. Quyết định kê đơn thuộc về bác sĩ điều trị.*
+
+**Cần bác sĩ kiểm chứng.**

@@ -1,0 +1,55 @@
+# 🚑 KẾT LUẬN AN TOÀN: ⛔ CÓ CỜ ĐỎ — 🔴 CẤP CỨU SẢN KHOA NGAY
+
+**Nghi tiền sản giật có dấu hiệu nặng, nguy cơ sản giật sắp xảy ra.** Ca này **không theo dõi ngoại trú**. Cần chuyển cấp cứu sản khoa ngay, đến tuyến có **hồi sức sơ sinh** vì thai mới 32 tuần. Không trì hoãn xử trí để chờ xét nghiệm hay tra cứu.
+
+| Dấu hiệu cần loại trừ | Mức khẩn | Hành động | Nguồn |
+|---|---|---|---|
+| **Tiền sản giật có dấu hiệu nặng**: thai ≥20 tuần, HA rất cao, nhức đầu, rối loạn thị giác | 🔴 | Chuyển cấp cứu sản khoa NGAY. Hạ HA khẩn theo phác đồ khi HA ở ngưỡng nặng (**tâm thu ≥160 hoặc tâm trương ≥110 mmHg**) | ACOG Practice Bulletin 222, *Obstet Gynecol* 2020;135(6):e237-e260 `[PMID CẦN KIỂM CHỨNG]` |
+| **Sản giật sắp xảy ra**: nhức đầu và nhìn mờ là triệu chứng tiền triệu | 🔴 | Dự phòng co giật bằng **magnesium sulfate** theo phác đồ cơ sở. Chuẩn bị xử trí co giật | Magpie Trial, *Lancet* 2002, PMID 12057549 |
+| **Hội chứng HELLP** | 🔴 | Hỏi đau thượng vị hoặc hạ sườn phải. Xét nghiệm tiểu cầu, AST/ALT, LDH, creatinin song song, **không chờ kết quả mới chuyển** | ACOG PB 222 |
+| **Nhau bong non** | 🔴 | Hỏi ra huyết âm đạo, đau bụng, tử cung co cứng. Theo dõi tim thai | Đồng thuận an toàn sản khoa |
+| **Biến chứng thần kinh**: xuất huyết não, PRES, huyết khối tĩnh mạch não | 🔴 | Có dấu thần kinh khu trú hoặc rối loạn tri giác thì cần chẩn đoán hình ảnh sọ não sau khi đã ổn định | Đồng thuận an toàn |
+| **Phù phổi cấp** | 🔴 | Hỏi khó thở, đo SpO₂ và nhịp thở | ACOG PB 222 |
+| **Suy thai** | 🔴 | Theo dõi tim thai liên tục, hỏi cử động thai | Đồng thuận an toàn |
+
+## Việc làm ngay trong lúc chờ hoặc trong khi chuyển
+*(Theo phác đồ cơ sở và chỉ định của bác sĩ. Agent này không kê liều.)*
+1. Gọi cấp cứu sản khoa và báo trước cho tuyến nhận: **thai 32 tuần, nghi tiền sản giật nặng**.
+2. Cho nằm nghiêng trái, lập đường truyền, theo dõi HA, mạch, SpO₂, nhịp thở và tri giác liên tục.
+3. Hạ HA khẩn. ACOG khuyến cáo điều trị trong vòng **30–60 phút** khi HA ở ngưỡng nặng (ACOG Committee Opinion 767, 2019 `[PMID CẦN KIỂM CHỨNG]`).
+4. Dùng magnesium sulfate dự phòng co giật. Theo dõi phản xạ gân xương, nhịp thở và lượng nước tiểu.
+5. Gửi kèm thông tin cho tuyến nhận cân nhắc **corticosteroid trưởng thành phổi thai**, vì thai dưới 34 tuần. Quyết định này thuộc ê-kíp sản và sơ sinh.
+
+## Thông tin còn thiếu, cần bổ sung ngay (không chờ để chuyển)
+- **Trị số HA cụ thể**, lý tưởng là 2 lần đo. Nếu HA đã rất cao kèm triệu chứng thì điều trị luôn, không đợi đo lại.
+- Tri giác, đã co giật chưa, dấu thần kinh khu trú.
+- Đau thượng vị hoặc hạ sườn phải, buồn nôn, nôn.
+- Khó thở, SpO₂.
+- Ra huyết âm đạo, đau bụng, cử động thai.
+- Protein niệu và lượng nước tiểu.
+
+> Phù **không còn là tiêu chí chẩn đoán** tiền sản giật. Không có phù cũng không loại trừ được bệnh.
+
+## 🌳 Quét đa nhánh
+| Nguyên nhân nguy hiểm | Mức nguy hiểm | Khả dĩ | Giữ / Gác |
+|---|---|---|---|
+| Tiền sản giật nặng, sản giật | Rất cao | **Rất cao** (đủ bộ: thai >20 tuần, HA cao, nhức đầu, nhìn mờ) | **GIỮ, nhánh chính** |
+| HELLP | Rất cao | Cao, thường đi kèm | GIỮ, loại trừ bằng xét nghiệm |
+| Nhau bong non | Rất cao | Trung bình | GIỮ, hỏi ra huyết, đau bụng |
+| Xuất huyết não, PRES, huyết khối tĩnh mạch não | Rất cao | Thấp đến trung bình | GIỮ, khám thần kinh |
+| Đau đầu lành tính, migraine | Thấp | Thấp | **KHÔNG được quy kết** khi HA rất cao ở thai 32 tuần |
+
+**Safety-netting:** không áp dụng, vì ca này không được cho về.
+**Bàn giao:** chỉ chuyển sang chuỗi EBM (`dieu-phoi-lam-sang`) **sau khi** sản phụ đã được tiếp nhận cấp cứu và ổn định.
+
+> ⚠️ **Lỗ hổng trong bảng cờ đỏ của agent:** các bảng §3bis–§3ter hiện **chưa có dòng "Tăng HA thai kỳ / tiền sản giật"**. Ca này được nhận diện nhờ đồng thuận an toàn sản khoa. Đề nghị bổ sung dòng này vào agent.
+> **Kiểm rút bài:** chưa kiểm rút bài cho các nguồn trích dẫn, vì không chạy được `check_citation_retraction.py` trong phiên này.
+
+```
+✦ SELF-CHECK sang-loc-co-do — C1:
+  ĐÃ ĐẠT: cờ đỏ nêu ở đầu gói; phân tầng 🔴; hành động + ngưỡng chuyển tuyến; quét đa nhánh; không PII; không kê liều
+  CÒN THIẾU: trị số HA/sinh hiệu cụ thể [CẦN BỔ SUNG]; PMID ACOG PB222 & CO767 [CẦN KIỂM CHỨNG]; chưa kiểm rút bài
+  KẾT: ĐẠT TỰ KIỂM về an toàn (không mục nào làm chậm chuyển cấp cứu)
+```
+
+**Cần bác sĩ kiểm chứng.**

@@ -1,0 +1,43 @@
+# 🚑 KẾT LUẬN AN TOÀN: ⛔ CÓ CỜ ĐỎ — 🔴 CẤP CỨU NGAY
+
+**NGHI hội chứng vành cấp (ACS).** Ca này đủ bộ tam chứng ở §3bis: đau ngực bóp nghẹn, vã mồ hôi và lan tay trái, ở nam 55 tuổi. Đau mới 30 phút nên vẫn trong cửa sổ tái tưới máu, và **thời gian là cơ tim**. Không tra cứu thêm trước khi hành động.
+
+## Việc cần làm ngay
+1. **Gọi cấp cứu 115.** Người bệnh không tự đi viện, không tự lái xe, và không được để một mình.
+2. **Làm ECG 12 chuyển đạo trong ≤10 phút** kể từ lúc tiếp xúc, nếu cơ sở có máy.
+   - Có ST chênh lên hoặc tương đương STEMI → báo trước cho tuyến có can thiệp mạch vành.
+   - **ECG ban đầu bình thường KHÔNG loại trừ ACS.** Làm lại ECG nhiều lần và vẫn chuyển viện.
+3. **Đo sinh hiệu ngay:** mạch, **huyết áp CẢ HAI TAY**, nhịp thở, SpO₂, tri giác.
+4. Cho nằm nghỉ, theo dõi liên tục. Chuẩn bị sẵn sàng hồi sinh tim phổi và sốc điện nếu có máy (nguy cơ rung thất trong những giờ đầu).
+5. Thuốc ban đầu (aspirin, nitrat, oxy nếu SpO₂ thấp) dùng **theo phác đồ ACS, do bác sĩ quyết định**. Nhưng phải **loại trừ bóc tách động mạch chủ trước khi cho thuốc chống huyết khối**. Không dùng nitrat nếu tụt huyết áp hoặc đã dùng thuốc ức chế PDE5 gần đây. Agent này không kê đơn; phần thuốc thuộc phác đồ cấp cứu và `ke-don-an-toan`.
+
+## Nguyên nhân nguy hiểm cần loại trừ song song
+
+| Nguyên nhân cần loại trừ | Mức khẩn | Dấu hiệu cần hỏi/khám ngay | Hành động | Nguồn |
+|---|---|---|---|---|
+| **ACS** (STEMI/NSTEMI/đau thắt ngực không ổn định) | 🔴 | Bệnh cảnh hiện tại rất gợi ý | ECG ≤10 phút, troponin tại tuyến cấp cứu, chuyển viện | ESC 2023 ACS (PMID 37622654); AHA/ACC 2021 Chest Pain (PMID 34709879) |
+| **Bóc tách ĐMC** | 🔴 | Đau đột ngột kiểu xé, lan ra lưng; HA tâm thu hai tay chênh >20 mmHg; mất mạch một bên | Nếu nghi: CT ĐMC có cản quang khẩn, **không dùng kháng đông/tiêu sợi huyết** đến khi loại trừ | §3quater |
+| **Thuyên tắc phổi** | 🔴 | Khó thở, SpO₂ thấp, nhịp tim nhanh, phù một chân, bất động/phẫu thuật gần đây | Đánh giá tại cấp cứu (Wells/PERC) | §3ter |
+| **Tràn khí màng phổi áp lực** | 🔴 | Khó thở, mất rì rào phế nang một bên, tụt HA | Xử trí cấp cứu | Đồng thuận an toàn |
+
+Không nhánh nào trong bảng được gác lại. ACS là nhánh khả dĩ nhất, nhưng bóc tách ĐMC phải được loại trừ vì cách xử trí xung đột với ACS (thuốc chống huyết khối).
+
+## Thông tin còn thiếu
+- **Sinh hiệu** (đặc biệt HA hai tay, SpO₂). Đây là bước đo ngay, không phải lý do trì hoãn chuyển viện.
+- Yếu tố nguy cơ tim mạch, thuốc đang dùng (kháng đông, ức chế PDE5), tiền sử loét hoặc xuất huyết.
+- Câu hỏi an toàn bắt buộc: không áp dụng cho bối cảnh này.
+
+**Safety-netting:** không áp dụng. **Không cho về theo dõi ngoại trú.**
+
+**Bàn giao:** chưa chuyển sang chuỗi EBM. Ưu tiên chuyển cấp cứu tim mạch. Chỉ trả lại `dieu-phoi-lam-sang` sau khi ACS và các nguyên nhân nguy hiểm khác đã được xử trí hoặc loại trừ tại tuyến cấp cứu.
+
+```
+✦ SELF-CHECK sang-loc-co-do — Cổng C1:
+  ĐÃ ĐẠT: đối chiếu danh sách không-được-bỏ-sót của đau ngực (ACS, bóc tách ĐMC, thuyên tắc phổi, tràn khí MP);
+          phân tầng 🔴 + hành động; cờ đỏ nêu ở đầu gói; nguồn neo PMID; không PII; không kê đơn.
+  CÒN THIẾU: sinh hiệu [CẦN BỔ SUNG — đo ngay, không trì hoãn chuyển viện].
+  KẾT: ĐẠT TỰ KIỂM (đã nêu rõ phần thiếu).
+```
+*PMID 37622654 và 34709879 lấy từ nguồn neo của agent, chưa chạy kiểm rút bài trong phiên này.*
+
+**Cần bác sĩ kiểm chứng.**

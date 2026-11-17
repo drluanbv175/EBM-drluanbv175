@@ -1,0 +1,54 @@
+# 🚑 KẾT LUẬN AN TOÀN: ⛔ CÓ CỜ ĐỎ — 🔴 CẤP CỨU NGAY
+
+**NGHI tụ máu ngoài màng cứng có dấu hiệu tụt não (thoát vị não).** Bệnh cảnh gồm chấn thương đầu, khoảng tỉnh, sau đó lơ mơ dần, kèm giãn đồng tử một bên. Đây là cấp cứu ngoại thần kinh. **Không trì hoãn vì tra cứu hay chẩn đoán phân biệt.**
+
+| Dấu hiệu cần loại trừ | Mức khẩn | Hành động | Nguồn |
+|---|---|---|---|
+| **Tụ máu ngoài màng cứng** (khoảng tỉnh rồi xấu dần là dấu điển hình) | 🔴 | Gọi ngoại thần kinh và chuyển ngay tới cơ sở có phẫu thuật thần kinh | Bullock MR, *Neurosurgery* 2006;58(3 Suppl):S7-15, PMID 16710967 |
+| **Thoát vị não thùy thái dương** (giãn đồng tử một bên kèm giảm tri giác) | 🔴 | Hồi sức ABCDE. Có thể dùng biện pháp tạm thời để giảm áp lực nội sọ theo chỉ định chuyên khoa | Carney N (BTF 4th ed), *Neurosurgery* 2017;80(1):6-15, PMID 27654000 |
+| Tụ máu dưới màng cứng cấp hoặc dập não (bệnh cảnh có thể tương tự) | 🔴 | CT sọ không cản quang khẩn, nhưng **không để CT làm chậm việc chuyển viện** nếu nơi đang khám không có phẫu thuật thần kinh | NICE NG232 Head injury (2023) |
+| Chấn thương cột sống cổ kèm theo | 🔴 | Cố định cột sống cổ cho đến khi loại trừ | ATLS / NICE NG232 |
+
+## Hành động ngay (song song, không tuần tự)
+
+1. **A – Đường thở.** Cố định cột sống cổ. Nếu GCS ≤ 8 hoặc không tự bảo vệ được đường thở, đặt nội khí quản (BTF/ATLS).
+2. **B – Hô hấp.** Tránh thiếu oxy, giữ SpO₂ ≥ 90%. Chỉ tăng thông khí ngắn hạn như biện pháp cầu nối khi có dấu tụt não, không dùng kéo dài (BTF 2016).
+3. **C – Tuần hoàn.** Tránh tụt huyết áp. BTF khuyến cáo HA tâm thu ≥ 110 mmHg cho người 15–49 tuổi. Một lần tụt HA hoặc thiếu oxy làm tăng rõ tử vong.
+4. **D – Thần kinh.** Ghi GCS và kích thước, phản xạ đồng tử, theo dõi lặp lại mỗi vài phút. Thử đường huyết mao mạch.
+5. **Thuốc thẩm thấu** (mannitol hoặc muối ưu trương) làm cầu nối trong lúc chờ mổ, **theo chỉ định của bác sĩ hồi sức hoặc ngoại thần kinh**. Agent không kê liều.
+6. **Hỏi nhanh:** có dùng kháng đông hoặc kháng kết tập không? Nếu có, nguy cơ chảy máu tiến triển cao hơn, phối hợp `quan-ly-khang-dong` để đảo ngược, song song với hồi sức. Hỏi thêm về rượu và chất kích thích. Đây là yếu tố gây nhiễu, **không được quy tri giác giảm cho rượu.**
+
+**⛔ KHÔNG:**
+- Chọc dò tủy sống (nguy cơ tụt não).
+- Dùng an thần làm che khám thần kinh khi chưa bảo vệ đường thở.
+- Cho về theo dõi.
+- Định vị khối máu chỉ dựa vào bên đồng tử giãn. Thường cùng bên với khối máu, nhưng có ngoại lệ (hiện tượng khuyết Kernohan), nên CT mới xác định được.
+
+## 🌳 Quét đa nhánh nguy hiểm
+
+| Nguyên nhân | Nguy hiểm | Khả dĩ | Giữ/Gác |
+|---|---|---|---|
+| Tụ máu ngoài màng cứng | Rất cao | Cao (khoảng tỉnh, người trẻ) | **GIỮ.** CT xác định, mổ khẩn |
+| Tụ máu dưới màng cứng cấp | Rất cao | Trung bình | **GIỮ.** CT |
+| Dập não, tụ máu trong nhu mô | Cao | Trung bình | **GIỮ.** CT |
+| Tổn thương cột sống cổ, đa chấn thương, sốc mất máu | Cao | Chưa rõ | **GIỮ.** Khám toàn diện theo ATLS |
+| Hạ đường huyết, ngộ độc rượu hoặc thuốc | Trung bình | Có thể đồng thời | **GIỮ như yếu tố cộng thêm.** Không dùng để giải thích dấu thần kinh khu trú |
+
+**Quay lui:** nếu GCS giảm thêm, đồng tử hai bên cùng giãn, hoặc xuất hiện bộ ba Cushing (HA tăng, mạch chậm, thở rối loạn), thì tụt não đang tiến triển. Báo ngoại thần kinh ngay.
+
+## Safety-netting
+Không áp dụng. Ca này **không có lựa chọn theo dõi ngoại trú**.
+
+## → Bàn giao
+**Chưa bàn giao cho chuỗi EBM.** Chuyển thẳng cấp cứu và ngoại thần kinh. Chỉ quay lại `dieu-phoi-lam-sang` sau khi đã xử trí khẩn.
+
+---
+```
+✦ SELF-CHECK sang-loc-co-do — Bước 0:
+  ĐÃ ĐẠT: cờ đỏ nêu ở đầu; phân tầng 🔴; hành động cấp cứu; quét đa nhánh; không PII; không kê liều
+  CÒN THIẾU: sinh hiệu/GCS thực tế [CẦN BỔ SUNG]; PMID 16710967, 27654000 chưa kiểm rút bài
+             (chưa chạy check_citation_retraction.py), không ảnh hưởng hành động khẩn
+  KẾT: ĐẠT TỰ KIỂM
+```
+
+**Cần bác sĩ kiểm chứng.**

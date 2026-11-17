@@ -1,0 +1,51 @@
+# 🚑 KẾT LUẬN AN TOÀN: ⛔ CÓ CỜ ĐỎ: 🔴 CẤP CỨU NGAY
+
+**Nghi xuất huyết tiêu hóa trên cấp, có dấu hiệu sốc mất máu.** Nôn máu lượng nhiều, da xanh và mạch nhanh là đủ để xử trí cấp cứu. **Không trì hoãn để chờ xét nghiệm, nội soi hay tra cứu.**
+
+| Dấu hiệu cần loại trừ / xử trí | Mức khẩn | Hành động | Nguồn |
+|---|---|---|---|
+| **Sốc mất máu do XHTH trên** | 🔴 | Gọi cấp cứu/chuyển khẩn. **2 đường truyền tĩnh mạch lớn**, bù dịch. Lấy máu xét nghiệm công thức máu, nhóm máu, phản ứng chéo, đông máu, chức năng gan thận. Nhịn ăn uống. Theo dõi sinh hiệu liên tục | ACG 2021 (Laine, *Am J Gastroenterol*, PMID 33929377) |
+| **Nguy cơ hít sặc / mất đường thở** (nôn máu nhiều, tri giác giảm) | 🔴 | Nằm nghiêng an toàn, hút đờm máu. Đánh giá bảo vệ đường thở trước nội soi | Đồng thuận an toàn |
+| **Nghi vỡ giãn tĩnh mạch thực quản** (rượu, viêm gan B/C, dấu bệnh gan mạn) | 🔴 | Hồi sức như trên. Báo tuyến cấp cứu để dùng **thuốc vận mạch + kháng sinh dự phòng** sớm và nội soi khẩn | Baveno VII (de Franchis 2022, PMID 35120736) |
+| **Đang dùng kháng đông / kháng kết tập / NSAID** | 🔴 | Phối hợp `quan-ly-khang-dong` (đảo ngược) **song song** với hồi sức, không chờ chọn thuốc | ACG 2021 |
+| Truyền máu | 🔴 | Ưu tiên chiến lược **hạn chế** theo ngưỡng Hb của guideline. Ngưỡng cụ thể theo bệnh nền tim mạch do tuyến cấp cứu quyết `[CẦN KIỂM CHỨNG]` | Villanueva 2013 *NEJM* (PMID 23281973); ACG 2021 |
+
+### Cần đo hoặc hỏi NGAY (đang thiếu, nhưng KHÔNG được chờ để chuyển)
+- **HA** (tâm thu, kèm tư thế nếu an toàn), **SpO₂**, nhịp thở, **tri giác**, nước tiểu. Đã có mạch nhanh và da xanh nên mặc định coi là sốc.
+- **Có thai không?** Nữ 35 tuổi cần thử βhCG song song, vì kết quả ảnh hưởng chọn thuốc và cận lâm sàng. Không được trì hoãn hồi sức để chờ kết quả.
+- Có thật là **nôn máu**? Phân biệt với ho ra máu, hoặc máu mũi/họng nuốt vào rồi nôn ra.
+- Đi ngoài phân đen? Có nôn khan nhiều trước khi ra máu (gợi ý Mallory-Weiss)?
+- Tiền sử loét, bệnh gan, rượu, phẫu thuật động mạch chủ.
+- **Có uống chất ăn mòn hay quá liều thuốc** (aspirin, warfarin…) không, kể cả cố ý? Nếu có, hỏi ý tưởng tự hại.
+
+### 🌳 Quét rộng nguyên nhân nguy hiểm (không cắt nhánh)
+
+| Nguyên nhân | Nguy hiểm | Khả dĩ | Giữ/Gác |
+|---|---|---|---|
+| Loét dạ dày-tá tràng chảy máu | Cao | Cao (thường gặp nhất) | **Giữ**: nội soi |
+| Vỡ giãn TM thực quản/dạ dày | Rất cao | Tùy tiền sử gan | **Giữ** đến khi loại trừ bệnh gan |
+| Rối loạn đông máu do thuốc | Cao | Chưa rõ | **Giữ**: hỏi thuốc, xét nghiệm đông máu |
+| Mallory-Weiss / ác tính | Trung bình-cao | Chưa rõ | Giữ |
+| Rò động mạch chủ-ruột | Rất cao | Thấp (cần tiền sử mổ ĐMC) | Giữ nếu có tiền sử |
+| Giả nôn máu (ho ra máu, máu mũi) | Thay đổi hướng xử trí | Phải loại trừ | Hỏi bệnh, khám |
+
+Nếu diễn tiến xấu (tụt HA, lơ mơ, tiếp tục nôn máu) thì nâng mức xử trí và báo ngay tuyến tiếp nhận.
+
+**Safety-netting:** Không áp dụng. **KHÔNG theo dõi ngoại trú, KHÔNG cho về.**
+
+**→ Bàn giao:** Hồi sức và chuyển cấp cứu/tiêu hóa để nội soi sau khi ổn định huyết động. Chỉ tiếp tục chuỗi EBM (`dieu-phoi-lam-sang`) **sau** khi đã xử trí khẩn. Nếu có kháng đông thì chuyển song song cho `quan-ly-khang-dong`.
+
+---
+```
+✦ SELF-CHECK sang-loc-co-do — C1:
+  ĐÃ ĐẠT: cờ đỏ nêu ở đầu gói; phân tầng 🔴 + hành động; quét danh sách
+          không-được-bỏ-sót XHTH trên; nguồn PMID; câu hỏi an toàn (thai, chất độc/tự hại);
+          bàn giao rõ; không PII.
+  CÒN THIẾU: HA/SpO₂/tri giác [CẦN BỔ SUNG, đo ngay]; ngưỡng truyền máu cụ thể
+             [CẦN KIỂM CHỨNG]; các PMID chưa chạy check_citation_retraction (chưa kiểm rút bài).
+  KẾT: ĐẠT TỰ KIỂM cho mục tiêu sàng lọc. Thiếu sinh hiệu KHÔNG làm chậm chuyển cấp cứu.
+```
+
+Đây là sàng lọc nghi ngờ, không phải chẩn đoán xác định, và không thay khám trực tiếp.
+
+**Cần bác sĩ kiểm chứng.**

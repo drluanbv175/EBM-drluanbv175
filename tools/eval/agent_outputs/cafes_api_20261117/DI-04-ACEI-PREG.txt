@@ -1,0 +1,79 @@
+# Rà soát an toàn kê đơn: Thai kỳ + ACEi/ARB
+
+## 🔴 CỔNG A — CHẶN: không kê ACEi/ARB cho người đang có thai
+
+Đây là chống chỉ định. Cổng này không có ngoại lệ "liều thấp" hay "chỉ dùng ngắn ngày". Bác sĩ quyết định, agent không tự sửa đơn.
+
+**Dữ kiện còn thiếu:** `[CẦN BỔ SUNG]` tuổi thai (tuần) · chỉ định dùng thuốc (tăng huyết áp mạn, bệnh thận có protein niệu, đái tháo đường, suy tim) · huyết áp hiện tại · bệnh nhân đã/đang dùng ACEi/ARB hay chưa · bệnh nền (hen, nhịp chậm, suy tim) · creatinin, protein niệu.
+
+## 🔴 NGHIÊM TRỌNG / CHỐNG CHỈ ĐỊNH
+
+**ACEi (…pril) và ARB (…sartan) trong thai kỳ**
+- **Cơ chế:** thuốc ức chế hệ renin–angiotensin của thai nhi, gây bệnh lý thai nhi, rõ nhất ở tam cá nguyệt 2–3:
+  - suy thận thai, thiểu ối;
+  - thiểu sản xương sọ, thiểu sản phổi, co cứng chi;
+  - thai chậm tăng trưởng;
+  - trẻ sơ sinh hạ huyết áp, vô niệu, có thể tử vong.
+- **Tam cá nguyệt 1:** có báo cáo tăng dị tật (Cooper 2006). Các phân tích sau cho thấy phần nguy cơ này có thể do chính bệnh tăng huyết áp gây nhiễu. Dù vậy, khuyến cáo hành động không đổi: ngừng ngay khi biết có thai.
+- **Đề xuất:** không khởi trị. Nếu đang dùng thì ngừng ngay và chuyển sang thuốc thay thế (xem dưới). Không phối hợp ACEi với ARB, cũng không dùng aliskiren thay thế, vì cùng trục RAS và cùng cảnh báo.
+- **Nguồn:**
+  - Nhãn FDA của toàn bộ nhóm ACEi/ARB, cảnh báo đóng khung "Fetal toxicity": ngừng càng sớm càng tốt khi phát hiện có thai.
+  - ACOG Practice Bulletin No. 203: *Chronic Hypertension in Pregnancy*, Obstet Gynecol 2019;133(1):e26–e50, PMID 30575676.
+  - Cooper WO et al., *N Engl J Med* 2006;354(23):2443–51, PMID 16760444.
+  - Trạng thái rút bài: chưa kiểm. Cần chạy `check_citation_retraction.py --pmid 30575676 16760444`.
+
+**Nếu bệnh nhân ĐÃ phơi nhiễm** (có thai khi đang dùng thuốc):
+- Ngừng thuốc và chuyển thuốc ngay.
+- Tư vấn rằng phơi nhiễm ở tam cá nguyệt 1 đơn thuần không phải chỉ định chấm dứt thai kỳ.
+- Siêu âm hình thái chi tiết.
+- Nếu đã phơi nhiễm ở tam cá nguyệt 2–3: theo dõi nước ối và tăng trưởng thai, và báo cho nhi sơ sinh để theo dõi huyết áp, nước tiểu, chức năng thận của trẻ.
+- Hội chẩn sản khoa nguy cơ cao.
+- Tần suất và phương pháp theo dõi cụ thể: `[CẦN KIỂM CHỨNG]` theo phác đồ sản khoa tại cơ sở.
+
+## 🟠 THAY THẾ HẠ ÁP AN TOÀN HƠN TRONG THAI KỲ (theo ACOG PB 203)
+
+| Thuốc | Liều theo bảng ACOG | Thận trọng / chống chỉ định |
+|---|---|---|
+| **Labetalol** (lựa chọn đầu tay) | 200–2400 mg/ngày, chia 2–3 lần | Tránh khi hen phế quản, nhịp chậm/block, suy tim mất bù |
+| **Nifedipine phóng thích kéo dài** (lựa chọn đầu tay) | 30–120 mg/ngày | Không dùng dạng tác dụng nhanh ngậm dưới lưỡi; có thể gây phù, nhức đầu, nhịp nhanh |
+| Methyldopa (lựa chọn thay thế) | 500–3000 mg/ngày, chia 2–4 lần | Gây buồn ngủ; hạn chế dùng sau sinh vì nguy cơ trầm cảm |
+
+- Liều trên lấy theo bảng ACOG PB 203 `[CẦN KIỂM CHỨNG — đối chiếu bảng gốc và nhãn thuốc lưu hành tại Việt Nam]`.
+- **Ngưỡng điều trị:** thử nghiệm CHAP cho thấy điều trị khi huyết áp ≥140/90, mục tiêu <140/90, giảm kết cục bất lợi mà không tăng thai nhỏ so với tuổi thai (Tita AT et al., *N Engl J Med* 2022;386:1781–92, PMID 35363951, chưa kiểm rút bài).
+- **Huyết áp ≥160/110 kéo dài:** cấp cứu sản khoa, xử trí theo phác đồ tăng huyết áp nặng hoặc tiền sản giật.
+
+**Nếu chỉ định ban đầu KHÔNG phải tăng huyết áp:**
+- **Bệnh thận có protein niệu hoặc bệnh thận đái tháo đường:** không có thuốc thay thế "bảo vệ thận" tương đương trong thai kỳ. Hội chẩn thận học và sản khoa nguy cơ cao; kiểm soát huyết áp bằng thuốc trong bảng trên.
+- **Suy tim:** hội chẩn tim mạch sản khoa. Hydralazine phối hợp nitrate và chẹn beta phù hợp thường được cân nhắc thay ACEi/ARB `[CẦN KIỂM CHỨNG theo guideline tim mạch thai kỳ hiện hành]`.
+
+## 🟡 LƯU Ý / THEO DÕI
+- **Cơ hội kê thêm thuốc nên có (START):** người tăng huyết áp mạn có nguy cơ tiền sản giật cao → cân nhắc **aspirin liều thấp từ tuần 12–28** (USPSTF 2021) `[CẦN KIỂM CHỨNG liều và thời điểm theo guideline tại cơ sở]`.
+- **Theo dõi:** huyết áp tại nhà, protein niệu, creatinin, men gan, tiểu cầu theo mốc khám thai; siêu âm tăng trưởng thai. Mốc cụ thể `[CẦN BỔ SUNG theo tuổi thai]`.
+- **Sau sinh và cho con bú:** có thể quay lại ACEi. Enalapril và captopril có dữ liệu cho con bú tương đối thuận lợi, cần đối chiếu **LactMed** trước khi kê. Nên tránh ARB khi chưa đủ dữ liệu `[CẦN KIỂM CHỨNG LactMed]`.
+- **Phụ nữ tuổi sinh đẻ đang dùng ACEi/ARB mà chưa có thai:** tư vấn tránh thai hoặc kế hoạch chuyển thuốc trước khi thụ thai, và ngừng ngay khi thử thai dương tính.
+
+## Nhóm đặc biệt: thai kỳ
+Đã rà. ACEi/ARB cần tránh. Đổi sang labetalol hoặc nifedipine phóng thích kéo dài (methyldopa là lựa chọn thay thế). Nguồn: nhãn FDA và ACOG PB 203.
+
+**Kháng sinh:** không liên quan · **Bớt thuốc:** ngừng ACEi/ARB nếu đang dùng.
+
+## Dặn bệnh nhân (safety-netting)
+Đi cấp cứu ngay nếu có:
+- nhức đầu dữ dội, nhìn mờ hoặc thấy chớp sáng;
+- đau thượng vị hoặc hạ sườn phải;
+- phù tăng nhanh, khó thở;
+- thai máy giảm, ra huyết âm đạo;
+- huyết áp đo ở nhà ≥160/110.
+
+```
+✦ SELF-CHECK ke-don-an-toan — Cổng A
+  ĐÃ ĐẠT: cờ 🔴 CHẶN ở đầu; cơ chế; đề xuất thay thế có nguồn; xử trí khi đã phơi nhiễm;
+          theo dõi; cho con bú (LactMed); không có PII; không tự sửa đơn
+  CÒN THIẾU: tuổi thai, chỉ định gốc, huyết áp/creatinin, bệnh nền [CẦN BỔ SUNG];
+             chưa chạy kiểm rút bài cho 3 PMID; liều cần đối chiếu bảng ACOG gốc
+  KẾT: ĐẠT TỰ KIỂM có điều kiện. Liều và mốc theo dõi giữ nhãn [CẦN KIỂM CHỨNG]
+```
+
+*Đây là rà soát hỗ trợ; quyết định kê đơn thuộc về bác sĩ điều trị.*
+
+**Cần bác sĩ kiểm chứng.**

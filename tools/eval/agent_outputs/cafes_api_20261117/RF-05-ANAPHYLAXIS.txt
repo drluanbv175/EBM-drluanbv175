@@ -1,0 +1,62 @@
+# 🚑 KẾT LUẬN AN TOÀN: ⛔ CÓ CỜ ĐỎ: 🔴 NGHI PHẢN VỆ (SỐC PHẢN VỆ) → CẤP CỨU NGAY
+
+**Lý do:** Bệnh nhân có triệu chứng ở da/niêm (mày đay, phù mặt), hô hấp (khó thở) và tuần hoàn (tụt HA), khởi phát sau khi tiếp xúc tác nhân (tiêm hoặc ăn). Bệnh cảnh này **đủ tiêu chuẩn lâm sàng phản vệ** theo NIAID/FAAN (Sampson 2006) và WAO 2020. **Không chờ xét nghiệm hay tra cứu trước khi tiêm adrenaline.**
+
+## Hành động ngay (theo thứ tự, làm song song nếu đủ người)
+
+| # | Hành động | Mức khẩn | Nguồn |
+|---|---|---|---|
+| 1 | **Ngừng hoặc loại bỏ tác nhân nghi ngờ** (ngừng truyền hoặc tiêm thuốc đang dùng). **Gọi hỗ trợ cấp cứu.** | 🔴 | Đồng thuận an toàn |
+| 2 | **ADRENALINE TIÊM BẮP NGAY.** Người lớn dùng **0,5 mg** (0,5 mL dung dịch 1 mg/mL), tiêm ở **mặt trước-ngoài đùi**. **Nhắc lại sau 5 phút** nếu không cải thiện. | 🔴 | WAO 2020 (Cardona V et al., *World Allergy Organ J* 2020;13(10):100472, PMID 33204386) · RCUK 2021 |
+| 3 | **Tư thế:** nằm ngửa, nâng chân. Nếu khó thở nặng thì cho ngồi. **Không cho đứng hay ngồi dậy đột ngột** vì có nguy cơ ngừng tuần hoàn. Nếu có thai, cho nằm nghiêng trái. | 🔴 | WAO 2020 · RCUK 2021 |
+| 4 | **Oxy lưu lượng cao.** Theo dõi liên tục SpO₂, mạch, HA và ECG. | 🔴 | RCUK 2021 |
+| 5 | **Đặt đường truyền tĩnh mạch.** Bù **dịch tinh thể nhanh** vì đang tụt HA (người lớn thường dùng bolus 500–1000 mL `[CẦN KIỂM CHỨNG theo phác đồ tại chỗ]`). | 🔴 | WAO 2020 · RCUK 2021 |
+| 6 | **Đánh giá đường thở sớm.** Nếu có khàn tiếng, thở rít, phù lưỡi hoặc họng tiến triển, gọi **người có kỹ năng đường thở khó** ngay vì có nguy cơ tắc nghẽn và đặt nội khí quản khó. | 🔴 | Đồng thuận an toàn |
+| 7 | **Kháng trị** (không đáp ứng sau 2 liều adrenaline tiêm bắp): cần truyền adrenaline tĩnh mạch, **do người có kinh nghiệm thực hiện** và có theo dõi monitor. Nếu bệnh nhân đang dùng **chẹn beta**, cân nhắc glucagon. | 🔴 | RCUK 2021 · WAO 2020 |
+
+⚠️ **KHÔNG dùng kháng histamin hoặc corticoid thay cho adrenaline, và không để chúng làm chậm adrenaline.** Đây chỉ là thuốc hỗ trợ (kháng histamin giúp giảm triệu chứng da) và không cứu được tình trạng tụt HA hay tắc đường thở.
+
+## 🌳 Quét các nguyên nhân nguy hiểm khác (giữ lại để loại trừ, không làm chậm xử trí phản vệ)
+
+| Nguyên nhân | Mức nguy hiểm | Khả năng theo bệnh cảnh | Giữ hay gác |
+|---|---|---|---|
+| **Phản vệ / sốc phản vệ** | Rất cao | **Rất cao** (đủ 3 hệ cơ quan, có yếu tố khởi phát) | **GIỮ, xử trí ngay** |
+| Phù mạch do bradykinin (do thuốc ức chế men chuyển, hoặc phù mạch di truyền) | Cao (tắc đường thở) | Thấp, vì thường **không có mày đay** | Tạm gác. Mở lại nếu adrenaline không đáp ứng và không có mày đay. Hỏi tiền sử dùng ƯCMC và tiền sử gia đình. |
+| Cơn hen nặng hoặc nguy kịch | Cao | Có thể chồng lên phản vệ | Giữ, theo dõi khò khè, SpO₂ và mức độ nói được. |
+| Phản ứng phế vị (ngất do phế vị) | Thấp | Thấp, vì phế vị thường có **mạch chậm, da tái** và **không có mày đay hay phù** | Gác sau khi khám lại da và đo mạch. |
+| Sốc nhiễm khuẩn hoặc sốc do nguyên nhân khác | Cao | Thấp (khởi phát ngay sau tiếp xúc tác nhân) | Gác. Mở lại nếu có sốt hoặc diễn tiến không phù hợp. |
+
+**Quay lui:** nếu sinh hiệu xấu đi hoặc tình trạng kháng trị, mở lại các nhánh trên và **nâng mức xử trí** (gọi hồi sức, kiểm soát đường thở).
+
+## Câu hỏi an toàn bắt buộc
+- Bệnh cảnh này **không kích hoạt** câu hỏi về ý tưởng tự sát.
+- **Hỏi khi đã ổn định:** khả năng có thai, thuốc đang dùng (**chẹn beta, ƯCMC**), tác nhân cụ thể (tên thuốc hoặc vắc-xin đã tiêm, món ăn), tiền sử dị ứng hoặc phản vệ.
+
+## Sau giai đoạn cấp (khi đã ổn định, do bác sĩ quyết định)
+- **Theo dõi tại viện** vì có nguy cơ **phản ứng hai pha**. RCUK 2021 gợi ý tối thiểu khoảng 6 giờ sau khi hết triệu chứng nếu chỉ cần 1 liều adrenaline, và **dài hơn (khoảng 12 giờ)** nếu phản ứng nặng hoặc cần trên 1 liều `[CẦN KIỂM CHỨNG theo phác đồ tại chỗ]`.
+- Lấy **tryptase huyết thanh** càng sớm càng tốt sau điều trị ban đầu, có thể lấy thêm mẫu sau 1–2 giờ, nhưng **không trì hoãn cấp cứu** để lấy mẫu.
+- **Khi ra viện:** kê bút tiêm adrenaline tự động, hướng dẫn cách dùng, ghi **tác nhân nghi ngờ vào hồ sơ dị ứng**, và chuyển khám **chuyên khoa dị ứng-miễn dịch**.
+- **Dặn bệnh nhân quay lại NGAY nếu:** khó thở trở lại, phù môi, lưỡi hoặc họng, khàn tiếng hay thở rít, choáng hoặc ngất, mày đay lan nhanh.
+
+## Nguồn
+- Sampson HA et al. *J Allergy Clin Immunol* 2006;117(2):391-397, PMID 16461139 (tiêu chuẩn lâm sàng phản vệ NIAID/FAAN).
+- Cardona V et al. *World Allergy Organ J* 2020;13(10):100472, PMID 33204386 (WAO Anaphylaxis Guidance 2020).
+- Resuscitation Council UK. *Emergency treatment of anaphylaxis*, 2021 (tài liệu hướng dẫn, không có PMID).
+- Trạng thái rút bài: **chưa kiểm rút bài**, cần chạy `check_citation_retraction.py --pmid 16461139 33204386`.
+
+## → Bàn giao
+**CHƯA chuyển sang suy luận EBM.** Ưu tiên tuyệt đối là xử trí cấp cứu phản vệ. Chỉ sau khi huyết động và đường thở ổn định mới trả cho `dieu-phoi-lam-sang` để: xác định tác nhân, rà lại thuốc (chẹn beta, ƯCMC), lên kế hoạch dự phòng và chuyển dị ứng. Khi đến bước kê đơn, phối hợp `ke-don-an-toan`.
+
+```
+✦ SELF-CHECK sang-loc-co-do — Bước 0 (C1):
+  ĐÃ ĐẠT: nhận diện hội chứng + sinh hiệu (tụt HA); quét cờ đỏ; phân tầng 🔴;
+          hành động cấp cứu nêu đầu gói; ToT giữ nhánh nguy hiểm; câu hỏi an toàn theo bối cảnh;
+          safety-netting sau ra viện; nguồn có PMID; không PII; không chẩn đoán xác định (dùng "NGHI").
+  CÒN THIẾU: sinh hiệu chi tiết (mạch, SpO₂, nhịp thở, tri giác) [CẦN BỔ SUNG];
+             kiểm rút bài PMID [CẦN KIỂM CHỨNG]; dịch truyền/thời gian theo dõi theo phác đồ tại chỗ.
+  KẾT: ĐẠT TỰ KIỂM cho mục đích cảnh báo cấp cứu, còn các mục [CẦN…] như trên.
+```
+
+Đây là sàng lọc an toàn, không thay thế khám và xử trí trực tiếp tại chỗ.
+
+**Cần bác sĩ kiểm chứng.**

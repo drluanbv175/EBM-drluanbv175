@@ -25,8 +25,10 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import hashlib
 import re
 import sys
+import time as _time
 from pathlib import Path
 
 # Windows: stdout mặc định cp1252 giết print() tiếng Việt — ép UTF-8 (chốt BH55/R4)
@@ -333,8 +335,9 @@ MODEL_CAFES = "claude-opus-5-5"
 BETA_DU_PHONG = "server-side-fallback-2026-07-01"
 # Giá Claude Opus 5.5, USD / 1 triệu token (tài liệu Claude API, đọc 17/11/2026). Ghi cache 5 phút = 1,25 × vào.
 GIA_OPUS_55 = {"vao": 4.00, "ghi_cache": 5.00, "doc_cache": 0.20, "ra": 20.00}
-# Giả định token RA mỗi ca khi ƯỚC TÍNH (thinking + trả lời ở effort high) — chưa đo được trước khi chạy.
-RA_GIA_DINH = (1000, 4000)
+# Giả định token RA mỗi ca khi ƯỚC TÍNH (thinking + trả lời ở effort high). Đo thật lượt đầu 17/11/2026 (32 ca):
+# tối thiểu 2.789 · trung vị 4.312 · TB 4.484 · tối đa 10.057 — giả định cũ 1.000–4.000 làm ước tính hụt 9% (2,78 → 3,02 USD).
+RA_GIA_DINH = (2800, 6000)
 CTR_NGUON = Path(__file__).resolve().parents[2] / "sync" / "skills" / "cap-nhat-chung-cu-y-khoa" / "tools" / "check_topic_relevance.py"
 
 
@@ -388,6 +391,7 @@ class ClaudeAPIAgent:
         self.effort = effort
         self.usage = {"vao": 0, "ghi_cache": 0, "doc_cache": 0, "ra": 0}
         self.so_luot = 0
+        self.nhat_ky: list = []   # mỗi lượt: agent, prompt, đầu ra thô HOẶC lý do không đo được, token, giây
 
     def _system(self, agent_name: str) -> str:
         p = os.path.join(self.agents_dir, f"{agent_name}.md")
@@ -410,6 +414,18 @@ class ClaudeAPIAgent:
         return sum(self.usage[k] * GIA_OPUS_55[k] for k in self.usage) / 1e6
 
     def generate(self, prompt: str, agent_name: str = "") -> str:
+        u0, t0 = dict(self.usage), _time.time()
+        try:
+            txt = self._goi(prompt, agent_name)
+        except KhongDoDuoc as e:
+            self.nhat_ky.append({"agent": agent_name, "prompt": prompt, "khong_do": str(e),
+                                 "usage": {k: self.usage[k] - u0[k] for k in u0}, "giay": round(_time.time() - t0, 1)})
+            raise
+        self.nhat_ky.append({"agent": agent_name, "prompt": prompt, "dau_ra": txt,
+                             "usage": {k: self.usage[k] - u0[k] for k in u0}, "giay": round(_time.time() - t0, 1)})
+        return txt
+
+    def _goi(self, prompt: str, agent_name: str = "") -> str:
         system = self._system(agent_name)
         try:
             msg = self.client.beta.messages.create(
@@ -430,6 +446,43 @@ class ClaudeAPIAgent:
             nhom = getattr(getattr(msg, "stop_details", None), "category", None)
             raise KhongDoDuoc(f"model từ chối (nhóm {nhom or 'không rõ'}), kể cả sau dự phòng")
         return "".join(getattr(b, "text", "") or "" for b in msg.content if getattr(b, "type", "") == "text")
+
+
+def van_tay_agent(agents_dir: str, ten_agent) -> dict:
+    """sha256 của từng tệp agent — cảm biến hòm việc so với tệp hiện tại để biết kết quả đo còn nói về agent này không."""
+    vt = {}
+    for ten in sorted(set(ten_agent)):
+        with open(os.path.join(agents_dir, f"{ten}.md"), "rb") as f:
+            vt[ten] = hashlib.sha256(f.read()).hexdigest()
+    return vt
+
+
+def luu_luot_do(thu_muc: str, agent: "ClaudeAPIAgent", test_cases: list, res: list, rep: dict,
+                luc_bat_dau: str, effort: str) -> str:
+    """Lưu một lượt đo THẬT: `<case_id>.txt` (chấm lại được bằng --cached, MIỄN PHÍ) hoặc `<case_id>.KHONG_DO.txt`,
+    và `_ket_qua.json` (báo cáo, token, chi phí, vân tay agent). Lượt đo tốn tiền — không bao giờ để kết quả mất."""
+    os.makedirs(thu_muc, exist_ok=True)
+    theo_prompt = {c["prompt"]: c["case_id"] for c in test_cases}
+    nk = []
+    for x in agent.nhat_ky:
+        cid = theo_prompt.get(x["prompt"], "khong-ro")
+        if "dau_ra" in x:
+            with open(os.path.join(thu_muc, f"{cid}.txt"), "w", encoding="utf-8", newline="\n") as f:
+                f.write(x["dau_ra"])
+        else:
+            with open(os.path.join(thu_muc, f"{cid}.KHONG_DO.txt"), "w", encoding="utf-8", newline="\n") as f:
+                f.write(x["khong_do"])
+        nk.append({"case_id": cid, "agent": x["agent"], "giay": x["giay"], "usage": x["usage"],
+                   **({"khong_do": x["khong_do"]} if "khong_do" in x else {})})
+    ban_ghi = {
+        "luc": luc_bat_dau, "luc_xong": _time.strftime("%Y-%m-%dT%H:%M:%S"), "model": MODEL_CAFES, "effort": effort,
+        "van_tay_agent": van_tay_agent(agent.agents_dir, [c["agent"] for c in test_cases]),
+        "bao_cao": rep, "ket_qua": res, "nhat_ky": nk, "usage": agent.usage, "chi_phi_usd": agent.chi_phi_usd(),
+    }
+    duong = os.path.join(thu_muc, "_ket_qua.json")
+    with open(duong, "w", encoding="utf-8", newline="\n") as f:
+        json.dump(ban_ghi, f, ensure_ascii=False, indent=2)
+    return duong
 
 
 def uoc_tinh_chi_phi(agents_dir: str, test_cases: list, client) -> dict:
@@ -480,6 +533,9 @@ def main():
     ap.add_argument("--api", action="store_true", help="gọi Claude API thật (TỐN TIỀN — chạy --uoc-tinh trước)")
     ap.add_argument("--uoc-tinh", action="store_true",
                     help="ước tính chi phí lượt --api bằng count_tokens (MIỄN PHÍ, không sinh token)")
+    ap.add_argument("--luu-dau-ra", default=None,
+                    help="thư mục lưu đầu ra thô + _ket_qua.json của lượt --api (mặc định: "
+                         "tools/eval/agent_outputs/cafes_api_<ngày-giờ>/) — cảm biến hòm việc đọc vân tay agent ở đây")
     ap.add_argument("--effort", default="high", choices=["low", "medium", "high", "xhigh", "max"],
                     help="effort cho lượt --api (mặc định high: sàng cờ đỏ/rà đơn là việc cần suy luận kỹ;"
                          " Opus 5.5 tự mặc định medium nên phải đặt tường minh)")
@@ -512,13 +568,19 @@ def main():
         print(f"  TỔNG ước tính: {u['tong_usd'][0]:.2f}–{u['tong_usd'][1]:.2f} USD. Chạy thật: --api")
         return 0
     if args.api:
+        luc_bat_dau = _time.strftime("%Y-%m-%dT%H:%M:%S")
+        thu_muc = args.luu_dau_ra or os.path.join(os.path.dirname(os.path.abspath(__file__)), "agent_outputs",
+                                                  "cafes_api_" + _time.strftime("%Y%m%d-%H%M"))
         try:
             agent = ClaudeAPIAgent(args.agents_dir, effort=args.effort)
             res = run_test_suite(agent, TEST_CASES)
         except CauHinhSai as e:
             print(f"⛔ {e}")
             return 2
-        _print(cafes_report(res), res, f"CAFÉ-S SUITE — Claude API ({MODEL_CAFES}, effort {args.effort})")
+        rep = cafes_report(res)
+        _print(rep, res, f"CAFÉ-S SUITE — Claude API ({MODEL_CAFES}, effort {args.effort})")
+        print(f"Đã lưu đầu ra thô + vân tay agent: {luu_luot_do(thu_muc, agent, TEST_CASES, res, rep, luc_bat_dau, args.effort)}"
+              f" — chấm lại MIỄN PHÍ: --cached {thu_muc}")
         u = agent.usage
         print(f"Chi phí THẬT (giá Opus 5.5, xấp xỉ): ~{agent.chi_phi_usd():.3f} USD — {agent.so_luot} lượt gọi · "
               f"vào {u['vao']:,} · ghi cache {u['ghi_cache']:,} · đọc cache {u['doc_cache']:,} · ra {u['ra']:,} token")

@@ -1,0 +1,63 @@
+# ⛔ CẢNH BÁO CHẶN (CỔNG A): CHƯA ĐƯỢC KÊ đơn này như hiện tại
+
+**Allopurinol + azathioprine ở liều không chỉnh là tương tác mức 🔴.** Bác sĩ cần xử lý (chỉnh liều hoặc đổi phác đồ) trước khi đơn đến tay bệnh nhân. Cảnh báo này giữ nguyên dù có ý định "theo dõi sát" hay "kê ngắn ngày". Agent chỉ đề xuất; quyết định thuộc bác sĩ điều trị.
+
+---
+
+**Đối chiếu thuốc:** 2 thuốc (allopurinol, azathioprine). Nhóm nguy cơ cao: **ức chế miễn dịch, độc tủy**.
+**Dữ kiện thiếu `[CẦN BỔ SUNG]`:** chỉ định của azathioprine (ghép tạng, bệnh viêm ruột, bệnh tự miễn…) · liều hiện tại của từng thuốc · thuốc nào mới thêm · tuổi · eGFR/creatinin · công thức máu nền · men gan · kiểu gen TPMT/NUDT15 · thuốc khác, kể cả OTC · khả năng có thai.
+
+## 🔴 NGHIÊM TRỌNG: xử lý trước khi kê
+
+**• Ức chế tủy xương nặng, có thể tử vong**
+- **Cơ chế:** azathioprine chuyển thành 6-mercaptopurine (6-MP). Xanthine oxidase là một đường bất hoạt chính của 6-MP. Allopurinol ức chế xanthine oxidase, nên 6-MP và các chất chuyển hóa thioguanine (6-TGN) tích lũy. Hậu quả là giảm bạch cầu, giảm 3 dòng và nhiễm trùng nặng.
+- **Đề xuất theo nhãn thuốc:** nếu buộc phải dùng đồng thời, nhãn azathioprine (Imuran, FDA) khuyến cáo **giảm liều azathioprine còn khoảng 1/3 đến 1/4 liều thường dùng**, kèm theo dõi công thức máu chặt. Nhãn allopurinol (Zyloprim) cũng có cảnh báo tương tự.
+- **Nguồn:** nhãn FDA Imuran (azathioprine) và Zyloprim (allopurinol), mục Drug Interactions (DailyMed). `[CẦN KIỂM CHỨNG: đối chiếu bản nhãn hiện hành]`
+
+**• Bẫy thay thế: KHÔNG đổi allopurinol sang febuxostat**
+- Febuxostat cũng ức chế xanthine oxidase. Nhãn FDA (Uloric) ghi **chống chỉ định** dùng chung với azathioprine hoặc mercaptopurine. Đổi thuốc hạ urat theo hướng này không loại bỏ được tương tác.
+- **Nguồn:** nhãn FDA Uloric (febuxostat), mục Contraindications.
+
+## 🟠 THẬN TRỌNG: các phương án để bác sĩ cân nhắc (tùy chỉ định)
+
+1. **Giữ cả hai thuốc, giảm azathioprine còn ~1/4–1/3 liều** theo nhãn. Nên hội chẩn với chuyên khoa kê azathioprine. Liều cụ thể tính từ liều hiện tại `[CẦN BỔ SUNG]`.
+2. **Xét lại chỉ định hạ urat:** có thật sự cần không (gout tái phát, sạn urat, hay chỉ tăng acid uric không triệu chứng)? Nếu không có chỉ định rõ, cân nhắc không thêm allopurinol.
+3. **Thuốc tăng thải urat** (probenecid, benzbromarone…) thay thế: phụ thuộc chức năng thận, tiền sử sạn thận và tình trạng lưu hành tại Việt Nam. `[CẦN KIỂM CHỨNG theo nhãn/guideline]`
+4. **Đổi thuốc ức chế miễn dịch:** quyết định của chuyên khoa điều trị bệnh nền. Lưu ý mycophenolate gây quái thai, nên áp dụng cổng thai kỳ nếu là phụ nữ tuổi sinh đẻ.
+5. **Ngữ cảnh chuyên khoa:** trong bệnh viêm ruột, allopurinol liều thấp kết hợp thiopurine đã giảm liều đôi khi được dùng **chủ đích** cho bệnh nhân "shunter" (6-MMP cao). Cách dùng này đòi hỏi đo chất chuyển hóa thiopurine và theo dõi chuyên khoa, không phải phối hợp ngẫu nhiên ở chăm sóc ban đầu. `[CẦN KIỂM CHỨNG: nguồn chuyên khoa tiêu hóa]`
+
+**Allopurinol theo chức năng thận:** cần eGFR để chọn liều khởi đầu `[CẦN BỔ SUNG]`.
+
+## 🟡 LƯU Ý / THEO DÕI
+
+- **Công thức máu đầy đủ (kèm bạch cầu, tiểu cầu):** đo trước khi phối hợp, sau đó dày hơn lịch thường quy của nhãn Imuran. Lịch thường quy là hằng tuần trong tháng đầu, 2 lần/tháng trong tháng 2–3, rồi hằng tháng. Cần làm thêm sau mỗi lần chỉnh liều. `[CẦN KIỂM CHỨNG tần suất cụ thể khi phối hợp]`
+- **Men gan:** theo dõi định kỳ (azathioprine có thể gây độc gan).
+- **TPMT/NUDT15:** nếu chưa có, xét nghiệm trước khi dùng thiopurine. Người thiếu hụt có nguy cơ độc tủy cộng dồn. (Guideline CPIC về thiopurine; `[CẦN KIỂM CHỨNG: PMID bản cập nhật]`)
+- **HLA-B\*5801 trước khi khởi allopurinol:** ACR 2020 khuyến cáo có điều kiện xét nghiệm ở người gốc Đông Nam Á/Á châu và người Mỹ gốc Phi, vì nguy cơ SJS/TEN/DRESS. FitzGerald JD et al., *Arthritis Care Res* 2020;72(6):744-760. `[PMID 32391934: CẦN KIỂM CHỨNG; chưa kiểm rút bài]`
+
+**Nhóm đặc biệt (thai kỳ/cho con bú):** chưa rà được vì thiếu thông tin giới/tuổi/khả năng có thai `[CẦN BỔ SUNG]`.
+**Cơ hội giảm thuốc:** xét lại chỉ định allopurinol (mục 🟠 phương án 2).
+**Kháng sinh:** không áp dụng.
+
+## Dặn bệnh nhân (safety-netting)
+Ngừng thuốc và **đi khám ngay** nếu có:
+- sốt, đau họng, loét miệng;
+- bầm tím hoặc chảy máu bất thường;
+- mệt lả hoặc xanh xao;
+- vàng da;
+- **phát ban, bong da, tổn thương niêm mạc** (dấu hiệu SJS/DRESS do allopurinol).
+
+---
+
+```
+✦ SELF-CHECK ke-don-an-toan — Cổng A
+  ĐÃ ĐẠT: cờ CHẶN 🔴 đầu output · cơ chế · đề xuất theo nhãn · cảnh báo bẫy febuxostat ·
+          xét nghiệm theo dõi · safety-netting · không PII · không bịa liều tuyệt đối
+  CÒN THIẾU: chỉ định/liều hiện tại, eGFR, CBC nền, TPMT/NUDT15, thai kỳ → [CẦN BỔ SUNG];
+             chưa chạy check_citation_retraction.py cho PMID nêu → "chưa kiểm rút bài"
+  KẾT: CÒN 🔴 → bác sĩ chọn phương án xử lý tương tác + bổ sung dữ kiện trước khi kê
+```
+
+*Đây là rà soát hỗ trợ; quyết định kê đơn thuộc về bác sĩ điều trị.*
+
+**Cần bác sĩ kiểm chứng.**
