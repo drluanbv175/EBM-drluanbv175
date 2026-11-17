@@ -173,6 +173,56 @@ class KetQuaHongLaErrorKhongPhaiSkipped(_CoSoCong):
         self.assertTrue(viec and viec[0][0] == 1 and viec[0][1] == "👤", viec)
 
 
+class KiemThuKhongChamTrangThaiThat(_CoSoCong):
+    """Rào 17/11/2026: dưới pytest, cổng không đọc kho khoá THẬT, không ghi nhật ký THẬT — kể cả qua tiến trình con.
+    Thủ phạm đo được: test_xuat_goi_cap_nhat_workflow_20260904 chạy xuat_goi --online ⇒ ghi đè nhật ký thật."""
+
+    def _gia_lam_that(self):
+        kho = self.tmp / "kho-that.env"
+        kho.write_text("ANTHROPIC_API_KEY=khoa-gia-dong-vai-that\n", encoding="utf-8")
+        nk = self.tmp / "nk-that.json"
+        nk.write_text("CU", encoding="utf-8")
+        self.ctr._KHO_THAT = self.ctr.KHO_BI_MAT = str(kho)
+        self.ctr._NK_THAT = self.ctr.NHAT_KY_API = str(nk)
+        return kho, nk
+
+    def test_duoi_pytest_khong_doc_kho_that(self):
+        self.assertTrue(os.environ.get("PYTEST_CURRENT_TEST"), "pytest phải đặt biến này")
+        self._gia_lam_that()
+        self.assertEqual(self.ctr._khoa_tu_kho(), "")
+
+    def test_duoi_pytest_khong_ghi_nhat_ky_that(self):
+        _, nk = self._gia_lam_that()
+        self.ctr.ghi_nhat_ky_api({"status": "ok", "total_items": 3})
+        self.assertEqual(nk.read_text(encoding="utf-8"), "CU")
+
+    def test_chu_dong_do_that_thi_mo_rao(self):
+        kho, nk = self._gia_lam_that()
+        os.environ["EBM_KIEM_API_THAT"] = "1"
+        try:
+            self.assertEqual(self.ctr._khoa_tu_kho(), "khoa-gia-dong-vai-that")
+            self.ctr.ghi_nhat_ky_api({"status": "ok", "total_items": 3})
+            self.assertIn('"trang_thai": "ok"', nk.read_text(encoding="utf-8"))
+        finally:
+            os.environ.pop("EBM_KIEM_API_THAT", None)
+
+    def test_tien_trinh_con_ke_thua_rao(self):
+        """Đúng đường thủ phạm: tiến trình con, HOME có kho khoá + nhật ký «thật» — không được đọc, không được ghi."""
+        nha = self.tmp / "nha"
+        (nha / ".ebm-secrets").mkdir(parents=True)
+        (nha / ".ebm-secrets" / "medical-ebm-automation.env").write_text("ANTHROPIC_API_KEY=khoa-gia\n", encoding="utf-8")
+        (nha / ".ebm-api-claude.json").write_text("CU", encoding="utf-8")
+        ma = ("import sys, json; sys.path.insert(0, sys.argv[1]); import check_topic_relevance as c; "
+              "print(json.dumps(c.check_dashboard_topic_relevance(sys.argv[2])))")
+        env = {k: v for k, v in os.environ.items() if k not in ("ANTHROPIC_API_KEY", "EBM_KIEM_API_THAT")}
+        env.update(HOME=str(nha), USERPROFILE=str(nha), PYTHONIOENCODING="utf-8")
+        r = subprocess.run([sys.executable, "-B", "-c", ma, str(NGUON), str(self.html)], capture_output=True,
+                           text=True, encoding="utf-8", timeout=120, env=env)
+        kq = json.loads(r.stdout.strip().splitlines()[-1])
+        self.assertEqual(kq["status"], "skipped", r.stdout + r.stderr)
+        self.assertEqual((nha / ".ebm-api-claude.json").read_text(encoding="utf-8"), "CU")
+
+
 class VerifyDashboardKhongNuotUncertain(unittest.TestCase):
     """Chạy verify_dashboard THẬT trong thư mục tạm, với check_topic_relevance giả trả kết quả cố định."""
 

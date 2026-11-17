@@ -115,6 +115,25 @@ def build_prompt(dashboard_topic: str, items: List[Dict[str, str]]) -> str:
 # Kho bí mật của bác sĩ nằm NGOÀI OneDrive (doctrine §5). Để thành hằng số để bộ kiểm trỏ sang
 # tệp giả, không bao giờ đụng kho thật.
 KHO_BI_MAT = os.path.join(os.path.expanduser("~"), ".ebm-secrets", "medical-ebm-automation.env")
+# Bản chụp đường THẬT lúc nạp — kiểm thử vá KHO_BI_MAT/NHAT_KY_API sang tệp tạm thì không đụng các hằng này.
+_KHO_THAT = KHO_BI_MAT
+
+
+def _cham_trang_thai_that(duong: str, that: str) -> bool:
+    """True khi đang chạy DƯỚI PYTEST mà sắp đọc/ghi đúng tệp THẬT ở thư mục nhà ⇒ phải từ chối.
+
+    VÌ SAO (17/11/2026): `tools/test_xuat_goi_cap_nhat_workflow_20260904.py` chạy `xuat_goi_cap_nhat.py
+    --online` thật; từ khi `--online` kéo theo `--check-topic`, tiến trình con ghi đè nhật ký sức khoẻ API
+    THẬT (bản `ok` lúc 13:30 bị thay bằng «skipped — không có mục»), và nếu dashboard mẫu có mục thì sẽ gọi
+    API THẬT bằng khoá THẬT — mỗi lượt CI/kiểm trên máy bác sĩ đều tốn tiền. Cùng luật CLAUDE.md §4 cho khoá
+    ký cổng G: dưới pytest, trỏ vào kho khoá thật thì từ chối. `PYTEST_CURRENT_TEST` được tiến trình con kế
+    thừa nên chặn cả đường gián tiếp. Chủ động đo thật thì đặt EBM_KIEM_API_THAT=1."""
+    if not os.environ.get("PYTEST_CURRENT_TEST") or os.environ.get("EBM_KIEM_API_THAT") == "1":
+        return False
+    try:
+        return os.path.realpath(duong) == os.path.realpath(that)
+    except (OSError, ValueError):
+        return True   # không phân định được ⇒ thận trọng: coi là tệp thật
 
 
 def _khoa_tu_kho(ten: str = "ANTHROPIC_API_KEY", kho: Optional[str] = None) -> str:
@@ -132,6 +151,8 @@ def _khoa_tu_kho(ten: str = "ANTHROPIC_API_KEY", kho: Optional[str] = None) -> s
     im lặng và rất khó đoán. `load_dotenv` mà repo y khoa dùng cũng để giá trị sau đè giá trị
     trước, nên lấy dòng cuối là khớp hành vi đã có chứ không phải luật mới."""
     duong = kho or KHO_BI_MAT
+    if _cham_trang_thai_that(duong, _KHO_THAT):
+        return ""          # dưới pytest không bao giờ đọc kho khoá THẬT
     gia_tri = ""
     try:
         with open(duong, "r", encoding="utf-8", errors="replace") as fh:
@@ -280,6 +301,7 @@ def _cham_chu_de(html_path: str) -> Dict:
 # Nhật ký SỨC KHOẺ lượt gọi API — nằm ngoài repo, ngoài OneDrive. KHÔNG BAO GIỜ chứa khoá, chỉ
 # chứa thời điểm, trạng thái và lý do đã cắt ngắn.
 NHAT_KY_API = os.path.join(os.path.expanduser("~"), ".ebm-api-claude.json")
+_NK_THAT = NHAT_KY_API   # bản chụp đường THẬT (xem _cham_trang_thai_that)
 
 
 def ghi_nhat_ky_api(kq: Dict, tep: Optional[str] = None) -> None:
@@ -290,9 +312,12 @@ def ghi_nhat_ky_api(kq: Dict, tep: Optional[str] = None) -> None:
     gọi. Thăm dò định kỳ thì tốn tiền vô ích, nên ta ghi lại kết quả của những lượt gọi mà dây
     chuyền VỐN ĐÃ thực hiện — chi phí thêm bằng 0. Giác quan `giac_quan_api_claude` đọc tệp này.
     Lỗi ghi đều nuốt: nhật ký hỏng không bao giờ được làm hỏng lượt xuất gói của bác sĩ."""
+    duong = tep or NHAT_KY_API
+    if _cham_trang_thai_that(duong, _NK_THAT):
+        return             # dưới pytest không bao giờ ghi đè nhật ký THẬT
     try:
         import datetime as _dt
-        with open(tep or NHAT_KY_API, "w", encoding="utf-8", newline="\n") as fh:
+        with open(duong, "w", encoding="utf-8", newline="\n") as fh:
             json.dump({
                 "luc": _dt.datetime.now().isoformat(timespec="seconds"),
                 "trang_thai": str(kq.get("status") or "?"),
