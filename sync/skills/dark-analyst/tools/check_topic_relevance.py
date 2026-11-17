@@ -199,6 +199,13 @@ def check_dashboard_topic_relevance(html_path: str) -> Dict:
         verdicts = parse_verdicts(raw)
     except TopicCheckError as exc:
         return {"status": "skipped", "message": str(exc)}
+    except Exception as exc:  # noqa: BLE001
+        # Lỗi TỪ SDK/mạng (401 khoá sai, hết hạn mức, timeout, DNS…) trước đây LỌT ra ngoài: chạy
+        # tay thì văng traceback, chạy trong cổng thì rơi vào `except Exception` của verify_dashboard
+        # nên thành cảnh báo khó đọc. Đo thật 17/11/2026: khoá sai ⇒ `AuthenticationError 401`.
+        # Nay quy về một mối «error» như mọi nhánh khác. KHÔNG nuốt im: cổng vẫn in cảnh báo.
+        # `Exception` không bắt KeyboardInterrupt/SystemExit nên Ctrl-C vẫn dừng được.
+        return {"status": "error", "message": f"{type(exc).__name__}: {str(exc)[:200]}"}
 
     off_topic = [
         {"id": iid, "title": next((it["title"] for it in items if it["id"] == iid), ""),

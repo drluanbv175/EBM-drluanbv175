@@ -82,6 +82,14 @@ class ThieuKhoaThiBoQuaEm(unittest.TestCase):
             self.skipTest("⚪ không có check_topic_relevance.py ở cây này")
         ctr = _nap_module("_ctr_kiem", ctr_path)
         cu = os.environ.pop("ANTHROPIC_API_KEY", None)
+        # CÁCH LY khỏi kho thật. Nếu không: trên máy ĐÃ có khoá, chốt này gọi API THẬT — tốn tiền
+        # và đổi kết quả theo môi trường (đo 17/11/2026: khoá bị từ chối ⇒ 'error' chứ không phải
+        # 'skipped' ⇒ chốt đỏ oan). Chốt phải ngoại tuyến tuyệt đối, không phụ thuộc máy nào chạy.
+        import tempfile as _tf
+        cu_kho = ctr.KHO_BI_MAT
+        with _tf.NamedTemporaryFile("w", suffix=".env", delete=False, encoding="utf-8") as _f:
+            _f.write("# kho rỗng dành cho bộ kiểm\n")
+            ctr.KHO_BI_MAT = _f.name
         try:
             # tầng trong: nêu lỗi RÕ TÊN BIẾN còn thiếu, không nuốt im
             with self.assertRaises(ctr.TopicCheckError) as ngu_canh:
@@ -103,13 +111,9 @@ class ThieuKhoaThiBoQuaEm(unittest.TestCase):
             self.assertEqual(kq["status"], "skipped")
             self.assertIn("ANTHROPIC_API_KEY", kq["message"])
         finally:
+            ctr.KHO_BI_MAT = cu_kho
             if cu is not None:
                 os.environ["ANTHROPIC_API_KEY"] = cu
-
-
-
-if __name__ == "__main__":
-    unittest.main()
 
 
 class KhoaPhaiToiDuocCongCu(unittest.TestCase):
@@ -204,3 +208,51 @@ class GoiAPIDungKhoaVaDungModel(unittest.TestCase):
         self.assertEqual(self.ctr.call_claude("hỏi thử"), "OK")
         self.assertEqual(ghi["api_key"], "khoa-gia-cho-kiem-thu")   # ★ khoá đến từ KHO
         self.assertEqual(ghi["model"], "claude-sonnet-5-5")          # ★ model thế hệ hiện hành
+
+
+class LoiSDKKhongDuocLOT(unittest.TestCase):
+    """★ Đo thật 17/11/2026: khoá sai ⇒ `anthropic.AuthenticationError 401` LỌT ra ngoài — chạy tay
+    văng traceback, chạy trong cổng thì thành cảnh báo khó đọc. Mọi lỗi SDK/mạng phải quy về
+    `status='error'` như các nhánh khác, và KHÔNG được nuốt im."""
+
+    def setUp(self):
+        ctr_path = HERE.parent / "sync" / "skills" / "cap-nhat-chung-cu-y-khoa" / "tools" / "check_topic_relevance.py"
+        if not ctr_path.exists():
+            self.skipTest("⚪ không có check_topic_relevance.py ở cây này")
+        self.ctr = _nap_module("_ctr_loi", ctr_path)
+
+    def _dashboard_gia(self) -> str:
+        import tempfile
+        html = """<html><script>const DATA = {
+          meta: { question: 'Chủ đề thử' },
+          items: [ { id: 'ITEM-1', title: 'Bài thử', action: 'Cân nhắc' } ],
+          summary: { conclusion: 'x', doNow: [], dontDo: [], redFlags: [] }
+        };</script></html>"""
+        with tempfile.NamedTemporaryFile("w", suffix=".html", delete=False, encoding="utf-8") as f:
+            f.write(html)
+            return f.name
+
+    def test_loi_401_thanh_error_chu_khong_nem_traceback(self):
+        class LoiGia(Exception):
+            pass
+
+        def no_tung(_prompt):
+            raise LoiGia("Error code: 401 - Invalid bearer token")
+
+        self.ctr.call_claude = no_tung
+        kq = self.ctr.check_dashboard_topic_relevance(self._dashboard_gia())
+        self.assertEqual(kq["status"], "error")
+        self.assertIn("LoiGia", kq["message"])
+        self.assertIn("401", kq["message"])
+
+    def test_thieu_khoa_van_la_skipped_chu_khong_phai_error(self):
+        """Thiếu khoá ≠ lỗi: vẫn phải là «skipped» để cổng phân biệt «chưa bật» với «bật mà hỏng»."""
+        def thieu(_prompt):
+            raise self.ctr.TopicCheckError("Thiếu ANTHROPIC_API_KEY — …")
+
+        self.ctr.call_claude = thieu
+        kq = self.ctr.check_dashboard_topic_relevance(self._dashboard_gia())
+        self.assertEqual(kq["status"], "skipped")
+
+if __name__ == "__main__":
+    unittest.main()
