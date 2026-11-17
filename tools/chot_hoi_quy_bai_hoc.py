@@ -12176,6 +12176,39 @@ def bh181_kiem_thu_khong_cham_khoa_va_nhat_ky_that():
     return True, "dưới pytest: không đọc kho khoá thật, không ghi nhật ký thật, không dựng client · EBM_KIEM_API_THAT=1 mở rào"
 
 
+def bh182_cong_thay_moi_muc_khong_co_muc_khoa_nhay():
+    """17/11 — `split_items` của cổng chỉ nhận `{id:` không nháy; `VKDT_TamThanKinh_20261113` có 6 mục ITEM-63…68 viết kiểu
+    JSON `{"id": …}` (thêm 05/11) ⇒ hiện trên trang nhưng MỌI luật cấp mục (PMID, rút bài, DOI), quét lạc chủ đề và cầu nạp
+    sổ cái hub đều không thấy, cổng vẫn PASS 12 ngày. Lộ ra khi chuyển ITEM-62 (khối «mục cuối» phình 16.428 ký tự vì nuốt 6
+    mục). Vá: luật 2b CHẶN CỨNG mục khoá nháy (không dạy riêng bộ tách — còn bộ parse khác cùng giả định); 6 mục chuẩn hoá,
+    qua cổng trực tuyến ngay lần đầu. Kiểm HÀNH VI: CLI thật của cổng trên dashboard tạm (nháy kép, nháy đơn bị chặn; không
+    nháy không báo oan) + quét DỮ LIỆU SỐNG: không dashboard nào trong kho còn mục khoá nháy."""
+    import re
+    import subprocess
+    import tempfile as _tf
+    cong = REPO / "sync/skills/cap-nhat-chung-cu-y-khoa/tools/verify_dashboard.py"
+    khuon = ('<html><script>const DATA = { meta: { question: "T" }, items: [ {id:"ITEM-1", title:"A"}, %s ], '
+             'summary: { conclusion: "x", doNow: [], dontDo: [], redFlags: [] } };</script></html>')
+    with _tf.TemporaryDirectory() as d:
+        for muc, phai_chan in (('{"id": "ITEM-2", "title": "B"}', True), ("{'id': 'ITEM-2', 'title': 'B'}", True),
+                               ("{id:'ITEM-2', title:'B'}", False)):
+            p = Path(d) / "dash.html"
+            p.write_text(khuon % muc, encoding="utf-8")
+            ra = subprocess.run([sys.executable, "-B", str(cong), str(p)], capture_output=True, text=True,
+                                encoding="utf-8", timeout=120).stdout
+            if ("khoá có nháy" in ra) != phai_chan:
+                return False, (f"cổng {'KHÔNG chặn' if phai_chan else 'báo oan'} mục {muc[:22]}… — mục khoá nháy vô hình với "
+                               "mọi luật cấp mục")
+    kho = REPO / "EBM-Dashboards"
+    if not kho.is_dir():
+        return True, "cổng chặn mục khoá nháy (nháy kép, nháy đơn), không báo oan · không có kho dashboard trên máy này để quét"
+    rx = re.compile(r"""\{\s*["']id["']\s*:\s*["']""")
+    bi = [f.name for f in kho.glob("WebDashboard_*.html") if rx.search(f.read_text(encoding="utf-8", errors="replace"))]
+    if bi:
+        return False, f"{len(bi)} dashboard còn mục khoá nháy (cổng/hub không thấy): {', '.join(bi[:3])}"
+    return True, "cổng chặn mục khoá nháy, không báo oan · kho không còn dashboard nào có mục khoá nháy"
+
+
 BAI_HOC = [
     ("BH01", "12/08", "Cổng không được `return` sớm che luật item", bh01_khong_return_som),
     ("BH02", "12/08", "Parser giữ nguyên giá trị có nháy kép", bh02_parser_giu_nguyen_nhay_kep),
@@ -12345,6 +12378,7 @@ BAI_HOC = [
     ("BH179", "17/11", "Vá ở nguồn tới được bản CHẠY của MỌI tool dây chuyền (PR #402 gộp mà `EBM-Dashboards/tools/check_topic_relevance.py` kẹt bản cũ ⇒ cổng kiểm lạc chủ đề trơ; BH11 đỏ mà chỉ surveillance_scan có đường tự vá): công cụ đồng bộ tự dò mọi tool, luật (c) theo đúng tệp, giữ dòng riêng, phạm vi trùng BH11, tu_sua_chua gọi --ap-dung", bh179_va_nguon_toi_ban_chay_moi_tool_day_chuyen),
     ("BH180", "17/11", "Gọi API Claude không cắt cụt, không nuốt, không đo sai (cổng kiểm lạc chủ đề max_tokens=2000 ⇒ dashboard 83 mục cụt ở 2000/2000, JSON hỏng quy về «skipped» nên hòm việc im lặng, «uncertain» bị nuốt; CAFÉ-S max_tokens=1500, thiếu agent thì đo model trần): max ≥ 16000 + effort, cụt ⇒ error, báo mục không chắc, ca cụt là ⚪", bh180_goi_api_khong_cat_cut_khong_nuot_khong_do_sai),
     ("BH181", "17/11", "Kiểm thử không chạm khoá và nhật ký API THẬT (test chạy xuat_goi --online ⇒ tiến trình con đọc kho khoá thật, ghi đè nhật ký sức khoẻ thật; mẫu có mục là gọi API thật mỗi lượt CI): dưới pytest từ chối, EBM_KIEM_API_THAT=1 mới mở", bh181_kiem_thu_khong_cham_khoa_va_nhat_ky_that),
+    ("BH182", "17/11", "Cổng thấy MỌI mục — chặn mục viết khoá có nháy (VKDT_TamThanKinh ITEM-63…68 kiểu {\"id\": …} vô hình với cổng, quét chủ đề, hub; cổng PASS 12 ngày): luật 2b chặn cứng, kho không còn mục khoá nháy", bh182_cong_thay_moi_muc_khong_co_muc_khoa_nhay),
     ("BH122", "27/09", "Chu trình chứng cứ không kéo 🔴 «rút bỏ hẳn» cho ca đính-chính-bị-rút bác sĩ đã ký", bh122_chu_trinh_khong_ra_do_gia_cho_dinh_chinh_da_ky),
     ("BH150", "02/10", "Làn trình duyệt có người: FDA 401 là mã chặn bot; máy mở trang, bác sĩ tự xác nhận, máy ghi bằng chứng; lô không dừng vì chặn bot; Scopus/WoS/DynaMed chỉ thành ứng viên khi xác minh được", bh150_lan_trinh_duyet_co_nguoi_chan_bot_va_tai_khoan_bac_si),
     ("BH123", "27/09", "Sổ xác minh nhận bằng chứng trình duyệt thật cho miền chặn kiểm tự động, đúng như cổng", bh123_so_xac_minh_nhan_bang_chung_trinh_duyet_nhu_cong),
