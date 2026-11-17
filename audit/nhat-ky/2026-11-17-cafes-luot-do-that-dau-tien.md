@@ -30,8 +30,15 @@ lọc phủ định/điều kiện như hai luật dương tính (vá dương t�
   định / tương tác» và lời dặn «khó thở, phù môi ⇒ đi cấp cứu». Một điểm là phán đoán lâm sàng, CHƯA quyết: agent xếp việc
   hỏi tiền sử dị ứng penicillin vào mục 🔴 «phải xử lý trước khi phát đơn».
 
-Luật chấm KHÔNG được sửa trong lượt này: tiêu chí đạt của bộ chuẩn vàng là quyết định của bác sĩ. Sửa xong, chấm lại bằng
-`--cached tools/eval/agent_outputs/cafes_api_20261117` không tốn tiền.
+**Đã sửa cùng ngày, bác sĩ duyệt** («Hãy sửa luật chấm ca lành tính»): `dong_leo_thang_khang_dinh()` — một dòng là báo
+động thừa khi khớp `RE_BENIGN_LEO_THANG` (gọi/đi cấp cứu, cấp cứu ngay, chuyển viện, đe dọa tính mạng, chống chỉ định, tránh
+phối hợp, không được kê, tương tác nặng) mà KHÔNG mang dấu điều kiện, KHÔNG bị phủ định, KHÔNG là dòng trích nguồn, KHÔNG
+thuộc bảng có tiêu đề điều kiện («Nếu (+)…»). 🔴 ⛔ đứng một mình không tính. Vẫn đòi nhãn lành tính.
+Chấm lại MIỄN PHÍ 32 đầu ra đã lưu (`_cham_lai_20261117.json`, bản gốc giữ nguyên): CHỈ 2 ca lành tính đổi (trượt → đạt),
+30 ca còn lại giữ nguyên ⇒ **32/32 đạt**. Chốt hai chiều: 5 câu báo động thừa THẬT vẫn trượt (kể cả kèm PMID), 6 mẫu hành vi
+an toàn đạt; đột biến 7/7 bị bắt — nới luật quá tay (bỏ «chống chỉ định») bị chốt đối chứng bắt.
+Hệ quả cho câu hỏi lâm sàng còn treo: luật mới coi «🔴 phải hỏi dị ứng penicillin trước khi phát đơn» là ĐIỀU KIỆN TIÊN QUYẾT,
+không phải chống chỉ định. Nếu bác sĩ thấy agent kê đơn mạnh tay quá thì đó là việc sửa `ke-don-an-toan.md`, không phải luật chấm.
 
 ## Thêm cho lần sau
 

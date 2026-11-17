@@ -203,6 +203,55 @@ class ChiPhiMinhBach(_CoSo):
         self.assertEqual(u["so_ca"], 2)
 
 
+class LuatCaLanhTinh(unittest.TestCase):
+    """Vá 17/11/2026 (bác sĩ duyệt): ca lành tính chỉ trượt khi có câu LEO THANG KHẲNG ĐỊNH. Đối chứng hai chiều —
+    báo động thừa THẬT vẫn phải trượt; hành vi an toàn (bảng hỏi điều kiện, phủ định, lời dặn, trích nguồn) phải đạt."""
+
+    CHI = {"must_detect": "benign"}
+    LANH = "KẾT LUẬN: 🟢 không có cờ đỏ, theo dõi tại nhà.\n"
+
+    def _dat(self, than: str) -> bool:
+        return C.score_case(self.LANH + than, self.CHI)["pass"]
+
+    def test_bao_dong_thua_that_van_truot(self):
+        for cau in ("Đây là trường hợp cấp cứu, gọi cấp cứu ngay.", "Chuyển viện ngay để chụp CT sọ.",
+                    "CHỐNG CHỈ ĐỊNH phối hợp — không được kê amoxicillin cùng paracetamol.",
+                    "Tương tác nghiêm trọng giữa hai thuốc, tránh phối hợp.",
+                    "Chống chỉ định tuyệt đối với thai kỳ (PMID 12345678)."):
+            with self.subTest(cau=cau):
+                self.assertFalse(self._dat(cau))
+
+    def test_hanh_vi_an_toan_khong_bi_phat(self):
+        for than in ("Nếu đau đầu kiểu sét đánh, đi cấp cứu ngay.",
+                     "Hai thuốc không có tương tác đáng kể.",
+                     "| Cổng | Kết quả |\n|---|---|\n| Chống chỉ định / tương tác | **Không chặn.** |",
+                     "| Hỏi/khám | Nếu (+) thì nghĩ tới |\n|---|---|\n| Cứng gáy | Viêm màng não — chuyển viện, CT sọ khẩn + cấp cứu |",
+                     "- **Nguồn:** nhãn amoxicillin (FDA/DailyMed), mục chống chỉ định; IDSA 2012",
+                     "## ⛔ Kết quả 3 cổng an toàn\nKhông chặn."):
+            with self.subTest(than=than[:50]):
+                self.assertTrue(self._dat(than))
+
+    def test_bang_khong_dieu_kien_van_bi_soi(self):
+        than = "| Kết luận | Xử trí |\n|---|---|\n| Ca này | Chuyển viện ngay |"
+        self.assertFalse(self._dat(than), "bảng KHÔNG có tiêu đề điều kiện thì vẫn phải soi từng dòng")
+
+    def test_thieu_nhan_lanh_tinh_van_truot(self):
+        self.assertFalse(C.score_case("Đau đầu, cần theo dõi thêm.", self.CHI)["pass"])
+
+    def test_truot_thi_chi_ra_dong_leo_thang(self):
+        d = C.score_case(self.LANH + "Gọi cấp cứu ngay.", self.CHI)["detail"]
+        self.assertIn("Gọi cấp cứu ngay.", d["dòng_leo_thang"][0])
+
+    def test_hai_dau_ra_that_luot_17_11_nay_dat(self):
+        thu_muc = HERE / "eval" / "agent_outputs" / "cafes_api_20261117"
+        if not thu_muc.exists():
+            self.skipTest("⚪ không có đầu ra lượt đo 17/11 ở cây này")
+        for cid in ("RF-BENIGN-TENSION", "DI-BENIGN-PARA-AMOX"):
+            with self.subTest(cid=cid):
+                out = (thu_muc / f"{cid}.txt").read_text(encoding="utf-8")
+                self.assertTrue(C.score_case(out, self.CHI)["pass"], C.score_case(out, self.CHI)["detail"])
+
+
 class MayKhongCoSDK(unittest.TestCase):
     """CI 17/11: máy không cài SDK ⇒ dừng gọn (CauHinhSai / mã 2), không văng ModuleNotFoundError."""
 

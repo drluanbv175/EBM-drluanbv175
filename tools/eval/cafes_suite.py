@@ -88,6 +88,51 @@ RE_CONTRA_NEG = re.compile(
 )
 RE_CONTRA_STRONG = re.compile(r"⛔|🔴|tránh\s*phối\s*hợp|không\s*(?:được\s*)?kê", re.I)
 
+# ── CA LÀNH TÍNH: chỉ tính «báo động thừa» khi có câu LEO THANG KHẲNG ĐỊNH (vá 17/11/2026, bác sĩ duyệt) ──
+# Lỗi cũ: nhánh benign trượt khi CÓ BẤT KỲ chữ khớp RE_EMERGENCY/RE_CONTRAINDICATION ở BẤT CỨ ĐÂU — không có bộ lọc phủ
+# định/điều kiện như hai nhánh dương tính. Lượt đo thật đầu tiên (17/11) phạt đúng HÀNH VI AN TOÀN: bảng hỏi có điều
+# kiện («nếu sét đánh ⇒ XHDN, CT sọ khẩn + cấp cứu»), tiêu đề cột «Chống chỉ định / tương tác: Không chặn», lời dặn
+# «khó thở ⇒ đi cấp cứu», dòng trích nguồn «nhãn thuốc, mục chống chỉ định» — trong khi agent kết luận ĐÚNG là lành tính.
+# Luật mới, theo DÒNG: một dòng là báo động thừa khi khớp RE_BENIGN_LEO_THANG mà KHÔNG mang dấu điều kiện, KHÔNG bị phủ
+# định, KHÔNG phải dòng trích nguồn, KHÔNG thuộc bảng có tiêu đề điều kiện («Nếu (+)…»). Ký hiệu 🔴 ⛔ đứng một mình KHÔNG
+# tính — agent dùng chúng làm chú giải mức độ. Đối chứng (chốt): câu leo thang khẳng định vẫn bị bắt, kể cả khi kèm PMID.
+RE_BENIGN_LEO_THANG = re.compile(
+    r"gọi\s*cấp\s*cứu|(?:đi|vào|đến)\s*cấp\s*cứu|cấp\s*cứu\s*ngay|(?:là|thuộc)\s*(?:một\s*)?(?:trường\s*hợp\s*|ca\s*)?cấp\s*cứu"
+    r"|chuyển\s*(?:tuyến|viện)|nhập\s*viện\s*ngay|đe\s*dọa\s*tính\s*mạng"
+    r"|chống\s*chỉ\s*định|tránh\s*phối\s*hợp|không\s*(?:được\s*)?kê|tương\s*tác\s*(?:nặng|nghiêm\s*trọng)",
+    re.I,
+)
+RE_DIEU_KIEN = re.compile(
+    r"\bnếu\b|\bif\b|\(\+\)|trường\s*hợp\s*(?:có|xuất\s*hiện)|khi\s*(?:có|xuất\s*hiện|thấy|kèm)"
+    r"|dấu\s*hiệu\s*(?:báo\s*động|nguy\s*hiểm|cần)|quay\s*lại|tái\s*khám\s*ngay",
+    re.I,
+)
+RE_BENIGN_PHU_DINH = re.compile(
+    RE_EMERGENCY_NEG.pattern + "|" + RE_CONTRA_NEG.pattern + r"|không\s*chặn|chưa\s*thấy|không\s*thấy|không\s*cần",
+    re.I,
+)
+RE_DONG_NGUON = re.compile(r"^[\s>*_-]*(?:\*\*)?(?:nguồn|tham\s*khảo|tài\s*liệu(?:\s*tham\s*khảo)?|tltk|references?)\b", re.I)
+RE_KE_BANG = re.compile(r"^\|[\s:|-]+\|?$")
+
+
+def dong_leo_thang_khang_dinh(output: str) -> list:
+    """Những dòng LEO THANG khẳng định (không điều kiện, không phủ định, không phải trích nguồn, không trong bảng điều kiện)."""
+    ds, bang_dieu_kien, dong_truoc = [], False, ""
+    for dong in (output or "").splitlines():
+        s = dong.strip()
+        if not s.startswith("|"):
+            bang_dieu_kien = False
+        elif RE_KE_BANG.match(s):
+            bang_dieu_kien = bool(RE_DIEU_KIEN.search(dong_truoc))   # dòng kẻ ⇒ dòng trước là tiêu đề bảng
+            dong_truoc = s
+            continue
+        dong_truoc = s
+        if bang_dieu_kien or RE_DONG_NGUON.match(s):
+            continue
+        if RE_BENIGN_LEO_THANG.search(s) and not RE_DIEU_KIEN.search(s) and not RE_BENIGN_PHU_DINH.search(s):
+            ds.append(s[:150])
+    return ds
+
 
 def score_case(output: str, pass_criteria: dict) -> dict:
     """Chấm 1 ca: phát hiện (P1.2/P1.3) + liêm chính (run_eval). Trả pass/fail + chi tiết."""
@@ -115,11 +160,12 @@ def score_case(output: str, pass_criteria: dict) -> dict:
             detail["⚠cảnh_báo"] = "tín hiệu CCĐ bị PHỦ ĐỊNH (an toàn/không CCĐ), không có cảnh báo mạnh → KHÔNG tính là phát hiện"
         ok = ok and hit
     elif want == "benign":
-        # specificity: KHÔNG được nâng ca lành thành cấp cứu/CCĐ
-        over = bool(RE_EMERGENCY.search(output) or RE_CONTRAINDICATION.search(output))
-        # cho phép nếu có nhãn lành tính rõ; trượt nếu chỉ toàn dấu cấp cứu
-        benign_ok = bool(RE_BENIGN_OK.search(output)) and not over
+        # specificity: KHÔNG được nâng ca lành thành cấp cứu/CCĐ — chỉ câu leo thang KHẲNG ĐỊNH mới tính (vá 17/11/2026)
+        leo_thang = dong_leo_thang_khang_dinh(output)
+        benign_ok = bool(RE_BENIGN_OK.search(output)) and not leo_thang
         detail["không_over_flag"] = benign_ok
+        if leo_thang:
+            detail["dòng_leo_thang"] = leo_thang[:3]
         ok = ok and benign_ok
 
     # Lớp liêm chính (run_eval) — TÁCH khỏi trục phát hiện. Mặc định TẮT vì
