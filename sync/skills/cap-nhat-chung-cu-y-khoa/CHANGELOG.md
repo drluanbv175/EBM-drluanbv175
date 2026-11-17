@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.63.0 — 2026-11-17 (cổng chặn mục viết khoá có nháy — BH182)
+
+Cổng `verify_dashboard.py` (luật 2b) báo LỖI CỨNG khi `DATA` có mục viết kiểu khoá có nháy (`{"id": …}` / `{'id': …}`). `split_items` chỉ nhận `{id:` không nháy, nên các mục đó vẫn hiện trên trang nhưng mọi luật cấp mục, quét lạc chủ đề và cầu nạp sổ cái hub đều không thấy — cổng vẫn báo PASS. Ca thật: `VKDT_TamThanKinh_20261113` ITEM-63…68 (thêm 05/11) chưa từng được kiểm PMID / rút bài / DOI; chuẩn hoá xong cả 6 qua cổng trực tuyến ngay lần đầu. Chọn CHẶN thay vì dạy bộ tách đọc thêm kiểu nháy vì còn nhiều bộ parse khác cùng giả định. SKILL.md dạy luật viết mục.
+
 ## v1.62.0 — 2026-11-14 (mã `DUONG_TINH_CHUA_VAO_SO` của sổ xác minh)
 
 #364 thêm mã cấp lượt `DUONG_TINH_CHUA_VAO_SO` (mã 2, kèm `SO_DANG_KHOA`): lượt đã phát hiện nguồn rút/EoC mới rồi mới hết hạn chờ khoá sổ. Trước bản này bảng mã chưa có, agent chỉ thấy văn bản đầu ra nên có thể đọc nhầm thành lỗi hạ tầng. Thêm vào đoạn «Mã cấp LƯỢT»: coi nguồn là ĐÃ BIẾT bị rút ngay, 🔴 lên đầu, chạy lại để ghi sổ. Chỉ đổi doctrine.

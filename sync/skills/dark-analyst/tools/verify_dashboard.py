@@ -1779,6 +1779,18 @@ def main():
     kind = meta_kind(data)
     is_tool = kind in {"cong-cu", "cong-cu-ho-tro", "tool"}
 
+    # 2b) MỤC VÔ HÌNH (vá 17/11/2026, BH182). split_items chỉ nhận `{id:` KHÔNG nháy. Mục viết kiểu khoá có nháy
+    # (`{"id": …}` / `{'id': …}`) vẫn HIỂN THỊ trên trang (trình duyệt đọc được) nhưng MỌI luật cấp mục bên dưới, quét
+    # lạc chủ đề và cầu nạp sổ cái hub đều KHÔNG thấy nó — và cổng vẫn báo PASS. Ca thật: VKDT_TamThanKinh_20261113
+    # ITEM-63…68 (thêm 05/11) chưa từng được kiểm PMID / rút bài / DOI. Không dạy riêng bộ tách này đọc thêm kiểu nháy:
+    # còn nhiều bộ parse khác (Word, bản đọc, cầu nạp hub) cùng giả định — nên CHẶN CỨNG, buộc dữ liệu về MỘT kiểu
+    # mà mọi công cụ đều đọc được.
+    an = re.findall(r"""\{\s*["']id["']\s*:\s*["']([^"']*)["']""", data)
+    if an:
+        errors.append("%d mục viết kiểu khoá có nháy ({\"id\": …}) — cổng, quét lạc chủ đề và sổ cái hub KHÔNG nhìn "
+                      "thấy, mọi luật cấp mục bỏ qua chúng: %s. Viết lại đúng kiểu {id:'…', title:'…'} như mọi mục "
+                      "khác." % (len(an), ", ".join(an[:8])))
+
     items = split_items(data)
     if not items:
         if is_tool:
