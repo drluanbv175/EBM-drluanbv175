@@ -163,6 +163,18 @@ class KhoaPhaiToiDuocCongCu(unittest.TestCase):
         kho = self._kho_gia("ANTHROPIC_API_KEY='co-nhay'\n")
         self.assertEqual(self.ctr._khoa_tu_kho(kho=kho), "co-nhay")
 
+    def test_dong_cuoi_thang_khi_kho_co_hai_dong(self):
+        """★ Hỏng thật 17/11/2026: kho ghi kiểu NỐI THÊM. Bác sĩ ghi khoá mới mà dòng cũ còn đó;
+        lấy dòng ĐẦU thì vẫn dùng khoá hỏng vừa thay — im lặng, rất khó đoán. `load_dotenv` của
+        repo y khoa cũng để giá trị sau đè trước, nên dòng CUỐI phải thắng."""
+        kho = self._kho_gia("ANTHROPIC_API_KEY=khoa-hong-cu\nNCBI_EMAIL=a@b.vn\nANTHROPIC_API_KEY=khoa-moi-dung\n")
+        self.assertEqual(self.ctr._khoa_tu_kho(kho=kho), "khoa-moi-dung")
+
+    def test_dong_rong_khong_de_len_dong_co_gia_tri(self):
+        """Dòng `ANTHROPIC_API_KEY=` rỗng ở cuối không được xoá sạch khoá hợp lệ ghi phía trên."""
+        kho = self._kho_gia("ANTHROPIC_API_KEY=khoa-that\nANTHROPIC_API_KEY=\n")
+        self.assertEqual(self.ctr._khoa_tu_kho(kho=kho), "khoa-that")
+
 
 class GoiAPIDungKhoaVaDungModel(unittest.TestCase):
     """★ Chốt HÀNH VI (không grep mã nguồn): `call_claude` phải lấy khoá từ KHO khi biến môi trường

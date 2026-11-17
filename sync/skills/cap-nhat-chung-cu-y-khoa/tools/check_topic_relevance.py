@@ -116,8 +116,14 @@ def _khoa_tu_kho(ten: str = "ANTHROPIC_API_KEY", kho: Optional[str] = None) -> s
     đúng kiểu âm tính giả mà doctrine cấm. Thứ tự lấy khoá theo §5: biến môi trường OS → kho secrets.
     Không dùng python-dotenv để khỏi thêm phụ thuộc cho một tool skill đi kèm bản phát hành.
     Mọi lỗi đọc đều nuốt: thiếu khoá là «bỏ qua êm», không bao giờ làm hỏng dây chuyền xuất gói.
-    KHÔNG BAO GIỜ in giá trị khoá ra đâu cả."""
+    KHÔNG BAO GIỜ in giá trị khoá ra đâu cả.
+
+    DÒNG CUỐI THẮNG (sửa 17/11/2026 sau một lượt hỏng thật): kho được ghi kiểu NỐI THÊM, nên khi
+    bác sĩ ghi lại khoá mới mà dòng cũ còn đó, lấy dòng ĐẦU sẽ dùng đúng cái khoá hỏng vừa thay —
+    im lặng và rất khó đoán. `load_dotenv` mà repo y khoa dùng cũng để giá trị sau đè giá trị
+    trước, nên lấy dòng cuối là khớp hành vi đã có chứ không phải luật mới."""
     duong = kho or KHO_BI_MAT
+    gia_tri = ""
     try:
         with open(duong, "r", encoding="utf-8", errors="replace") as fh:
             for dong in fh:
@@ -126,9 +132,13 @@ def _khoa_tu_kho(ten: str = "ANTHROPIC_API_KEY", kho: Optional[str] = None) -> s
                     continue
                 k, _, v = dong.partition("=")
                 if k.strip() == ten:
-                    return v.strip().strip("'\"")
+                    v = v.strip().strip("'\"")
+                    if v:
+                        gia_tri = v          # không return sớm: dòng sau đè dòng trước
     except OSError:
         pass
+    if gia_tri:
+        return gia_tri
     return ""
 
 
