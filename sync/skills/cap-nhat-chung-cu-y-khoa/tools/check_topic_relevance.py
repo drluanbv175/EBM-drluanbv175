@@ -54,6 +54,15 @@ class TopicCheckError(Exception):
     pass
 
 
+class KetQuaApiHong(TopicCheckError):
+    """API ĐÃ trả lời nhưng kết quả KHÔNG dùng được: cắt cụt ở max_tokens, model từ chối, JSON hỏng.
+
+    Khác «chưa cấu hình» (thiếu khoá/SDK — `TopicCheckError` thường ⇒ status «skipped»): đây là HỎNG
+    ⇒ status «error», để cảm biến ⑦r của hòm việc báo bác sĩ. VÁ 17/11/2026: trước đây JSON hỏng cũng
+    quy về «skipped», mà ⑦r chỉ báo «skipped» khi lý do nhắc tên khoá ⇒ cổng trơ mà hòm việc im lặng.
+    Là lớp con của `TopicCheckError` nên mọi chỗ bắt lớp cha vẫn bắt được."""
+
+
 def _extract_meta_question(data_block: str) -> Optional[str]:
     """Lấy meta.question (câu hỏi/chủ đề khai báo của dashboard) từ khối DATA."""
     m = re.search(r"\bquestion\s*:\s*['\"]([^'\"]*)['\"]", data_block)
@@ -75,7 +84,7 @@ def _items_for_prompt(data_block: str) -> List[Dict[str, str]]:
 def build_prompt(dashboard_topic: str, items: List[Dict[str, str]]) -> str:
     lines = [
         "Bạn đang kiểm tra xem các mục chứng cứ y khoa dưới đây có THỰC SỰ thuộc "
-        f"chủ đề/chuyên khoa đã khai báo của dashboard hay không.",
+        "chủ đề/chuyên khoa đã khai báo của dashboard hay không.",
         "",
         f'Chủ đề dashboard đã khai báo: "{dashboard_topic}"',
         "",
@@ -142,8 +151,24 @@ def _khoa_tu_kho(ten: str = "ANTHROPIC_API_KEY", kho: Optional[str] = None) -> s
     return ""
 
 
-def call_claude(prompt: str, *, model: Optional[str] = None, max_tokens: int = 2000) -> str:
-    """Gọi Claude API. Đúng khuôn mẫu claude_llm() trong app/integrations/ambient_scribe.py."""
+# Model nhận `output_config.effort` và `fallbacks: "default"` (beta dự phòng khi model từ chối) — theo
+# tài liệu Claude API 11/2026. Model khác (đặt qua TOPIC_CHECK_MODEL) gọi như cũ, không thêm tham số mới,
+# để khỏi lỗi 400 với model không nhận chúng.
+_MODEL_HIEN_HANH = {"claude-sonnet-5-5", "claude-opus-5-5", "claude-opus-5", "claude-fable-5-1", "claude-fable-5-2"}
+BETA_DU_PHONG = "server-side-fallback-2026-07-01"
+MAX_TOKENS_MAC_DINH = 16000
+
+
+def call_claude(prompt: str, *, model: Optional[str] = None, max_tokens: int = MAX_TOKENS_MAC_DINH) -> str:
+    """Gọi Claude API. Đúng khuôn mẫu claude_llm() trong app/integrations/ambient_scribe.py.
+
+    VÁ 17/11/2026 — max_tokens 2000 → 16000 và effort «low». Trên Sonnet 5.5 thinking LUÔN bật và ăn
+    CHUNG ngân sách max_tokens với JSON phán quyết. Đo thật dashboard Suy tim 83 mục: stop_reason=
+    max_tokens ở 2000/2000 token, JSON cụt ⇒ cổng trơ đúng trên dashboard tổng hợp lớn nhất (116/303
+    dashboard có ≥ 40 mục). Phân loại là việc effort «low» làm tốt; token trần không tính tiền — chỉ
+    token thật sinh ra mới tính. Kiểm stop_reason TRƯỚC khi đọc nội dung: cắt cụt hay từ chối ⇒
+    `KetQuaApiHong` (status «error»), không bao giờ đưa nửa JSON cho bộ parse.
+    """
     key = os.getenv("ANTHROPIC_API_KEY", "") or _khoa_tu_kho()
     if not key:
         raise TopicCheckError(
@@ -156,11 +181,26 @@ def call_claude(prompt: str, *, model: Optional[str] = None, max_tokens: int = 2
         raise TopicCheckError("Chưa cài SDK: `pip install anthropic`.") from exc
     mdl = model or os.getenv("TOPIC_CHECK_MODEL", "claude-sonnet-5-5")
     client = anthropic.Anthropic(api_key=key)
-    resp = client.messages.create(  # pragma: no cover - cần mạng + key
-        model=mdl, max_tokens=max_tokens,
-        messages=[{"role": "user", "content": prompt}],
-    )
-    return "".join(getattr(b, "text", "") for b in resp.content)
+    if mdl in _MODEL_HIEN_HANH:
+        resp = client.beta.messages.create(  # pragma: no cover - cần mạng + key
+            model=mdl, max_tokens=max_tokens,
+            output_config={"effort": os.getenv("TOPIC_CHECK_EFFORT", "low")},
+            betas=[BETA_DU_PHONG], fallbacks="default",
+            messages=[{"role": "user", "content": prompt}],
+        )
+    else:
+        resp = client.messages.create(  # pragma: no cover - cần mạng + key
+            model=mdl, max_tokens=max_tokens,
+            messages=[{"role": "user", "content": prompt}],
+        )
+    ly_do_dung = getattr(resp, "stop_reason", None)
+    if ly_do_dung == "max_tokens":
+        raise KetQuaApiHong(
+            f"Kết quả bị CẮT CỤT ở max_tokens={max_tokens} — JSON phán quyết không trọn, không chấm.")
+    if ly_do_dung == "refusal":
+        nhom = getattr(getattr(resp, "stop_details", None), "category", None)
+        raise KetQuaApiHong(f"Model từ chối chấm (refusal, nhóm {nhom or 'không rõ'}), kể cả sau dự phòng.")
+    return "".join(getattr(b, "text", "") or "" for b in resp.content)
 
 
 def parse_verdicts(raw_response: str) -> Dict[str, Dict[str, str]]:
@@ -174,12 +214,12 @@ def parse_verdicts(raw_response: str) -> Dict[str, Dict[str, str]]:
     try:
         parsed = json.loads(text)
     except json.JSONDecodeError as exc:
-        raise TopicCheckError(f"Model không trả JSON hợp lệ: {exc}. Raw: {text[:200]}") from exc
+        raise KetQuaApiHong(f"Model không trả JSON hợp lệ: {exc}. Raw: {text[:200]}") from exc
     if not isinstance(parsed, dict):
-        raise TopicCheckError(f"Model trả JSON không phải object: {type(parsed)}")
+        raise KetQuaApiHong(f"Model trả JSON không phải object: {type(parsed)}")
     for iid, v in parsed.items():
         if not isinstance(v, dict) or v.get("verdict") not in VALID_VERDICTS:
-            raise TopicCheckError(f"Verdict không hợp lệ cho {iid}: {v!r}")
+            raise KetQuaApiHong(f"Verdict không hợp lệ cho {iid}: {v!r}")
     return parsed
 
 
@@ -207,6 +247,9 @@ def _cham_chu_de(html_path: str) -> Dict:
     try:
         raw = call_claude(prompt)
         verdicts = parse_verdicts(raw)
+    except KetQuaApiHong as exc:
+        # API trả lời mà kết quả hỏng ⇒ «error» để ⑦r báo bác sĩ (bắt TRƯỚC lớp cha).
+        return {"status": "error", "message": str(exc)}
     except TopicCheckError as exc:
         return {"status": "skipped", "message": str(exc)}
     except Exception as exc:  # noqa: BLE001

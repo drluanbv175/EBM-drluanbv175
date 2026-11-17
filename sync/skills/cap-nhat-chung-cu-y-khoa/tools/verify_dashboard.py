@@ -2049,15 +2049,26 @@ def main():
                 warns.append("Kiểm chủ đề (--check-topic): BỎ QUA — %s" % topic_result["message"])
             elif topic_result["status"] == "error":
                 warns.append("Kiểm chủ đề (--check-topic): lỗi — %s" % topic_result["message"])
-            elif topic_result["off_topic"]:
-                ids = ", ".join(it["id"] for it in topic_result["off_topic"])
-                warns.append(
-                    "NGHI %d item LẠC CHỦ ĐỀ '%s' (LLM chấm, cần bác sĩ rà, KHÔNG tự gỡ): %s"
-                    % (len(topic_result["off_topic"]), topic_result["topic"], ids)
-                )
             else:
-                oks.append("Kiểm chủ đề: %d/%d item đều khớp chủ đề dashboard."
-                           % (topic_result["total_items"], topic_result["total_items"]))
+                # VÁ 17/11/2026: «uncertain» trước đây bị NUỐT — chỉ off_topic được đọc, nên dashboard có
+                # mục LLM không đủ thông tin để kết luận vẫn in «đều khớp» (báo xanh giả, CLAUDE.md §0.2).
+                # Lượt chạy thật đầu tiên (17/11) có 1 mục uncertain. Nay mỗi mức một dòng riêng.
+                khong_chac = topic_result.get("uncertain") or []
+                if topic_result["off_topic"]:
+                    ids = ", ".join(it["id"] for it in topic_result["off_topic"])
+                    warns.append(
+                        "NGHI %d item LẠC CHỦ ĐỀ '%s' (LLM chấm, cần bác sĩ rà, KHÔNG tự gỡ): %s"
+                        % (len(topic_result["off_topic"]), topic_result["topic"], ids)
+                    )
+                if khong_chac:
+                    warns.append(
+                        "Kiểm chủ đề: %d item KHÔNG CHẮC thuộc chủ đề '%s' (LLM không đủ thông tin để kết"
+                        " luận — cần bác sĩ rà, KHÔNG tự gỡ): %s"
+                        % (len(khong_chac), topic_result["topic"], ", ".join(khong_chac))
+                    )
+                if not topic_result["off_topic"] and not khong_chac:
+                    oks.append("Kiểm chủ đề: %d/%d item đều khớp chủ đề dashboard."
+                               % (topic_result["total_items"], topic_result["total_items"]))
         except Exception as e:
             warns.append("Không chạy được kiểm chủ đề: %s" % e)
 
