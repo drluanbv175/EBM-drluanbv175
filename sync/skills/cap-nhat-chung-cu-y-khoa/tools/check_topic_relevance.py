@@ -27,9 +27,11 @@ Cách dùng:
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import json
 import os
 import re
+import subprocess
 import sys
 from pathlib import Path
 from typing import Dict, List, Optional
@@ -199,7 +201,10 @@ def call_claude(prompt: str, *, model: Optional[str] = None, max_tokens: int = M
     try:
         import anthropic  # type: ignore
     except ImportError as exc:  # pragma: no cover - phụ thuộc môi trường
-        raise TopicCheckError("Chưa cài SDK: `pip install anthropic`.") from exc
+        raise TopicCheckError(
+            f"Chưa cài SDK `anthropic` trong trình Python {sys.executable} — cài bằng "
+            f"`{sys.executable} -m pip install anthropic` hoặc chạy bằng Python của ~/.ebm-venv."
+        ) from exc
     mdl = model or os.getenv("TOPIC_CHECK_MODEL", "claude-sonnet-5-5")
     client = anthropic.Anthropic(api_key=key)
     if mdl in _MODEL_HIEN_HANH:
@@ -305,7 +310,7 @@ _NK_THAT = NHAT_KY_API   # bản chụp đường THẬT (xem _cham_trang_thai_t
 
 
 def ghi_nhat_ky_api(kq: Dict, tep: Optional[str] = None) -> None:
-    """Ghi kết quả lượt gọi gần nhất để hòm việc biết API còn sống hay đã chết.
+    """Ghi kết quả lượt gọi gần nhất (theo từng công cụ — `_gop_theo_nguon`) để hòm việc biết API còn sống.
 
     VÌ SAO (17/11/2026, bác sĩ: «khi API hết hạn báo lại tôi»): khoá Anthropic không hết hạn theo
     ngày — nó chết vì HẾT TÍN DỤNG, BỊ THU HỒI (401) hay VƯỢT HẠN MỨC (429), và chỉ lộ ra đúng lúc
@@ -317,23 +322,152 @@ def ghi_nhat_ky_api(kq: Dict, tep: Optional[str] = None) -> None:
         return             # dưới pytest không bao giờ ghi đè nhật ký THẬT
     try:
         import datetime as _dt
-        with open(duong, "w", encoding="utf-8", newline="\n") as fh:
-            json.dump({
-                "luc": _dt.datetime.now().isoformat(timespec="seconds"),
-                "trang_thai": str(kq.get("status") or "?"),
-                "ly_do": str(kq.get("message") or "")[:200],
-                "so_muc": int(kq.get("total_items") or 0),
-            }, fh, ensure_ascii=False, indent=1)
+        ban_ghi = {
+            "luc": _dt.datetime.now().isoformat(timespec="seconds"),
+            "trang_thai": str(kq.get("status") or "?"),
+            "ly_do": str(kq.get("message") or "")[:200],
+            "so_muc": int(kq.get("total_items") or 0),
+            "nguon": NGUON_NHAT_KY,
+        }
+        # «» là tên cũ của chính cổng này (bản trước không ghi «nguon») ⇒ bỏ, không để một lượt cũ nằm lại mãi.
+        _ghi_nguyen_tu(duong, _gop_theo_nguon(duong, ban_ghi, bo_nguon_cu=("",)))
     except (OSError, TypeError, ValueError):
         pass
+
+
+NGUON_NHAT_KY = "check_topic_relevance"
+_TRUONG_LUOT = ("luc", "trang_thai", "ly_do", "so_muc")
+
+
+def _gop_theo_nguon(duong: str, ban_ghi: Dict, bo_nguon_cu: tuple = ()) -> Dict:
+    """Trộn lượt mới vào nhật ký đã có: giữ lượt GẦN NHẤT CỦA TỪNG CÔNG CỤ trong khoá «theo_nguon».
+
+    VÌ SAO (17/11/2026, bác sĩ duyệt «mục 2»): tệp trước chỉ giữ MỘT lượt — 8 công cụ ghi chung một ô nên lượt
+    sau xoá lượt trước. Công cụ A lỗi 401 rồi công cụ B chạy ổn ngay sau ⇒ lỗi của A biến mất trước khi hòm việc
+    kịp đọc. Khoá cấp cao (luc · trang_thai · ly_do · so_muc · nguon) VẪN là lượt gần nhất, để bản đọc cũ (máy chưa
+    cập nhật) đọc như trước. Nhật ký kiểu cũ (chưa có «theo_nguon») được giữ làm mục của nguồn đã ghi nó.
+    Khuôn này có ở BA nơi ghi — cổng này · tools/nhat_ky_api_claude.py · cầu nối y khoa tools/api_claude_nc.py
+    (skill và repo y khoa phải tự đứng được, không nhập chung một mô-đun) — sửa một nơi phải sửa cả ba."""
+    try:
+        with open(duong, "r", encoding="utf-8") as fh:
+            cu = json.load(fh)
+    except (OSError, ValueError):
+        cu = None
+    theo: Dict[str, Dict] = {}
+    if isinstance(cu, dict):
+        tn = cu.get("theo_nguon")
+        if isinstance(tn, dict):
+            theo = {str(k): v for k, v in tn.items() if isinstance(v, dict)}
+        elif cu.get("trang_thai"):
+            theo[str(cu.get("nguon") or "")] = {k: cu.get(k) for k in _TRUONG_LUOT}
+    for k in bo_nguon_cu:
+        theo.pop(k, None)
+    theo[str(ban_ghi.get("nguon") or "")] = {k: ban_ghi.get(k) for k in _TRUONG_LUOT}
+    return dict(ban_ghi, theo_nguon=theo)
+
+
+def _ghi_nguyen_tu(duong: str, du_lieu: Dict) -> None:
+    """Ghi qua tệp tạm rồi đổi tên: hai công cụ ghi cùng lúc không bao giờ để lại tệp cụt nửa chừng."""
+    tam = f"{duong}.{os.getpid()}.tmp"
+    try:
+        with open(tam, "w", encoding="utf-8", newline="\n") as fh:
+            json.dump(du_lieu, fh, ensure_ascii=False, indent=1)
+        os.replace(tam, duong)
+    finally:
+        if os.path.exists(tam):
+            try:
+                os.remove(tam)
+            except OSError:
+                pass
+
+
+# ─────────────── chạy bằng Python của venv khi trình hiện tại thiếu SDK ───────────────
+# VÌ SAO (17/11/2026, bác sĩ duyệt «mục 1»): dây chuyền xuất gói được gọi bằng `python3 tools/xuat_goi_cap_nhat.py`
+# (skill cap-nhat-chung-cu-y-khoa, tác vụ lịch goi-duyet-tuan-ebm, CLAUDE.md) và cổng này chạy TRONG tiến trình đó.
+# `python3` mặc định của máy bác sĩ KHÔNG có SDK `anthropic` — chỉ ~/.ebm-venv có. Đo thật: cổng trả «skipped — Chưa
+# cài SDK», hòm việc im lặng, luật kiểm lạc chủ đề TẮT CÂM dù khoá vẫn tốt. Nay trình hiện tại thiếu SDK mà venv chuẩn
+# có Python ⇒ chấm bằng tiến trình con chạy CHÍNH tệp này bằng Python của venv (đường Mac/Linux lẫn Windows).
+THU_MUC_VENV = os.path.join(os.path.expanduser("~"), ".ebm-venv")
+CO_QUA_VENV = "EBM_KIEM_CHU_DE_QUA_VENV"   # tiến trình con mang cờ này ⇒ không chuyển tiếp lần nữa (chống đệ quy)
+GIAY_CHO_VENV = 900                         # một lượt chấm dashboard lớn (~80 mục) mất 1–3 phút
+
+
+def _co_sdk() -> bool:
+    """True khi trình Python ĐANG CHẠY nhập được `anthropic` (không nhập thật — chỉ dò)."""
+    try:
+        return importlib.util.find_spec("anthropic") is not None
+    except (ImportError, ValueError):
+        return False
+
+
+def _python_venv() -> Optional[str]:
+    """Đường Python của venv chuẩn (Mac/Linux `bin/python`, Windows `Scripts/python.exe`); None khi vắng."""
+    for duong in (os.path.join(THU_MUC_VENV, "bin", "python"), os.path.join(THU_MUC_VENV, "Scripts", "python.exe")):
+        if os.path.isfile(duong):
+            return duong
+    return None
+
+
+def _dang_trong_venv() -> bool:
+    """So THƯ MỤC venv (sys.prefix), không so tệp thực thi: Python của venv thường là symlink tới chính `python3`
+    hệ thống, so realpath tệp thực thi sẽ tưởng «đang ở venv» và không bao giờ chuyển tiếp."""
+    try:
+        return os.path.realpath(sys.prefix) == os.path.realpath(THU_MUC_VENV)
+    except (OSError, ValueError):
+        return False
+
+
+def _duoi_pytest() -> bool:
+    """Bộ kiểm KHÔNG BAO GIỜ được chấm thật qua đường vòng venv (venv của máy bác sĩ có SDK + kho khoá thật ⇒ gọi
+    API thật, tốn tiền). Cùng rào BH181; chủ động đo thật thì đặt EBM_KIEM_API_THAT=1."""
+    return bool(os.environ.get("PYTEST_CURRENT_TEST")) and os.environ.get("EBM_KIEM_API_THAT") != "1"
+
+
+def _cham_qua_venv(html_path: str) -> Optional[Dict]:
+    """Chấm bằng Python của ~/.ebm-venv. None = không chuyển tiếp được (đã ở venv / đang là tiến trình con / dưới
+    pytest / không có venv) ⇒ người gọi chấm tại chỗ như cũ, thiếu SDK thì ra «skipped» nêu rõ trình Python.
+    Tiến trình con lỗi, quá giờ hay không trả JSON đọc được ⇒ «error» (không bao giờ im lặng thành «skipped»)."""
+    if os.environ.get(CO_QUA_VENV) == "1" or _dang_trong_venv() or _duoi_pytest():
+        return None
+    py = _python_venv()
+    if not py:
+        return None
+    env = dict(os.environ)
+    env[CO_QUA_VENV] = "1"
+    env["PYTHONIOENCODING"] = "utf-8"   # Windows: stdout tiến trình con mặc định cp1252, JSON tiếng Việt sẽ vỡ
+    try:
+        r = subprocess.run(
+            [py, os.path.abspath(__file__), os.path.abspath(html_path), "--json"],
+            capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=GIAY_CHO_VENV, env=env,
+        )
+    except (OSError, subprocess.SubprocessError) as exc:
+        return {"status": "error",
+                "message": f"Chấm chủ đề bằng Python của venv ({py}) thất bại: {type(exc).__name__}: {exc}"[:300]}
+    ra = r.stdout or ""
+    kq = None
+    for doan in (ra, ra[ra.find("{"):] if "{" in ra else ""):
+        try:
+            kq = json.loads(doan)
+            break
+        except ValueError:
+            continue
+    if not isinstance(kq, dict) or kq.get("status") not in ("ok", "skipped", "error"):
+        cuoi = ((r.stderr or "") + ra).strip()[-160:]
+        return {"status": "error",
+                "message": f"Python của venv ({py}) không trả kết quả đọc được (mã {r.returncode}): {cuoi}"}
+    kq["qua_venv"] = py
+    return kq
 
 
 def check_dashboard_topic_relevance(html_path: str) -> Dict:
     """Vỏ bọc của `_cham_chu_de`: chấm xong thì GHI LẠI sức khoẻ lượt gọi rồi mới trả kết quả.
 
     Tách vỏ thay vì sửa sáu chỗ `return` bên trong — mọi nhánh (ok/skipped/error) đều được ghi,
-    không nhánh nào lọt. Hành vi trả về không đổi một ly."""
-    kq = _cham_chu_de(html_path)
+    không nhánh nào lọt. Trình Python đang chạy thiếu SDK ⇒ chấm bằng Python của ~/.ebm-venv
+    (`_cham_qua_venv`); kết quả trả về cùng khuôn, thêm khoá `qua_venv` nêu trình đã dùng."""
+    kq = _cham_qua_venv(html_path) if not _co_sdk() else None
+    if kq is None:
+        kq = _cham_chu_de(html_path)
     ghi_nhat_ky_api(kq)
     return kq
 
@@ -360,6 +494,8 @@ def main() -> int:
         print(f"  ⛔ LỖI: {result['message']}")
         return 1
 
+    if result.get("qua_venv"):
+        print(f"  (chấm bằng Python của venv: {result['qua_venv']} — trình đang chạy thiếu SDK anthropic)")
     print(f"  Chủ đề dashboard: {result['topic']}")
     print(f"  Tổng số mục đã chấm: {result['total_items']}")
     if result["off_topic"]:
