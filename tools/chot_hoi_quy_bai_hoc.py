@@ -12111,6 +12111,71 @@ def bh180_goi_api_khong_cat_cut_khong_nuot_khong_do_sai():
     return True, "cổng chủ đề max 16000 + effort, cụt ⇒ error, báo mục không chắc · CAFÉ-S dừng khi thiếu agent, ca cụt là ⚪"
 
 
+def bh181_kiem_thu_khong_cham_khoa_va_nhat_ky_that():
+    """17/11 — nhật ký sức khoẻ API THẬT (`~/.ebm-api-claude.json`, bản `ok` lúc 13:30) bị ghi đè lúc 14:24 thành
+    «skipped — không có mục»: `tools/test_xuat_goi_cap_nhat_workflow_20260904.py` chạy `xuat_goi_cap_nhat.py
+    --online` thật, mà từ #402 `--online` kéo theo `--check-topic`; tiến trình con đọc kho khoá THẬT và ghi nhật ký
+    THẬT. Dashboard mẫu không có mục nên chưa gọi API — có mục là mỗi lượt CI/kiểm trên máy bác sĩ gọi API thật bằng
+    khoá thật. Đo bằng HOME tạm: chỉ đúng tệp đó ghi. Vá theo luật CLAUDE.md §4 cho khoá ký cổng G: dưới pytest
+    (`PYTEST_CURRENT_TEST`, tiến trình con kế thừa) không đọc kho khoá thật, không ghi nhật ký thật, trừ khi
+    EBM_KIEM_API_THAT=1. Kiểm HÀNH VI: đặt tạm biến kiểm thử, kho + nhật ký «thật» là tệp tạm ⇒ không SDK nào được
+    gọi, trạng thái «skipped», nhật ký nguyên vẹn; mở rào thì đọc được."""
+    import os
+    import shutil
+    import tempfile as _tf
+    import types as _ty
+    nguon = REPO / "sync/skills/cap-nhat-chung-cu-y-khoa/tools"
+    goi: list = []
+
+    class _Cli:
+        def __init__(self, api_key=None):
+            goi.append(api_key)
+            self.messages = self.beta = None
+
+    gia = _ty.ModuleType("anthropic")
+    gia.Anthropic = _Cli
+    sdk_cu = sys.modules.get("anthropic")
+    env_cu = {k: os.environ.get(k) for k in ("PYTEST_CURRENT_TEST", "ANTHROPIC_API_KEY", "EBM_KIEM_API_THAT")}
+    d = Path(_tf.mkdtemp())
+    try:
+        if str(nguon) not in sys.path:
+            sys.path.insert(0, str(nguon))
+        ctr = _nap(nguon / "check_topic_relevance.py", "_bh181_ctr")
+        kho, nk = d / "kho.env", d / "nk.json"
+        kho.write_text("ANTHROPIC_API_KEY=khoa-gia\n", encoding="utf-8")
+        nk.write_text("CU", encoding="utf-8")
+        ctr._KHO_THAT = ctr.KHO_BI_MAT = str(kho)
+        ctr._NK_THAT = ctr.NHAT_KY_API = str(nk)
+        html = d / "dash.html"
+        html.write_text("<html><script>const DATA = { meta: { question: 'T' }, items: [ { id: 'ITEM-1', title: 'B',"
+                        " action: '' } ], summary: { conclusion: 'x', doNow: [], dontDo: [], redFlags: [] } };"
+                        "</script></html>", encoding="utf-8")
+        for k in ("ANTHROPIC_API_KEY", "EBM_KIEM_API_THAT"):
+            os.environ.pop(k, None)
+        os.environ["PYTEST_CURRENT_TEST"] = "bh181 (call)"
+        sys.modules["anthropic"] = gia
+        kq = ctr.check_dashboard_topic_relevance(str(html))
+        if goi:
+            return False, "dưới pytest cổng đọc kho khoá THẬT và dựng client API — mỗi lượt kiểm có thể tốn tiền"
+        if kq.get("status") != "skipped" or nk.read_text(encoding="utf-8") != "CU":
+            return False, f"dưới pytest cổng ghi đè nhật ký sức khoẻ THẬT (trạng thái {kq.get('status')})"
+        os.environ["EBM_KIEM_API_THAT"] = "1"
+        if ctr._khoa_tu_kho() != "khoa-gia":
+            return False, "EBM_KIEM_API_THAT=1 mà rào vẫn chặn — không còn cách chủ động đo thật"
+    finally:
+        shutil.rmtree(d, ignore_errors=True)
+        if sdk_cu is None:
+            sys.modules.pop("anthropic", None)
+        else:
+            sys.modules["anthropic"] = sdk_cu
+        for k, v in env_cu.items():
+            if v is None:
+                os.environ.pop(k, None)
+            else:
+                os.environ[k] = v
+    return True, "dưới pytest: không đọc kho khoá thật, không ghi nhật ký thật, không dựng client · EBM_KIEM_API_THAT=1 mở rào"
+
+
 BAI_HOC = [
     ("BH01", "12/08", "Cổng không được `return` sớm che luật item", bh01_khong_return_som),
     ("BH02", "12/08", "Parser giữ nguyên giá trị có nháy kép", bh02_parser_giu_nguyen_nhay_kep),
@@ -12279,6 +12344,7 @@ BAI_HOC = [
     ("BH178", "03/11", "Bộ lọc loại thiết kế của bộ quét nhận «Consensus Statement» (DESIGN thiếu loại đồng thuận hiện hành của PubMed ⇒ 792 bản ghi/36 tháng trên 58 chủ đề bị tầng guideline loại im lặng; đường dự phòng Europe PMC cùng lỗ)", bh178_design_nhan_consensus_statement),
     ("BH179", "17/11", "Vá ở nguồn tới được bản CHẠY của MỌI tool dây chuyền (PR #402 gộp mà `EBM-Dashboards/tools/check_topic_relevance.py` kẹt bản cũ ⇒ cổng kiểm lạc chủ đề trơ; BH11 đỏ mà chỉ surveillance_scan có đường tự vá): công cụ đồng bộ tự dò mọi tool, luật (c) theo đúng tệp, giữ dòng riêng, phạm vi trùng BH11, tu_sua_chua gọi --ap-dung", bh179_va_nguon_toi_ban_chay_moi_tool_day_chuyen),
     ("BH180", "17/11", "Gọi API Claude không cắt cụt, không nuốt, không đo sai (cổng kiểm lạc chủ đề max_tokens=2000 ⇒ dashboard 83 mục cụt ở 2000/2000, JSON hỏng quy về «skipped» nên hòm việc im lặng, «uncertain» bị nuốt; CAFÉ-S max_tokens=1500, thiếu agent thì đo model trần): max ≥ 16000 + effort, cụt ⇒ error, báo mục không chắc, ca cụt là ⚪", bh180_goi_api_khong_cat_cut_khong_nuot_khong_do_sai),
+    ("BH181", "17/11", "Kiểm thử không chạm khoá và nhật ký API THẬT (test chạy xuat_goi --online ⇒ tiến trình con đọc kho khoá thật, ghi đè nhật ký sức khoẻ thật; mẫu có mục là gọi API thật mỗi lượt CI): dưới pytest từ chối, EBM_KIEM_API_THAT=1 mới mở", bh181_kiem_thu_khong_cham_khoa_va_nhat_ky_that),
     ("BH122", "27/09", "Chu trình chứng cứ không kéo 🔴 «rút bỏ hẳn» cho ca đính-chính-bị-rút bác sĩ đã ký", bh122_chu_trinh_khong_ra_do_gia_cho_dinh_chinh_da_ky),
     ("BH150", "02/10", "Làn trình duyệt có người: FDA 401 là mã chặn bot; máy mở trang, bác sĩ tự xác nhận, máy ghi bằng chứng; lô không dừng vì chặn bot; Scopus/WoS/DynaMed chỉ thành ứng viên khi xác minh được", bh150_lan_trinh_duyet_co_nguoi_chan_bot_va_tai_khoan_bac_si),
     ("BH123", "27/09", "Sổ xác minh nhận bằng chứng trình duyệt thật cho miền chặn kiểm tự động, đúng như cổng", bh123_so_xac_minh_nhan_bang_chung_trinh_duyet_nhu_cong),
