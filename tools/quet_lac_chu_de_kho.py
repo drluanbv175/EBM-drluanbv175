@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import argparse
 import datetime as _dt
+import hashlib
 import importlib.util
 import json
 import os
@@ -260,6 +261,7 @@ def main(argv: list[str] | None = None, client=None, ngu=time.sleep) -> int:
         loai_loi = sorted({str(k.get("loi") or k.get("loai") or "?") for k in ket.values()}) or ["không có kết quả"]
         ghi_suc_khoe("error", "Batch không có yêu cầu nào thành công: " + ", ".join(loai_loi))
     cham = [cham_mot(C, y, ket.get(k, {"loai": "khong_co_ket_qua"})) for k, y in ma_theo_id.items()]
+    ghi_so_da_kiem(C, list(ma_theo_id.values()), cham)
     chi_phi = sum(k.get("vao", 0) * GIA_BATCH["vao"] + k.get("ra", 0) * GIA_BATCH["ra"] for k in ket.values()) / 1e6
     md, _ = ghi_bao_cao(cham, goc, batch_id, chi_phi, _dt.date.today().strftime("%Y%m%d"))
     loi = sum(1 for c in cham if c["status"] != "ok")
@@ -270,6 +272,25 @@ def main(argv: list[str] | None = None, client=None, ngu=time.sleep) -> int:
     print(f"  Báo cáo: {md.as_posix()}")
     print("Cần bác sĩ kiểm chứng.")
     return 1 if loi else 0
+
+
+def ghi_so_da_kiem(C, yeu_cau: list, cham: list) -> int:
+    """Dashboard chấm «ok» ⇒ ghi vào sổ «đã kiểm chủ đề» của cổng, kèm vân tay ĐÚNG prompt đã gửi.
+
+    VÌ SAO (18/11/2026, cơ chế API khi cần): `tools/api_khi_can.py` chỉ chấm dashboard có nội dung đổi so với lần chấm
+    «ok» gần nhất. Không ghi sổ ở đây thì ngay sau một lượt quét toàn kho, cơ chế vẫn tưởng cả kho «chưa kiểm» và trả
+    tiền chấm lại. Cổng cũ (chưa có `ghi_so_chu_de`) ⇒ bỏ qua êm. Trả số dashboard đã ghi."""
+    ghi = getattr(C, "ghi_so_chu_de", None)
+    if not callable(ghi):
+        return 0
+    n = 0
+    for y, c in zip(yeu_cau, cham):
+        if c.get("status") != "ok":
+            continue
+        kq = {"total_items": c.get("so_muc", 0), "off_topic": c.get("off_topic", []), "uncertain": c.get("uncertain", [])}
+        ghi(y["tep"], hashlib.sha256(y["prompt"].encode("utf-8")).hexdigest(), kq, nguon=NGUON_NHAT_KY)
+        n += 1
+    return n
 
 
 def _dung_loi_api(buoc: str, e: Exception) -> int:

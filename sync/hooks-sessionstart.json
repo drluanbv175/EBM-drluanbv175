@@ -80,6 +80,12 @@
         },
         {
           "type": "command",
+          "command": "D=\"${CLAUDE_PROJECT_DIR:-$PWD}\"; if [ -f \"$D/tools/api_khi_can.py\" ]; then cd \"$D\"; PY=\"$(command -v python3 || command -v python)\"; if [ -n \"$PY\" ]; then \"$PY\" tools/api_khi_can.py --nen --im-khi-on; else echo \"⚠ CHỐT api_khi_can KHÔNG CHẠY — không tìm thấy python3 lẫn python\"; fi; else echo \"⚠ CHỐT api_khi_can KHÔNG CHẠY — không thấy $D/tools/api_khi_can.py\"; fi; true",
+          "timeout": 10,
+          "statusMessage": "API Claude khi cần (xét mỗi 6 giờ, chạy nền)…"
+        },
+        {
+          "type": "command",
           "command": "D=\"${CLAUDE_PROJECT_DIR:-$PWD}\"; if [ -f \"$D/tools/hom_viec_mot_cua.py\" ]; then cd \"$D\"; PY=\"$(command -v python3 || command -v python)\"; if [ -n \"$PY\" ]; then \"$PY\" tools/hom_viec_mot_cua.py --doc --lam-moi-nen; else echo \"⚠ CHỐT hom_viec_mot_cua KHÔNG CHẠY — không tìm thấy python3 lẫn python\"; fi; else echo \"⚠ CHỐT hom_viec_mot_cua KHÔNG CHẠY — không thấy $D/tools/hom_viec_mot_cua.py\"; fi; true",
           "timeout": 10,
           "statusMessage": "Hòm việc một cửa (đọc bảng sinh sẵn)…"

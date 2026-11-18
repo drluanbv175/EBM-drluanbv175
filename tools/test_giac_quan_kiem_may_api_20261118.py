@@ -42,13 +42,33 @@ def _tool(tt) -> str:
     return f"def tinh_trang_tat_ca(goc):\n    return {tt!r}\n"
 
 
-def test_bao_cao_cu_la_viec_uu_tien_2_lenh_chay_kho(tmp_path, tdx):
+def test_bao_cao_cu_la_viec_uu_tien_2_lenh_chay_kho(tmp_path, tdx, monkeypatch):
+    # 18/11: ghim chính sách «không tự chạy» (repo nay có sync/api-khi-can.json) ⇒ vẫn là việc bác sĩ quyết.
+    monkeypatch.setattr(tdx, "_chinh_sach_api_khi_can", lambda: None)
     tt = [{"study": "btm", "do_duoc": True, "bao_cao": [_bc(cu=True, ly_do="đề cương đổi", chua_duyet=9)]}]
     viec = tdx.giac_quan_kiem_may_api(_mea(tmp_path, _tool(tt)))
     assert len(viec) == 1
     uu, nhan, mo_ta, lenh = viec[0]
     assert (uu, nhan) == (2, "👤") and "CŨ" in mo_ta and "btm" in mo_ta
     assert "kiem_noi_dung_trich_dan.py --study btm" in lenh and "--goi-api" not in lenh  # chỉ chạy khô
+
+
+def test_bao_cao_cu_va_chinh_sach_tu_chay_thi_may_tu_chay(tmp_path, tdx, monkeypatch):
+    """18/11: bác sĩ cho TỰ CHẠY «Kiểm đề cương khi đổi» ⇒ 🛎 trỏ cơ chế API khi cần (chạy THẬT, không chạy khô)."""
+    monkeypatch.setattr(tdx, "_chinh_sach_api_khi_can",
+                        lambda: {"tu_chay": {"chu_de": True, "de_cuong": True, "cafes": True}})
+    tt = [{"study": "btm", "do_duoc": True, "bao_cao": [_bc(cu=True, ly_do="đề cương đổi", chua_duyet=9)]}]
+    (uu, nhan, mo_ta, lenh), = tdx.giac_quan_kiem_may_api(_mea(tmp_path, _tool(tt)))
+    assert (uu, nhan) == (3, "🛎") and "TỰ CHẠY LẠI" in mo_ta and "btm" in mo_ta
+    assert lenh == "python3 tools/api_khi_can.py --chay --chi de_cuong"
+
+
+def test_khong_khang_dinh_duoc_cu_thi_khong_tu_chay(tmp_path, tdx, monkeypatch):
+    """«Không khẳng định được» (cu=None) KHÔNG được coi là cũ để tự chi tiền."""
+    monkeypatch.setattr(tdx, "_chinh_sach_api_khi_can",
+                        lambda: {"tu_chay": {"chu_de": True, "de_cuong": True, "cafes": True}})
+    tt = [{"study": "btm", "do_duoc": True, "bao_cao": [_bc(cu=None, ly_do="chưa có mã băm", chua_duyet=0)]}]
+    assert all(v[1] != "🛎" for v in tdx.giac_quan_kiem_may_api(_mea(tmp_path, _tool(tt))))
 
 
 def test_chua_duyet_la_uu_tien_3_kem_lenh_phieu(tmp_path, tdx):

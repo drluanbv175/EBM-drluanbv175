@@ -1562,9 +1562,17 @@ def giac_quan_cafes_agent_an_toan(goc: Path | None = None) -> list[tuple[int, st
         if hien != h:
             doi.append(ten)
     if doi:
-        viec.append((2, "👤", f"Agent an toàn đã ĐỔI kể từ lượt đo CAFÉ-S {luc[:10]}: {', '.join(doi)} — kết quả đo cũ không còn"
-                              " nói về agent hiện tại; ước chi phí (miễn phí) rồi đo lại bằng --api (~3 USD)",
-                     "python3 tools/eval/cafes_suite.py --uoc-tinh"))
+        cs = _chinh_sach_api_khi_can()
+        if cs and cs["tu_chay"]["cafes"]:
+            # 18/11/2026: bác sĩ cho TỰ CHẠY «CAFÉ-S khi agent an toàn đổi» (sync/api-khi-can.json) — máy tự đo lại khi
+            # đủ khoảng cách tối thiểu, không còn là việc chờ bác sĩ quyết.
+            viec.append((3, "🛎", f"Agent an toàn đã ĐỔI kể từ lượt đo CAFÉ-S {luc[:10]}: {', '.join(doi)} — cơ chế API khi "
+                                  f"cần sẽ TỰ ĐO LẠI khi đủ {cs['cafes_cach_ngay_toi_thieu']} ngày từ lượt trước "
+                                  "(bác sĩ đã duyệt; ~3 USD)", "python3 tools/api_khi_can.py --chi cafes"))
+        else:
+            viec.append((2, "👤", f"Agent an toàn đã ĐỔI kể từ lượt đo CAFÉ-S {luc[:10]}: {', '.join(doi)} — kết quả đo cũ "
+                                  "không còn nói về agent hiện tại; ước chi phí (miễn phí) rồi đo lại bằng --api (~3 USD)",
+                         "python3 tools/eval/cafes_suite.py --uoc-tinh"))
     return viec
 
 
@@ -1595,6 +1603,8 @@ def giac_quan_kiem_may_api(goc_mea: Path | None = None) -> list[tuple[int, str, 
         _ghi_chet(nhan, f"lỗi {type(exc).__name__}")
         return []
     lenh_kiem = {"A12": "kiem_noi_dung_trich_dan.py", "PHAN_BIEN": "phan_bien_may_de_cuong.py"}
+    cs = _chinh_sach_api_khi_can()
+    tu_chay_de_cuong = bool(cs and cs["tu_chay"]["de_cuong"])
     viec: list[tuple[int, str, str, str]] = []
     for t in tt:
         s = t["study"]
@@ -1602,6 +1612,11 @@ def giac_quan_kiem_may_api(goc_mea: Path | None = None) -> list[tuple[int, str, 
             if b.get("hong"):
                 viec.append((2, "👤", f"Kiểm máy API {s}: báo cáo {b['tep_bao_cao']} hỏng — không đọc được",
                              f"cd medical-ebm-automation && python3 tools/duyet_kiem_may_api.py tinh-trang --study {s}"))
+            elif b.get("cu") is True and tu_chay_de_cuong:
+                # 18/11/2026: bác sĩ cho TỰ CHẠY «Kiểm đề cương khi đổi» (sync/api-khi-can.json) ⇒ máy chạy lại.
+                viec.append((3, "🛎", f"Kiểm máy API {s}: báo cáo {b['ten']} đã CŨ ({b['ly_do']}) — cơ chế API khi cần sẽ "
+                                      "TỰ CHẠY LẠI (bác sĩ đã duyệt; ~0,15 USD)",
+                             "python3 tools/api_khi_can.py --chay --chi de_cuong"))
             elif b.get("cu"):
                 viec.append((2, "👤", f"Kiểm máy API {s}: báo cáo {b['ten']} đã CŨ ({b['ly_do']}) — {b['chua_duyet']} mục "
                                       "của bản cũ không còn nói về đề cương hiện hành; ước chi phí rồi quyết có chạy lại",
@@ -1610,6 +1625,80 @@ def giac_quan_kiem_may_api(goc_mea: Path | None = None) -> list[tuple[int, str, 
                 viec.append((3, "👤", f"Kiểm máy API {s}: {b['chua_duyet']}/{b['can_duyet']} phát hiện {b['ten']} chưa duyệt — "
                                       "tỷ lệ đúng của máy chưa đo",
                              f"cd medical-ebm-automation && python3 tools/duyet_kiem_may_api.py phieu --study {s}"))
+    return viec
+
+
+def _nap_api_khi_can():
+    """Nạp `tools/api_khi_can.py` (cùng repo) — một nguồn duy nhất cho luật đọc chính sách và sổ; lỗi ⇒ None."""
+    try:
+        sp = _ilu_mea.spec_from_file_location("_akc_tdxv", REPO / "tools" / "api_khi_can.py")
+        m = _ilu_mea.module_from_spec(sp)
+        sys.modules[sp.name] = m
+        sp.loader.exec_module(m)
+        return m
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def _chinh_sach_api_khi_can() -> dict | None:
+    m = _nap_api_khi_can()
+    return m.doc_chinh_sach() if m else None
+
+
+# Cơ chế API khi cần chưa xét quá số ngày này ⇒ ⚪ (hook đầu phiên phóng mỗi 6 giờ; tác vụ tháng là lưới đỡ cuối).
+NGAY_API_KHI_CAN_CU = 8
+# Báo cáo kiểm lạc chủ đề tự động có mục nghi lạc còn nổi trên hòm việc trong số ngày này (máy không gỡ mục — bác sĩ rà).
+NGAY_BAO_CAO_CHU_DE = 14
+
+
+def giac_quan_api_khi_can(goc: Path | None = None, bay_gio: dt.datetime | None = None) -> list[tuple[int, str, str, str]]:
+    """CƠ CHẾ TỰ CHẠY API CLAUDE KHI CẦN (18/11/2026, bác sĩ duyệt) — `tools/api_khi_can.py`, chính sách sync/api-khi-can.json.
+
+    Chỉ ĐỌC chính sách + sổ lượt chạy `~/.ebm-api-khi-can.json` + báo cáo KIEM-CHU-DE-KHI-CAN_*.json — không gọi API:
+      • chính sách vắng/hỏng ⇒ ⚪ (cơ chế TẮT — không được đọc thành «đang tự chạy»);
+      • chưa xét lần nào / quá NGAY_API_KHI_CAN_CU ngày ⇒ ⚪ (hook đầu phiên chưa áp, hoặc lượt nền chết);
+      • lượt gần nhất có việc LỖI ⇒ 👤 ưu tiên 2 (khoá/tín dụng/trần chi phí — bác sĩ xem);
+      • báo cáo kiểm lạc chủ đề tự động ≤ NGAY_BAO_CAO_CHU_DE ngày có mục NGHI LẠC ⇒ 👤 ưu tiên 2 (bác sĩ rà; máy không gỡ).
+    Việc «cần chạy» từng loại do hai giác quan CAFÉ-S / kiểm máy báo (🛎 khi chính sách cho tự chạy) — không báo trùng ở đây."""
+    _SO_GIAC_QUAN["chay"] += 1
+    nhan = ["", "API Claude khi cần"]
+    m = _nap_api_khi_can()
+    cs = m.doc_chinh_sach() if m else None
+    if cs is None:
+        _ghi_chet(nhan, "chính sách sync/api-khi-can.json vắng/hỏng — cơ chế TẮT")
+        return []
+    if not any(cs["tu_chay"].values()):
+        return []
+    so = m.doc_so()
+    try:
+        cuoi = dt.datetime.fromisoformat(str(so.get("lan_xet_cuoi"))[:19])
+    except ValueError:
+        _ghi_chet(nhan, "chưa xét lần nào — hook đầu phiên chưa áp? (python3 tools/dong_bo_hook_sessionstart.py --ap-dung)")
+        return []
+    bay_gio = bay_gio or dt.datetime.now()
+    if (bay_gio - cuoi).days > NGAY_API_KHI_CAN_CU:
+        _ghi_chet(nhan, f"chưa xét {(bay_gio - cuoi).days} ngày (lần cuối {cuoi:%d/%m %H:%M}) — lượt nền có chạy không?")
+    viec: list[tuple[int, str, str, str]] = []
+    luot = (so.get("luot") or [None])[-1]
+    if isinstance(luot, dict):
+        for v, r in (luot.get("viec") or {}).items():
+            if isinstance(r, dict) and r.get("ket_qua") == "loi":
+                ly = r.get("dung") or (f"{r.get('so_loi')} việc lỗi" if r.get("so_loi") else r.get("duoi") or "lỗi")
+                viec.append((2, "👤", f"API khi cần {str(luot.get('luc'))[:16].replace('T', ' ')}: {m.TEN_VIEC.get(v, v)} "
+                                      f"LỖI — {str(ly)[:120]} (kiểm khoá/tín dụng/trần ở console.anthropic.com)",
+                             f"python3 tools/api_khi_can.py --chay --chi {v}"))
+    for js in sorted(((goc or REPO) / "EBM-Dashboards" / "derivatives").glob("KIEM-CHU-DE-KHI-CAN_*.json"))[-1:]:
+        try:
+            d = json.loads(js.read_text(encoding="utf-8"))
+            luc = dt.datetime.fromisoformat(str(d.get("luc"))[:19])
+        except (OSError, ValueError):
+            continue
+        ket = [k for k in d.get("ket_qua") or [] if isinstance(k, dict)]
+        so_lac = sum(len(k.get("off_topic") or []) for k in ket)
+        if so_lac and (bay_gio - luc).days <= NGAY_BAO_CAO_CHU_DE:
+            n_db = sum(1 for k in ket if k.get("off_topic"))
+            viec.append((2, "👤", f"Kiểm lạc chủ đề tự động {luc:%d/%m}: {so_lac} mục NGHI LẠC ở {n_db} dashboard — bác sĩ rà "
+                                  "(máy không gỡ mục nào)", f"open {js.with_suffix('.md').relative_to(goc or REPO).as_posix()}"))
     return viec
 
 
@@ -2411,6 +2500,9 @@ def main() -> int:
 
     # ⑦t KIỂM MÁY CLAUDE API (18/11/2026): báo cáo A12/phản biện máy CŨ so với đề cương, hoặc phát hiện chưa duyệt — xem docstring.
     de_xuat += giac_quan_kiem_may_api()  # đúng khuôn (ưu tiên, nhãn 👤, mô tả, lệnh)
+
+    # ⑦u API CLAUDE KHI CẦN (18/11/2026): cơ chế tự chạy chết/lỗi, hoặc kiểm lạc chủ đề tự động có mục nghi lạc — xem docstring.
+    de_xuat += giac_quan_api_khi_can()  # đúng khuôn (ưu tiên, nhãn 👤, mô tả, lệnh)
 
     # ⑦j CHỦ ĐỀ 0 ỨNG VIÊN NHIỀU LƯỢT LIỀN (03/10/2026): «0 ứng viên ≠ không có chứng cứ mới» — xem docstring.
     _viec_0, _tt_0 = giac_quan_chu_de_0_lien(DASH, SAN_LUONG_GIAM_SAT)

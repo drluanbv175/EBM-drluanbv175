@@ -68,6 +68,11 @@ CÁC BƯỚC:
    treo, không khoá ghi của tiến trình khác, không cờ tạm dừng — kiểm trước TỪNG bước ghi; EndNote chưa mở ⇒ bỏ qua, không tự
    bật). Lượt lịch KHÔNG tự chạy lệnh đó. KHÔNG kết thúc phiên trước khi phiếu tháng này có mặt — không thấy phiếu ⇒ báo
    «⚪ lượt chưa hoàn tất».
+6b. `python3 tools/api_khi_can.py --chay` — TỰ CHẠY API CLAUDE KHI CẦN (bác sĩ duyệt 18/11/2026, chính sách
+   `sync/api-khi-can.json`): quét lạc chủ đề các dashboard ĐỔI nội dung từ lần kiểm trước · chạy lại kiểm máy đề cương có báo
+   cáo CŨ · CAFÉ-S khi agent an toàn đổi (tối đa 1 lượt/30 ngày). Công cụ tự phát hiện việc cần, tự chạy, tự ghi sổ; lượt
+   khác đang chạy ⇒ bỏ qua. Mã thoát: 0 sạch/không có việc · 1 có việc lỗi · 2 chính sách hỏng (cơ chế TẮT). Lượt lịch KHÔNG
+   sửa dashboard, KHÔNG gỡ mục — mục nghi lạc chỉ vào báo cáo KIEM-CHU-DE-KHI-CAN_*.md cho bác sĩ rà.
 7. Báo NGẮN, TRUNG THỰC, theo thứ tự: (0) bước 0 — mã thoát tiền kiểm quyền và các dòng 🔴/🟠/⚪ của cảm biến kỳ lỡ (nếu có);
    (a) bước 2–4 — đọc dòng «KẾT THÚC» cuối của ba log trên (công cụ Read), mã thoát từng
    bước và verdict PASS/CÓ BƯỚC LỖI, KHÔNG tô hồng; bước lỗi nêu tên + mã thoát + hệ quả (watermark giữ, không nối Hub); có cảnh
@@ -76,6 +81,8 @@ CÁC BƯỚC:
    toàn văn; danh sách bản nối tiếp (ưu tiên trước, kèm ước tính token); ⑨ chờ duyệt; toàn văn còn thiếu; đề xuất watchlist; thư
    mục có nội dung thật chưa có dashboard; kết quả từng chủ đề quét và từng bước hoàn thiện. Mã thoát của bước 6: 0 không có việc
    · 1 có việc cho bác sĩ · 2 KHÔNG ĐO ĐƯỢC (báo nguyên văn) · 3 tham số sai. Dòng ⚪ giữ nguyên là ⚪ — KHÔNG đọc thành đạt hay lỗi.
+   (d) bước 6b — chép nguyên các dòng tóm tắt từng việc mà công cụ in (số dashboard đã chấm, số mục nghi lạc, đường báo
+   cáo; số công cụ đề cương đã chạy; CAFÉ-S cổng critical) và mã thoát; dòng ⚪ giữ nguyên là ⚪.
 
 RÀNG BUỘC BẤT BIẾN:
 - CHỈ THU THẬP/BẢO TRÌ + CANDIDATE: kết quả vào hàng ứng viên; không dựng/sửa dashboard, không đổi decision/gradeLevel, không tự
