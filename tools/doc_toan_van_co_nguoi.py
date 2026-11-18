@@ -938,7 +938,9 @@ def _khong_truy_cap(kho: Path, hom_nay: date) -> dict[str, dict]:
         try:
             d = json.loads(dong)
             if (hom_nay - date.fromisoformat(d["ngay"])).days <= HAN_KHONG_TRUY_CAP_NGAY:
-                ra[str(d["pmid"])] = d
+                # 18/11/2026: tài liệu CHỈ có DOI (TLTK đề tài: Hu & Bentler 1999, Browne & Cudeck 1992…) ghi theo DOI ⇒
+                # khoá «doi:<chữ thường>» — không bao giờ trùng khoá PMID của các nơi đọc cũ.
+                ra[str(d["pmid"]) if d.get("pmid") else f"doi:{str(d['doi']).strip().lower()}"] = d
         except (ValueError, KeyError, TypeError):
             continue
     return ra
@@ -1486,7 +1488,8 @@ def nap(hs: dict, *, ghi: bool, xac_minh: Callable[[dict], dict] | None, kho: Pa
     return 0, bao
 
 
-def danh_dau_khong_truy_cap(pm: str, ly_do: str, kho: Path | None = None, hom_nay: date | None = None) -> int:
+def danh_dau_khong_truy_cap(pm: str, ly_do: str, kho: Path | None = None, hom_nay: date | None = None,
+                            doi: str | None = None) -> int:
     """Ghi nối «bác sĩ không có quyền đọc» vào `trinh_duyet/khong-truy-cap.jsonl`. Mã: 0 đã ghi · 2 kho vắng (KHÔNG ĐO ĐƯỢC —
     không tự tạo kho; TT-05 15/10/2026: trước đó mkdir(parents=True) dựng kho ma ở worktree/phiên Cloud, quyết định của bác sĩ rơi
     vào thư mục không ai đọc, còn chốt ⚪ của công cụ đọc bị lật thành kết quả đo — đồng nhất với `danh_dau_bac_si_da_doc`)."""
@@ -1496,7 +1499,10 @@ def danh_dau_khong_truy_cap(pm: str, ly_do: str, kho: Path | None = None, hom_na
     tep = kho / "trinh_duyet" / "khong-truy-cap.jsonl"
     tep.parent.mkdir(parents=True, exist_ok=True)
     with open(tep, "a", encoding="utf-8", newline="\n") as f:
-        f.write(json.dumps({"pmid": pm, "ngay": hom_nay.isoformat(), "ly_do": ly_do}, ensure_ascii=False) + "\n")
+        dong = {"pmid": pm, "ngay": hom_nay.isoformat(), "ly_do": ly_do}
+        if doi:  # 18/11/2026: tài liệu chỉ có DOI — `pm` rỗng, khoá đọc lại là «doi:<chữ thường>»
+            dong = {"pmid": None, "doi": doi.strip().lower(), "ngay": hom_nay.isoformat(), "ly_do": ly_do}
+        f.write(json.dumps(dong, ensure_ascii=False) + "\n")
     return 0
 
 
@@ -1615,7 +1621,8 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--nap", type=Path, help="hồ sơ trích xuất JSON do phiên Claude soạn")
     ap.add_argument("--ghi", action="store_true",
                     help="cùng --nap / --bac-si-da-doc / --ghi-uy-quyen: ghi thật (mặc định chạy thử)")
-    ap.add_argument("--khong-truy-cap", metavar="PMID")
+    ap.add_argument("--khong-truy-cap", metavar="PMID|DOI",
+                    help="ghi «không có quyền đọc»; tài liệu chỉ có DOI (vd TLTK đề tài) ghi bằng DOI «10.xxxx/…»")
     ap.add_argument("--ly-do", default="")
     ap.add_argument("--bac-si-da-doc", metavar="PMID",
                     help="NXB cấm AI/TDM: bác sĩ đã tự đọc bài — ghi kết luận (cần --ghi-chu; mặc định chạy thử)")
@@ -1635,13 +1642,16 @@ def main(argv: list[str] | None = None) -> int:
         print(json.dumps(MAU, ensure_ascii=False, indent=2))
         return 0
     if a.khong_truy_cap:
-        if not re.fullmatch(r"\d{6,9}", a.khong_truy_cap) or not a.ly_do.strip():
-            print("✗ cần PMID đúng dạng và --ly-do (vd «tạp chí đòi mua bài, bác sĩ không có quyền»)")
+        la_doi = bool(re.fullmatch(r"10\.\d{4,9}/\S+", a.khong_truy_cap))
+        if not (la_doi or re.fullmatch(r"\d{6,9}", a.khong_truy_cap)) or not a.ly_do.strip():
+            print("✗ cần PMID hoặc DOI đúng dạng và --ly-do (vd «tạp chí đòi mua bài, bác sĩ không có quyền»)")
             return 3
-        if danh_dau_khong_truy_cap(a.khong_truy_cap, a.ly_do.strip()) != 0:
+        if danh_dau_khong_truy_cap(None if la_doi else a.khong_truy_cap, a.ly_do.strip(),
+                                   doi=a.khong_truy_cap if la_doi else None) != 0:
             print(f"⚪ KHÔNG ĐO ĐƯỢC — không thấy kho {KHO} (EBM-Dashboards/ vắng ở cây này) — KHÔNG ghi (không tự tạo kho)")
             return 2
-        print(f"✓ PMID {a.khong_truy_cap}: ghi «không có quyền đọc» — không nhắc lại {HAN_KHONG_TRUY_CAP_NGAY} ngày.")
+        print(f"✓ {'DOI' if la_doi else 'PMID'} {a.khong_truy_cap}: ghi «không có quyền đọc» — không nhắc lại "
+              f"{HAN_KHONG_TRUY_CAP_NGAY} ngày.")
         return 0
     if a.bac_si_da_doc is not None:
         ma, bao = danh_dau_bac_si_da_doc(a.bac_si_da_doc, a.ghi_chu, ghi=a.ghi)
