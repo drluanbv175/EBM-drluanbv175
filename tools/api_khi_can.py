@@ -72,6 +72,8 @@ HAN_KHOA_GIO = 3
 GIAY_DE_CUONG = 1800
 GIAY_CAFES = 3600
 CONG_CU_DE_CUONG = {"A12": "kiem_noi_dung_trich_dan.py", "PHAN_BIEN": "phan_bien_may_de_cuong.py"}
+# Dấu hiệu cầu nối y khoa từ chối gọi vì trần chi phí tháng (`api_claude_nc.HetNganSach`) — so CHỮ THƯỜNG.
+DAU_HIEU_HET_TRAN = ("trần chi phí", "kiểm được trần", "ngân sách", "hetngansach")
 MAC_DINH = {"chu_de_toi_da_moi_luot": 60, "cafes_cach_ngay_toi_thieu": 30, "nen_cach_gio_toi_thieu": 6}
 GIA_SONNET = (2.0, 10.0)   # USD / triệu token vào · ra (Sonnet 5.5) — chỉ để IN ước tính, không dùng chặn
 
@@ -345,7 +347,9 @@ def chay_de_cuong(can: List[Dict[str, Any]], goc_mea: Path = GOC_MEA,
         ma, duoi = chay(lenh, goc_mea, GIAY_DE_CUONG)
         ket.append({"study": x["study"], "loai": x["loai"], "ma_thoat": ma, "ok": ma in (0, 1),
                     "co_phat_hien": ma == 1, "duoi": duoi[-200:]})
-        if ma not in (0, 1) and any(s in duoi for s in ("ngân sách", "trần chi phí", "HetNganSach")):
+        # Không phân biệt hoa thường: thông điệp vượt trần chính của cầu nối mở đầu «Trần chi phí Claude API tháng…»
+        # (viết hoa) — so khớp phân biệt hoa thường từng bỏ sót nó (đo 18/11/2026 sau khi y khoa #306 gộp).
+        if ma not in (0, 1) and any(s in duoi.lower() for s in DAU_HIEU_HET_TRAN):
             dung = "dừng: chạm trần chi phí tháng của cầu nối y khoa"
             break
     so_loi = sum(1 for k in ket if not k["ok"])
