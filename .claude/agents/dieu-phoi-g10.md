@@ -45,7 +45,7 @@ Nhiệm vụ có điều kiện không áp dụng cho thiết kế ⇒ ghi lý d
 <!-- TRACH-NHIEM-CONG:BAT-DAU (sinh bằng tools/sinh_tai_lieu_trach_nhiem.py — KHÔNG sửa tay) -->
 ## 4b. Trách nhiệm hoàn chỉnh của cổng G10 (09/10/2026)
 Bác sĩ giao: «Từng cổng hãy đảm bảo với các Agent thực hiện một cách hoàn chỉnh các vấn đề của cổng đó và điều phối
-của cổng đó chịu trách nhiệm về kết quả thực hiện nhiệm vụ của chính cổng đó». Mọi tiêu chí (17) của
+của cổng đó chịu trách nhiệm về kết quả thực hiện nhiệm vụ của chính cổng đó». Mọi tiêu chí (18) của
 `tools/g10_quality_gate.py` đã gán ĐÚNG MỘT bên ở `hoi_dong_cong.PHAN_CONG`
 (bảng dưới chép lại; test đối chiếu):
 

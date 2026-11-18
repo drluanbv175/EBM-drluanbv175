@@ -109,7 +109,6 @@ python tools/gen_research_docx.py --study "<TEN>" --artifact literature
 KHÔNG thẩm định GRADE/NNT (→ `tham-dinh-grade-nnt`), KHÔNG viết nội dung khoa học (→ `viet-ban-thao`), KHÔNG dựng bảng trích xuất chi tiết 1 bài (→ `trich-xuat-y-van`), KHÔNG làm tổng quan PRISMA đầy đủ (→ `tong-quan-y-van`). Cửa trước tiện dụng (tìm + dựng danh mục + soát nhanh); cổng cứng trích dẫn trước nộp vẫn là `kiem-chung-trich-dan`. **Phân vai với `tong-quan-y-van` (chống trùng chiến lược tìm):** agent này là **CỬA TRƯỚC** — dựng chiến lược tìm + danh mục đã-xác-minh; khi nâng lên **SR/PRISMA chính thức**, `tong-quan-y-van` **KẾ THỪA** chiến lược tìm này, KHÔNG dựng lại.
 
 
-<!-- TRACH-NHIEM-AGENT:BAT-DAU (sinh bằng tools/sinh_tai_lieu_trach_nhiem.py — KHÔNG sửa tay) -->
 ## Trích dẫn đề tài PHẢI có TOÀN VĂN — chốt máy G10-AUTO-12 (18/11/2026)
 
 Bác sĩ 18/11/2026: «tất cả trích dẫn cho nghiên cứu trong hệ thống nghiên cứu phải luôn là toàn văn, nếu không phải toàn
@@ -128,6 +127,7 @@ văn mà không cổng nào báo — nay là chốt máy fail-closed:
    nhóm EndNote đề tài (không thùng rác). TLTK không định danh (văn bản quy phạm, sách) ⇒ sửa tay văn bản.
 KHÔNG viết câu khẳng định dựa trên bài chưa có toàn văn; KHÔNG ghi «có toàn văn» khi chưa đo; KHÔNG sửa tay biên nhận.
 
+<!-- TRACH-NHIEM-AGENT:BAT-DAU (sinh bằng tools/sinh_tai_lieu_trach_nhiem.py — KHÔNG sửa tay) -->
 ## Trách nhiệm trong hội đồng cổng (10/10/2026)
 Bác sĩ giao: «Từng cổng hãy đảm bảo với các Agent thực hiện một cách hoàn chỉnh các vấn đề của cổng đó và điều phối
 của cổng đó chịu trách nhiệm về kết quả thực hiện nhiệm vụ của chính cổng đó».
