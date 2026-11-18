@@ -658,6 +658,10 @@ def bien_nhan_toan_van(study: str, thu_muc: Path, *, endnote, kho: Path | None, 
     phu = do_phu_toan_van(endnote, ma) if endnote is not None else {}
     gom = bool(bc.get("gom_toan_van"))
     khong_tc = khong_truy_cap or {}
+    # 18/11/2026: TLTK chỉ ghi DOI mà lượt nạp đã tra ra PMID («TLTK n: DOI d → PMID p») ⇒ tra sổ «không truy cập» theo
+    # cả PMID đó (C1a TLTK 35: sổ ghi theo PMID 16943232, đề cương chỉ có DOI ⇒ trước đây không bao giờ khớp).
+    doi_ra_pmid = {d.lower(): p for x in (bc.get("pmid_tu_doi") or {}).get("them") or []
+                   for d, p in re.findall(r"DOI (\S+) → PMID (\d+)", str(x))}
     muc = []
     for r in ds:
         tv = phu.get(r["so"]) if r["so"] in ma else (False if endnote is not None else None)
@@ -674,8 +678,10 @@ def bien_nhan_toan_van(study: str, thu_muc: Path, *, endnote, kho: Path | None, 
             if gom and (r["pmid"] or r["doi"]):
                 _gop_lan(lan, {"lan": "truy_cap_mo", "ngay": hom_nay.isoformat(),
                                "ket_qua": "--gom-toan-van (PMC + Unpaywall): không có bản truy cập mở hợp lệ"})
-            if r["pmid"] and r["pmid"] in khong_tc:
-                d = khong_tc[r["pmid"]]
+            khoa_ktc = [k for k in (r["pmid"], doi_ra_pmid.get(str(r["doi"] or "").lower()),
+                                    f"doi:{str(r['doi']).lower()}" if r["doi"] else None) if k and k in khong_tc]
+            if khoa_ktc:
+                d = khong_tc[khoa_ktc[0]]
                 _gop_lan(lan, {"lan": "trinh_duyet", "ngay": str(d.get("ngay")),
                                "ket_qua": str(d.get("ly_do") or "sổ «không truy cập»: không có quyền đọc")[:200]})
         muc.append({"so": r["so_tltk"], "tai_lieu": r["tai_lieu"], "khoa": r["khoa"], "toan_van": tv, "nguon": nguon,

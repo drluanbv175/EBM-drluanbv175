@@ -179,3 +179,51 @@ def test_voi_mo_dun_that_ket_luan_khong_lay_duoc_sau_hai_lan(tmp_path, monkeypat
     kl = {x["so"]: x["ket_luan"] for x in kq["tltk"]}
     assert kl == {1: "co", 2: "khong_lay_duoc", 3: "chua_thu_het", 4: "co"}
     assert kq["trang_thai"] == "VI_PHAM"
+
+
+# ── 18/11/2026 (làn toàn văn C1a): sổ «không truy cập» nhận DOI; biên nhận tra theo PMID · DOI · PMID suy từ DOI ──────────
+DTV = _nap("tools/doc_toan_van_co_nguoi.py", "_dtv_bien_nhan_test")
+DE_CUONG_DOI = DE_CUONG + "5. Bài chỉ có DOI. doi:10.2000/abc5.\n"
+
+
+def test_so_khong_truy_cap_ghi_va_doc_theo_doi(tmp_path):
+    kho = tmp_path / "kho"
+    kho.mkdir()
+    assert DTV.danh_dau_khong_truy_cap(None, "T&F đòi mua", kho=kho, hom_nay=date(2026, 11, 18), doi="10.1080/ABC") == 0
+    assert DTV.danh_dau_khong_truy_cap("12345678", "SAGE", kho=kho, hom_nay=date(2026, 11, 18)) == 0
+    ktc = DTV._khong_truy_cap(kho, date(2026, 11, 18))
+    assert set(ktc) == {"doi:10.1080/abc", "12345678"}
+    assert ktc["doi:10.1080/abc"]["ly_do"] == "T&F đòi mua"
+
+
+def test_cli_khong_truy_cap_nhan_doi_tu_choi_chuoi_la(tmp_path, monkeypatch, capsys):
+    kho = tmp_path / "kho"
+    kho.mkdir()
+    monkeypatch.setattr(DTV, "KHO", kho)
+    assert DTV.main(["--khong-truy-cap", "10.1177/0049124192021002005", "--ly-do", "SAGE get access"]) == 0
+    assert "DOI 10.1177/0049124192021002005" in capsys.readouterr().out
+    assert DTV.main(["--khong-truy-cap", "abc", "--ly-do", "x"]) == 3
+    assert DTV.main(["--khong-truy-cap", "10.1177/x"]) == 3  # thiếu --ly-do
+
+
+def _de_tai_doi(tmp_path: Path) -> Path:
+    d = _de_tai(tmp_path)
+    (d / f"DE_CUONG_NOP_HOI_DONG_{S}.md").write_text(DE_CUONG_DOI, encoding="utf-8", newline="\n")
+    return d
+
+
+def test_bien_nhan_tra_so_theo_doi_cho_tltk_chi_co_doi(tmp_path):
+    d = _de_tai_doi(tmp_path)
+    bn = T.bien_nhan_toan_van(S, d, endnote=EN, kho=None, bc={"gom_toan_van": {"chay": True}}, tvt=_tvt_gia(),
+                              hom_nay=date(2026, 11, 18),
+                              khong_truy_cap={"doi:10.2000/abc5": {"ngay": "2026-11-18", "ly_do": "không quyền"}})
+    lan = {x["lan"] for x in _muc(bn, 5)["lan_da_thu"]}
+    assert lan == {"truy_cap_mo", "trinh_duyet"}
+
+
+def test_bien_nhan_tra_so_theo_pmid_suy_tu_doi(tmp_path):
+    d = _de_tai_doi(tmp_path)
+    bc = {"pmid_tu_doi": {"them": ["TLTK 5: DOI 10.2000/abc5 → PMID 55555555"]}}
+    bn = T.bien_nhan_toan_van(S, d, endnote=EN, kho=None, bc=bc, tvt=_tvt_gia(), hom_nay=date(2026, 11, 18),
+                              khong_truy_cap={"55555555": {"ngay": "2026-11-10", "ly_do": "OUP redirectedFrom"}})
+    assert [(x["lan"], x["ngay"]) for x in _muc(bn, 5)["lan_da_thu"]] == [("trinh_duyet", "2026-11-10")]
