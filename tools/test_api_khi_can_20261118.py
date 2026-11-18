@@ -244,8 +244,23 @@ def test_chay_de_cuong_goi_that_va_doc_ma_thoat_dung(tmp_path, akc):
 def test_cham_tran_chi_phi_thi_dung_cac_viec_con_lai(tmp_path, akc):
     dem = []
     r = akc.chay_de_cuong([{"study": "a", "loai": "A12"}, {"study": "b", "loai": "A12"}], tmp_path,
-                          lambda l, c, t: dem.append(l) or (2, "⛔ Vượt trần chi phí tháng — HetNganSach"))
+                          lambda lenh, c, t: dem.append(lenh) or (2, "⛔ Vượt trần chi phí tháng — HetNganSach"))
     assert r["ket_qua"] == "loi" and "trần" in r["dung"] and len(dem) == 1
+
+
+@pytest.mark.parametrize("thong_diep", [
+    # Nguyên văn các thông điệp HetNganSach của medical-ebm-automation/tools/api_claude_nc.py (sau y khoa #306).
+    "⛔ Trần chi phí Claude API tháng 2026-11: đã dùng 19.80/20.00 USD; lượt «kiem_noi_dung_trich_dan» ước tối đa 0.40 USD"
+    " ⇒ vượt trần (mặc định), KHÔNG gửi.",
+    "⛔ Trần chi phí Claude API tháng đang = 0 (biến môi trường; khoá hẳn…) — không gọi.",
+    "⛔ Sổ chi phí API /x/.ebm-api-claude-chi-phi.json sai khuôn — không kiểm được trần ⇒ không gọi.",
+])
+def test_nhan_dien_het_tran_khong_phan_biet_hoa_thuong(tmp_path, akc, thong_diep):
+    """Thông điệp vượt trần thật mở đầu bằng «Trần» viết hoa — so phân biệt hoa thường từng bỏ sót (18/11)."""
+    dem = []
+    r = akc.chay_de_cuong([{"study": "a", "loai": "A12"}, {"study": "b", "loai": "PHAN_BIEN"}], tmp_path,
+                          lambda lenh, c, t: dem.append(lenh) or (2, thong_diep))
+    assert "trần" in r["dung"] and len(dem) == 1
 
 
 def test_duoi_pytest_khong_chay_cong_cu_de_cuong_that(tmp_path, akc):
@@ -285,9 +300,9 @@ def test_cafes_chi_khi_agent_doi_va_du_khoang_cach(tmp_path, akc):
 def test_chay_cafes_doc_cong_critical_cua_luot_moi(tmp_path, akc):
     _cafes(tmp_path, "2026-11-17T14:00:00", sua_agent=True)
     viec = {"agent_doi": ["sang-loc-co-do"], "luc_do_truoc": "2026-11-17T14:00:00"}
-    r = akc.chay_cafes(viec, tmp_path, lambda l, c, t: (_cafes(tmp_path, "2026-12-18T09:00:00", cong="FAIL") or (0, "xong")))
+    r = akc.chay_cafes(viec, tmp_path, lambda lenh, c, t: (_cafes(tmp_path, "2026-12-18T09:00:00", cong="FAIL") or (0, "xong")))
     assert r["ket_qua"] == "ok" and r["critical_gate"] == "FAIL"
-    r = akc.chay_cafes(viec | {"luc_do_truoc": "2026-12-18T09:00:00"}, tmp_path, lambda l, c, t: (2, "lỗi"))
+    r = akc.chay_cafes(viec | {"luc_do_truoc": "2026-12-18T09:00:00"}, tmp_path, lambda lenh, c, t: (2, "lỗi"))
     assert r["ket_qua"] == "loi"                                                          # không có lượt mới ⇒ lỗi
 
 
