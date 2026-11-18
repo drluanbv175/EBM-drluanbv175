@@ -30,6 +30,13 @@ Nhóm: `--ten-nhom` → nhóm ĐÃ GHI NHỚ của đề tài (khoá `DE-TAI_<m�
 `nap_endnote_chu_de.py --de-tai`) → «NC · <mã>»; `--ap-dung` thật ghi nhớ tên đã dùng (25/10/2026 — tránh nhóm NC thứ hai).
 
 Chạy khô mặc định. `--ap-dung` mới ghi EndNote và biên nhận `exports/<đề tài>/ENDNOTE_TLTK_<đề tài>.json`.
+`--ghi-bien-nhan-toan-van` (18/11/2026 — bác sĩ: «tất cả trích dẫn cho nghiên cứu … phải luôn là toàn văn, nếu không phải
+toàn văn và không thể lấy được toàn văn thì loại bỏ»): đo TỪNG TLTK của đề cương nộp + bản thảo G7 trên thư viện EndNote
+THẬT (rồi kho toàn văn / `toan_van_tltk/`) và ghi biên nhận `exports/<đề tài>/TOAN_VAN_TLTK_<đề tài>.json` mà cổng
+G10-AUTO-12 của repo y khoa đọc (`tools/toan_van_trich_dan.py` — khoá TLTK và khuôn biên nhận lấy từ CHÍNH mô-đun đó).
+Ghi được cả khi chạy khô (chỉ ghi tệp đo, không đụng EndNote); EndNote chưa mở thư viện ⇒ KHÔNG ghi (giữ biên nhận cũ —
+không đo được ≠ thiếu toàn văn). Làn đã thử: `--gom-toan-van` cùng lượt ⇒ «truy_cap_mo»; sổ «không truy cập» của làn
+trình duyệt (`trinh_duyet/khong-truy-cap.jsonl`) ⇒ «trinh_duyet»; làn cũ ở biên nhận trước được giữ.
 Mã thoát: 0 đủ (mọi TLTK trong EndNote, đủ toàn văn, không lệch) · 1 còn việc (thiếu toàn văn/lệch/chưa nhập được) ·
 2 không chạy được · 3 tham số sai. Cần bác sĩ kiểm chứng.
 """
@@ -609,6 +616,103 @@ def _viec_toan_van(r: dict, kho: Path | None, thu_muc_tv: Path) -> str:
     return f"TLTK {r['so']} ({dd}): chưa có toàn văn — đặt `{THU_MUC_TOAN_VAN}/{ten_tep_can(r)}`"
 
 
+# ── biên nhận toàn văn từng TLTK (18/11/2026) ──────────────────────────────────────────────────────────────────────
+
+def nap_tvt(thu_muc: Path):
+    """Mô-đun `toan_van_trich_dan` của repo y khoa chứa đề tài (exports/<mã> → <repo>/tools/) — None nếu chưa có."""
+    tep = Path(thu_muc).resolve().parent.parent / "tools" / "toan_van_trich_dan.py"
+    if not tep.is_file():
+        return None
+    sp = importlib.util.spec_from_file_location("_tvt_de_tai", tep)
+    m = importlib.util.module_from_spec(sp)
+    sys.modules["_tvt_de_tai"] = m
+    sp.loader.exec_module(m)
+    return m
+
+
+def _gop_lan(lan: list[dict], them: dict) -> None:
+    if not any(x.get("lan") == them["lan"] and x.get("ngay") == them["ngay"] for x in lan):
+        lan.append(them)
+
+
+def bien_nhan_toan_van(study: str, thu_muc: Path, *, endnote, kho: Path | None, bc: dict, tvt,
+                       hom_nay: date | None = None, khong_truy_cap: dict | None = None) -> dict:
+    """Biên nhận `de_tai/toan_van_tltk/v1` cho MỌI TLTK của đề cương nộp + bản thảo G7 (khoá TLTK theo `tvt`).
+
+    toan_van: True khi bản ghi EndNote mang PDF toàn văn, hoặc PDF toàn văn có sẵn ở kho chung/`toan_van_tltk/` (chờ
+    gắn) · False khi EndNote đo được mà không có (kể cả TLTK chưa có bản ghi) · None khi không đọc được trường tệp."""
+    hom_nay = hom_nay or date.today()
+    tltk, van_ban = tvt.tltk_de_tai(thu_muc, study)
+    cu, _loi = tvt.doc_bien_nhan(thu_muc, study)
+    thu_muc_tv = Path(thu_muc) / THU_MUC_TOAN_VAN
+    ds = []
+    for i, t in enumerate(tltk):
+        pm = next((k.split(":", 1)[1] for k in t["khoa"] if k.startswith("pmid:")), None)
+        doi = next((k.split(":", 1)[1] for k in t["khoa"] if k.startswith("doi:")), None)
+        ds.append({"so": i, "so_tltk": t["so"], "pmid": pm, "doi": doi, "tai_lieu": t["tai_lieu"], "khoa": t["khoa"]})
+    ma = ma_ban_ghi(endnote, [r for r in ds if r["pmid"] or r["doi"]]) if endnote is not None else {}
+    ids_kdd = {str(k): v for k, v in ((bc.get("khong_dinh_danh") or {}).get("ids") or {}).items()}
+    for r in ds:  # TLTK không định danh của đề cương nộp: mã bản ghi do lượt nạp này tạo/tìm (theo số TLTK)
+        if not (r["pmid"] or r["doi"]) and r["tai_lieu"].startswith("DE_CUONG_NOP") and ids_kdd.get(str(r["so_tltk"])):
+            ma[r["so"]] = ids_kdd[str(r["so_tltk"])]
+    phu = do_phu_toan_van(endnote, ma) if endnote is not None else {}
+    gom = bool(bc.get("gom_toan_van"))
+    khong_tc = khong_truy_cap or {}
+    muc = []
+    for r in ds:
+        tv = phu.get(r["so"]) if r["so"] in ma else (False if endnote is not None else None)
+        nguon, tep = ("endnote", None) if tv else (None, None)
+        if not tv:
+            ra_tep = {"so": r["so_tltk"] if r["tai_lieu"].startswith("DE_CUONG_NOP") else -1,
+                      "pmid": r["pmid"], "doi": r["doi"]}
+            pdf = chon_toan_van(ra_tep, kho, thu_muc_tv)
+            if pdf:
+                tv, tep = True, pdf[0].name
+                nguon = "toan_van_tltk" if pdf[0].parent.resolve() == thu_muc_tv.resolve() else "kho_toan_van"
+        lan = list((tvt._tim_muc(r["khoa"], cu) or {}).get("lan_da_thu") or []) if cu else []
+        if tv is False:
+            if gom and (r["pmid"] or r["doi"]):
+                _gop_lan(lan, {"lan": "truy_cap_mo", "ngay": hom_nay.isoformat(),
+                               "ket_qua": "--gom-toan-van (PMC + Unpaywall): không có bản truy cập mở hợp lệ"})
+            if r["pmid"] and r["pmid"] in khong_tc:
+                d = khong_tc[r["pmid"]]
+                _gop_lan(lan, {"lan": "trinh_duyet", "ngay": str(d.get("ngay")),
+                               "ket_qua": str(d.get("ly_do") or "sổ «không truy cập»: không có quyền đọc")[:200]})
+        muc.append({"so": r["so_tltk"], "tai_lieu": r["tai_lieu"], "khoa": r["khoa"], "toan_van": tv, "nguon": nguon,
+                    "tep": tep, "lan_da_thu": lan})
+    return {"schema": tvt.SCHEMA, "study": study, "luc": datetime.now().isoformat(timespec="seconds"),
+            "nguoi_do": "tools/nap_endnote_de_tai.py --ghi-bien-nhan-toan-van (đo trên thư viện EndNote thật)",
+            "tai_lieu": van_ban, "muc": muc}
+
+
+def _chay_bien_nhan(study: str, thu_muc: Path, *, endnote, kho: Path | None, bc: dict) -> None:
+    tvt = nap_tvt(thu_muc)
+    if tvt is None:
+        print("   ⚪ Biên nhận toàn văn: repo y khoa chưa có tools/toan_van_trich_dan.py — không ghi.")
+        return
+    if endnote is None:
+        print("   ⚪ Biên nhận toàn văn: EndNote chưa mở đúng thư viện — KHÔNG ghi (không đo được ≠ thiếu toàn văn; "
+              "giữ biên nhận cũ). Mở thư viện rồi chạy lại.")
+        return
+    ktc = {}
+    if kho:
+        try:
+            dtv = _nap("doc_toan_van_co_nguoi.py", "_dtv_de_tai")
+            ktc = dtv._khong_truy_cap(Path(kho), date.today())
+        except Exception as e:  # noqa: BLE001 — sổ hỏng: không suy ra làn trình duyệt, vẫn ghi phần đo được
+            print(f"   ⚪ không đọc được sổ «không truy cập»: {type(e).__name__}")
+    bn = bien_nhan_toan_van(study, thu_muc, endnote=endnote, kho=kho, bc=bc, tvt=tvt, khong_truy_cap=ktc)
+    tep = tvt.ghi_bien_nhan(thu_muc, study, bn)
+    kq = tvt.danh_gia(thu_muc, study)
+    dem = kq.get("dem") or {}
+    print(f"   📄 Biên nhận toàn văn: {len(bn['muc'])} TLTK — có {dem.get('co', 0)} · còn làn chưa thử "
+          f"{dem.get('chua_thu_het', 0)} · KHÔNG lấy được {dem.get('khong_lay_duoc', 0)} · chưa đo {dem.get('khong_do', 0)}"
+          f" → {tep.name} ({kq['trang_thai']})")
+    if dem.get("khong_lay_duoc"):
+        print(f"   🔴 Có TLTK không lấy được toàn văn ⇒ loại: (repo y khoa) python3 tools/toan_van_trich_dan.py loai-bo "
+              f"--study {study} --ap-dung, rồi sinh lại đề cương nộp và gỡ khỏi nhóm EndNote của đề tài.")
+
+
 def ma_thoat(bc: dict) -> int:
     nap = bc.get("nap") or {}
     if nap.get("loi") or nap.get("nhap_hut") or bc["khong_dinh_danh"].get("nhap_hut"):
@@ -702,6 +806,8 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--gom-toan-van", action="store_true",
                     help="chạy làn truy cập mở (PMC + Unpaywall, cổng điều khoản) cho TLTK còn thiếu PDF trước khi nạp")
     ap.add_argument("--ap-dung", action="store_true", help="ghi thật vào EndNote (mặc định chạy khô)")
+    ap.add_argument("--ghi-bien-nhan-toan-van", action="store_true",
+                    help="ghi biên nhận TOAN_VAN_TLTK_<mã>.json (đo từng TLTK trên EndNote thật) — cổng G10-AUTO-12 đọc")
     ap.add_argument("--json", action="store_true")
     a = ap.parse_args(argv)
     if not re.fullmatch(r"[A-Za-z0-9._-]{1,120}", a.study):
@@ -760,6 +866,8 @@ def main(argv: list[str] | None = None) -> int:
         print(f"✗ nạp TLTK: {type(e).__name__}: {e}"[:300])
         return MA_KHONG_CHAY
     in_bao_cao(bc)
+    if a.ghi_bien_nhan_toan_van:
+        _chay_bien_nhan(a.study, thu_muc, endnote=endnote, kho=kho, bc=bc)
     if a.ap_dung:
         tep = thu_muc / f"ENDNOTE_TLTK_{a.study}.json"
         tep.write_text(json.dumps({**bc, "luc": datetime.now().isoformat(timespec="seconds")}, ensure_ascii=False,
