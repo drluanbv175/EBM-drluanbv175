@@ -159,12 +159,15 @@ DIEU_KHOAN_NXB: dict[str, dict] = {
         # jclinepi.com (J Clin Epidemiol — đọc chân trang trên Chrome 20/11/2026: «Copyright © 2026 Elsevier Inc.», «its
         # licensors, and contributors», liên kết điều khoản trỏ ĐÚNG trang ở `nguon`; DOI 10.1016/j.jclinepi.* phân giải về
         # miền này, còn ScienceDirect dừng ở thách thức Cloudflare) — cần cho 4 tài liệu phương pháp của đề tài BTM.
+        # annemergmed.com (Ann Emerg Med — đọc chân trang trên Chrome 20/11/2026: «Copyright © 2026 Elsevier Inc., its
+        # licensors, and contributors», liên kết điều khoản trỏ ĐÚNG trang ở `nguon`; DOI 10.1016/S0196-0644.* phân giải về
+        # miền này) — cần cho tài liệu phương pháp Gilbert 1996 (trích hồ sơ bệnh án) của đề tài BTM.
         "ket_luan": "cam", "doi": ("10.1016/", "10.1053/", "10.1067/", "10.1054/", "10.1006/", "10.1078/", "10.1383/", "10.1157/",
                                      "10.1378/", "10.1124/", "10.4158/"),
         "mien": ("sciencedirect.com", "elsevier.com", "thelancet.com", "cell.com", "jacc.org", "journal-of-hepatology.eu",
                  "cghjournal.org", "elsevierhealth.com", "gastrojournal.org", "ajkd.org", "chestnet.org", "aspetjournals.org",
                  "endocrinepractice.org", "jpain.org", "jaci-inpractice.org", "jacionline.org", "mayoclinicproceedings.org",
-                 "giejournal.org", "amjmed.com", "heartlungcirc.org", "jclinepi.com"),
+                 "giejournal.org", "amjmed.com", "heartlungcirc.org", "jclinepi.com", "annemergmed.com"),
         "nguon": "https://www.elsevier.com/legal/elsevier-website-terms-and-conditions", "doc_luc": "2026-10-03",
         "trich": "may not use Content … with an artificial intelligence tool … except … relevant license",
         "ngoai_le": "giấy phép, thoả thuận thuê bao hay cho phép của Elsevier; điều khoản riêng của dịch vụ (Scopus: khoá riêng dưới) hoặc hợp đồng thuê bao của cơ sở thắng điều khoản chung",
