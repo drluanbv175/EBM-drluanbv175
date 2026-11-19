@@ -500,6 +500,17 @@ def giac_quan_no_toan_van(dash_dir: Path, hom_nay: dt.date | None = None) -> lis
         ra.append((1 if con <= 7 else 2, f"{len(no['trong_han'])} mục «Áp dụng ngay» còn NỢ toàn văn — hạn {no['han']} (còn {con} "
                                          "ngày; quá hạn cổng chặn) — làn trình duyệt hoặc bác sĩ xác nhận đã đọc",
                    "python3 tools/so_toan_van.py"))
+    # 20/11/2026: mục apply KHÔNG có PMID — nguồn chính thức (DOI/URL) chưa có bằng chứng đã đọc (cổng mới chỉ cảnh báo).
+    try:
+        ng = stv.quet_nguon_chinh_thuc(dash_dir, kho)
+    except Exception as exc:  # noqa: BLE001 — phần mở rộng hỏng phải hiện ra, không làm câm phần PMID
+        _ghi_chet(["", "đọc nguồn chính thức"], f"lỗi {type(exc).__name__}")
+        return ra
+    con = ng["so_nguon"] - ng["da_doc"]
+    if con:
+        ra.append((3, f"{con}/{ng['so_nguon']} nguồn chính thức (DOI/URL) của mục «Áp dụng ngay» KHÔNG PMID chưa có bằng chứng "
+                      "đã đọc — máy tải trọn trang được phần lớn; FDA/EMA và trang chặn bot đi làn trình duyệt",
+                   "python3 tools/doc_nguon_chinh_thuc.py tai --tat-ca --ghi"))
     return ra
 
 

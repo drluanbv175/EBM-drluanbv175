@@ -105,6 +105,17 @@ def quet_muc(dash: Path, kho: Path, hom_nay: date | None = None) -> list[dict]:
     return tho
 
 
+def quet_nguon_chinh_thuc(dash: Path, kho: Path) -> dict:
+    """Mục apply KHÔNG có PMID (20/11/2026 — mở rộng bảo đảm sang nguồn chính thức DOI/URL): {so_muc, so_nguon, da_doc,
+    khong_khoa}. Dùng CHÍNH hàm của cổng (`verify_dashboard.khoa_nguon_chinh_thuc` · `bang_chung_nguon_chinh_thuc`)."""
+    dn = _nap("_dnct_stv", REPO / "tools/doc_nguon_chinh_thuc.py")
+    V = dn.vd()
+    muc = dn.quet_muc(sorted(Path(dash).glob("WebDashboard_*.html")), V)
+    nhom = dn.nhom_theo_khoa(muc, V.bang_chung_nguon_chinh_thuc(kho))
+    return {"so_muc": len(muc), "so_nguon": len(nhom), "da_doc": sum(1 for x in nhom.values() if x["da_doc"]),
+            "khong_khoa": sum(1 for m in muc if not m["khoa"])}
+
+
 def phan_loai_no(muc: list[dict], so_no: dict | None, hom_nay: date) -> dict:
     """Mục apply chưa đọc ⇒ «trong_han» (có trong sổ nợ, chưa quá hạn) · «qua_han» · «ngoai_so» (mục MỚI — cổng chặn ngay)."""
     chua = [m for m in muc if m["decision"] == "apply" and not m["da_doc"]]
@@ -122,7 +133,7 @@ def phan_loai_no(muc: list[dict], so_no: dict | None, hom_nay: date) -> dict:
     return ra
 
 
-def bao_cao(muc: list[dict], no: dict, so_no: dict | None, hom_nay: date) -> list[str]:
+def bao_cao(muc: list[dict], no: dict, so_no: dict | None, hom_nay: date, nguon: dict | None = None) -> list[str]:
     dong = [f"SỔ BẢO ĐẢM ĐỌC TOÀN VĂN — {hom_nay.isoformat()}", ""]
     for dec, ten in (("apply", "Áp dụng ngay"), ("consider", "Cân nhắc"), ("notyet", "Chưa đủ")):
         nhom = {m["pmid"] for m in muc if m["decision"] == dec}
@@ -153,8 +164,20 @@ def bao_cao(muc: list[dict], no: dict, so_no: dict | None, hom_nay: date) -> lis
                  f"  (b) làn trình duyệt:      python3 tools/doc_toan_van_co_nguoi.py --pmid {' '.join(pm)}",
                  "  (c) bác sĩ đã tự đọc:     python3 tools/doc_toan_van_co_nguoi.py --bac-si-da-doc <PMID> --ghi-chu \"<kết luận>\" --ghi",
                  "  (d) bác sĩ hạ mục xuống «Cân nhắc» (quyết định lâm sàng của bác sĩ)."]
-    khong_pmid = "Mục không có PMID (guideline chỉ có URL/DOI) chưa được sổ này đo — đọc trực tiếp nguồn chính thức."
-    return dong + ["", khong_pmid, "Cần bác sĩ kiểm chứng."]
+    if nguon is None:
+        khong_pmid = ["Mục không có PMID (guideline chỉ có URL/DOI): chưa đo được ở lượt này."]
+    else:
+        con = nguon["so_nguon"] - nguon["da_doc"]
+        khong_pmid = [f"Nguồn chính thức của mục «Áp dụng ngay» KHÔNG có PMID (DOI/URL): {nguon['da_doc']}/{nguon['so_nguon']} "
+                      f"nguồn có bằng chứng đã đọc ({nguon['so_muc']} mục"
+                      + (f"; {nguon['khong_khoa']} mục không truy nguyên được nguồn" if nguon["khong_khoa"] else "") + ")."]
+        if con:
+            khong_pmid += [f"🟠 {con} nguồn chưa có bằng chứng — cổng hiện chỉ CẢNH BÁO. Làm tiếp:",
+                           "  máy tải trọn trang:  python3 tools/doc_nguon_chinh_thuc.py tai --tat-ca --ghi",
+                           "  làn trình duyệt:     python3 tools/doc_nguon_chinh_thuc.py huong-dan",
+                           "  bác sĩ đã tự đọc:    python3 tools/doc_nguon_chinh_thuc.py bac-si-da-doc --nguon \"<DOI|URL>\" "
+                           "--ghi-chu \"<kết luận>\" --ghi"]
+    return dong + [""] + khong_pmid + ["Cần bác sĩ kiểm chứng."]
 
 
 def ghi_so_no(dash: Path, muc_no: list[dict], han: str, can_cu: str, *, ghi: bool, cu: dict | None,
@@ -231,7 +254,11 @@ def main(argv: list[str] | None = None, *, dash: Path | None = None, hom_nay: da
                           "dem": {k: len(no[k]) for k in ("ngoai_so", "qua_han", "trong_han")},
                           "chua_doc_apply": no["ngoai_so"] + no["qua_han"] + no["trong_han"]}, ensure_ascii=False, indent=1))
     else:
-        print("\n".join(bao_cao(muc, no, so_no, hom_nay)))
+        try:
+            nguon = quet_nguon_chinh_thuc(dash, kho)
+        except Exception:  # noqa: BLE001 — phần mở rộng hỏng không được làm câm báo cáo PMID; in rõ «chưa đo được»
+            nguon = None
+        print("\n".join(bao_cao(muc, no, so_no, hom_nay, nguon)))
     return 1 if (no["ngoai_so"] or no["qua_han"] or (so_no and "hong" in so_no)) else 0
 
 

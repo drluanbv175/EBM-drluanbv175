@@ -1004,6 +1004,100 @@ def kiem_toan_van_apply(items, kho, errors, warns, oks, *, ten_dashboard="", duo
         oks.append("Bảo đảm đọc toàn văn: %d/%d mục apply (PMID chính) đã đọc toàn văn." % (da_doc, tong))
 
 
+
+# ── BẢO ĐẢM ĐỌC NGUỒN CHÍNH THỨC — mục apply KHÔNG có PMID (20/11/2026) ─────────────────────────────────────────────────────
+# Bác sĩ (20/11/2026, «Làm 2,3,6» — mục 2: mở rộng bảo đảm toàn văn sang mục không PMID). Đo 20/11: 164/843 mục «Áp dụng
+# ngay» ở bản PASS mới nhất mỗi chủ đề KHÔNG có PMID — phần lớn là trang chính thức (FDA/MHRA Drug Safety, trang guideline)
+# chỉ có `url`, vài mục chỉ có `doi`. `kiem_toan_van_apply` bỏ qua cả nhóm này ⇒ chính những khuyến cáo bác sĩ áp dụng mà máy
+# chưa từng chứng minh đã đọc nguồn gốc. Khoá nguồn = `doi:<doi chữ thường>` hoặc `url:<scheme>://<host>/<path>[?query đã sắp]`
+# (bỏ fragment, tham số utm_*, dấu / cuối của path). BẰNG CHỨNG (một trong): hồ sơ `toan_van_oa/nguon_chinh_thuc/*.json` (máy tải trọn trang hoặc làn trình
+# duyệt thật — `tools/doc_nguon_chinh_thuc.py`) hoặc dòng `nguon` trong sổ «bác sĩ đã đọc» (`trinh_duyet/bac-si-da-doc.jsonl`).
+# MỨC: CẢNH BÁO (chưa chặn) — chuyển sang chặn là quyết định của bác sĩ và phải đi qua sổ nợ như nhóm PMID (bánh cóc), không
+# bật một cổng mới làm đỏ hàng loạt gói đã PASS.
+THU_MUC_NGUON_CHINH_THUC = "nguon_chinh_thuc"
+SO_KY_TU_TOI_THIEU_NGUON = 1500
+_CACH_DOC_NGUON = ("may_tai", "trinh_duyet")
+
+
+def khoa_nguon_chinh_thuc(doi, url):
+    """`doi:<doi>` | `url:<scheme>://<host><path>` | None — cùng một nguồn ra cùng một khoá dù viết khác nhau."""
+    d = re.sub(r"^(?:https?://(?:dx\.)?doi\.org/|doi:\s*)", "", (doi or "").strip(), flags=re.I).strip()
+    if re.match(r"^10\.\d{4,9}/\S+$", d):
+        return "doi:" + d.lower()
+    u = (url or "").strip()
+    if re.match(r"^https?://[^/\s]+", u, re.I):
+        sp = urllib.parse.urlsplit(u)
+        # GIỮ query (openFDA `?search=…`, DailyMed `?setid=…` chính là định danh nhãn thuốc — bỏ đi thì 224 mục openFDA gộp
+        # thành MỘT nguồn), sắp theo khoá; chỉ bỏ tham số theo dõi utm_* và fragment.
+        q = sorted((k, v) for k, v in urllib.parse.parse_qsl(sp.query, keep_blank_values=True)
+                   if not k.lower().startswith("utm_"))
+        return "url:%s://%s%s%s" % (sp.scheme.lower(), sp.netloc.lower(), sp.path.rstrip("/") or "/",
+                                    ("?" + urllib.parse.urlencode(q)) if q else "")
+    return None
+
+
+def bang_chung_nguon_chinh_thuc(kho):
+    """Tập khoá nguồn chính thức CÓ bằng chứng đã đọc. Hồ sơ hợp lệ: JSON có `khoa` đúng khuôn, `cach` ∈ _CACH_DOC_NGUON,
+    `so_ky_tu` ≥ SO_KY_TU_TOI_THIEU_NGUON, `sha256` 64 hex — thiếu/sai một trường ⇒ không tính (không đoán). Cộng dòng
+    `nguon` của sổ «bác sĩ đã đọc» (dòng hỏng bỏ qua)."""
+    kho = Path(kho)
+    ra = set()
+    for q in sorted((kho / THU_MUC_NGUON_CHINH_THUC).glob("*.json")):
+        try:
+            hs = json.loads(q.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        if not isinstance(hs, dict):
+            continue
+        k = str(hs.get("khoa") or "")
+        so = hs.get("so_ky_tu")
+        if (re.match(r"^(?:doi:10\.|url:https?://)", k) and hs.get("cach") in _CACH_DOC_NGUON
+                and isinstance(so, int) and so >= SO_KY_TU_TOI_THIEU_NGUON
+                and re.fullmatch(r"[0-9a-f]{64}", str(hs.get("sha256") or ""))):
+            ra.add(k)
+    try:
+        dong_tep = (kho / "trinh_duyet" / "bac-si-da-doc.jsonl").read_text(encoding="utf-8").splitlines()
+    except OSError:
+        dong_tep = []
+    for dong in dong_tep:
+        try:
+            k = json.loads(dong).get("nguon")
+        except (ValueError, AttributeError):
+            continue
+        if isinstance(k, str) and re.match(r"^(?:doi:10\.|url:https?://)", k):
+            ra.add(k)
+    return ra
+
+
+def kiem_doc_nguon_chinh_thuc_apply(items, kho, errors, warns, oks):
+    """Mục decision='apply' KHÔNG có PMID chính: CẢNH BÁO khi nguồn chính thức (DOI/URL) chưa có bằng chứng đã đọc.
+    Mục không có cả DOI lẫn URL hợp lệ ⇒ cảnh báo riêng (không truy nguyên được nguồn để đọc). Không thấy kho ⇒ ⚪."""
+    kho = Path(kho)
+    if not kho.is_dir():
+        oks.append("⚪ Không thấy kho toàn văn — CHƯA đo bảo đảm đọc nguồn chính thức cho mục apply không PMID (không phải đạt).")
+        return
+    co = bang_chung_nguon_chinh_thuc(kho)
+    tong = da_doc = 0
+    for ch in items:
+        if field(ch, "decision") != "apply" or PMID_RE.match((field(ch, "pmid") or "").strip()):
+            continue
+        tong += 1
+        iid = field(ch, "id") or "(?)"
+        k = khoa_nguon_chinh_thuc(field(ch, "doi"), field(ch, "url"))
+        if k is None:
+            warns.append("[%s] ĐỌC NGUỒN CHÍNH THỨC: decision='apply' không có PMID, DOI hay URL hợp lệ — không truy nguyên được "
+                         "nguồn để đọc." % iid)
+            continue
+        if k in co:
+            da_doc += 1
+            continue
+        warns.append("[%s] ĐỌC NGUỒN CHÍNH THỨC: decision='apply' (không PMID) nhưng nguồn %s CHƯA có bằng chứng đã đọc — máy tải "
+                     "trọn trang/làn trình duyệt: `python3 tools/doc_nguon_chinh_thuc.py tai --ghi`; bác sĩ đã tự đọc: "
+                     "`python3 tools/doc_nguon_chinh_thuc.py bac-si-da-doc --nguon \"%s\" --ghi-chu \"<kết luận>\" --ghi` "
+                     "(hiện chỉ CẢNH BÁO, chưa chặn)." % (iid, k, k))
+    if tong:
+        oks.append("Đọc nguồn chính thức (mục apply không PMID): %d/%d có bằng chứng đã đọc." % (da_doc, tong))
+
 # Khoá cấp 1 HỢP LỆ của DATA.summary — phải khớp ĐÚNG thứ mà template và ba bộ
 # sinh phái sinh đọc: evidence-workbench-template.html (s.dontDo),
 # tools/build_ban_doc_chung_cu.py, EBM-Dashboards/tools/build_dashboard_docx.py và
@@ -1855,6 +1949,7 @@ def main():
             warns.append("--strict-sources đang chạy offline: đã kiểm hợp đồng nguồn, nhưng chưa phân giải thật PMID/DOI. Dashboard thật nên chạy thêm --online.")
         kiem_toan_van_apply(items, Path(a.file).resolve().parent / "toan_van_oa", errors, warns, oks,
                             ten_dashboard=Path(a.file).stem)
+        kiem_doc_nguon_chinh_thuc_apply(items, Path(a.file).resolve().parent / "toan_van_oa", errors, warns, oks)
 
     # 2) PII (heuristic — chỉ cảnh báo)
     pii = []
