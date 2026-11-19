@@ -62,8 +62,9 @@ def _ho_so(kho: Path, khoa: str, **sua):
     hs.update(sua)
     thu = kho / V.THU_MUC_NGUON_CHINH_THUC
     thu.mkdir(parents=True, exist_ok=True)
-    (thu / (hashlib.sha256(khoa.encode()).hexdigest()[:20] + json.dumps(sua, sort_keys=True)[:8].replace("/", "") + ".json")
-     ).write_text(json.dumps(hs), encoding="utf-8")
+    # Tên tệp CHỈ chữ số hex (Windows cấm «"», «:», «{» trong tên tệp — CI windows 20/11/2026).
+    ten = hashlib.sha256((khoa + json.dumps(sua, sort_keys=True)).encode("utf-8")).hexdigest()[:24]
+    (thu / f"{ten}.json").write_text(json.dumps(hs), encoding="utf-8")
 
 
 def test_chi_ho_so_du_chuan_moi_la_bang_chung(tmp_path):
