@@ -95,7 +95,7 @@ class _Nen(unittest.TestCase):
         for k, v in self._cu.items():
             setattr(XGCN, k, v)
 
-    def chay(self, noi_dung: str, co_online: bool, gia, verify_that: bool):
+    def chay(self, noi_dung: str, co_online: bool, gia, verify_that: bool, them_argv=()):
         """Chạy XGCN.main(). `gia(cmd)` trả (rc, out) cho công cụ con; nếu `verify_that`
         thì mọi lời gọi verify_dashboard.py đi qua run() GỐC (chạy thật, ngoại tuyến)."""
         goi = []
@@ -115,7 +115,7 @@ class _Nen(unittest.TestCase):
             buf, loi = io.StringIO(), io.StringIO()
             try:
                 sys.argv = ["xuat_goi_cap_nhat.py", str(dash), "--json"] + (
-                    ["--online"] if co_online else [])
+                    ["--online"] if co_online else []) + list(them_argv)
                 with redirect_stdout(buf), redirect_stderr(loi):
                     rc = XGCN.main()
             finally:
@@ -182,7 +182,7 @@ class TestSongNgoaiTuyenChanXuat(_Nen):
         self.assertEqual(len(self.goi_verify(goi)), 2, goi)
 
 
-def _gia_day_chuyen(rc_verify=0, rc_strict=0, strict_out="KẾT QUẢ: ✓ PASS", rc_moi_nhat=0):
+def _gia_day_chuyen(rc_verify=0, rc_strict=0, strict_out="KẾT QUẢ: ✓ PASS", rc_moi_nhat=0, rc_api=0):
     """run() giả cho CẢ dây chuyền ②③④⑤⑥ chạy thông, không ghi đĩa."""
     def gia(cmd):
         ten = Path(cmd[1]).name
@@ -194,6 +194,8 @@ def _gia_day_chuyen(rc_verify=0, rc_strict=0, strict_out="KẾT QUẢ: ✓ PASS"
             return 0, "✓ Đã ghi /gia/ban-doc.html"
         if ten == "kiem_cheo_ngu_nghia.py" or ten == "kiem_quan_the_chieu.py":
             return 0, "Tổng: 0"
+        if ten == "kiem_ngu_nghia_api.py":      # ④-quinquies (20/11/2026) — chỉ cảnh báo, CHƯA HIỆU CHUẨN
+            return rc_api, "Tổng: 3 mục apply có PMID · ẩn giữ mù bộ vàng 0 · có kết quả 3 · NGHI 1 — CHƯA HIỆU CHUẨN"
         if ten == "kiem_moi_nhat_toan_van.py":   # ④-quater (06/11/2026) — chỉ cảnh báo
             return rc_moi_nhat, "Tổng: M1 2 · M1-cũ 0 · M2 1/3 ứng viên · ⚪ 0. Cần bác sĩ kiểm chứng."
         if ten == "docx_sang_pdf_giu_mau.py":
@@ -260,6 +262,27 @@ class TestDonViNgoaiTuyen(_Nen):
         self.assertIn("④-quater", out)
         self.assertIn("Tổng: M1 2", out)
         self.assertEqual(self.json_cuoi(out)["moi_nhat_toan_van_ma"], 1)
+
+    def test_buoc_ngu_nghia_api_canh_bao_khong_doi_ma_thoat(self):
+        """④-quinquies (bác sĩ 20/11/2026, «Làm 2,3,6» — mục 3): chỉ chạy khi --online, gọi đúng lệnh, mã 1 (có mục bị
+        nghi) KHÔNG đổi mã thoát bộ năm; --khong-api bỏ bước; không --online thì không gọi."""
+        rc, out, goi, _ = self.chay(DASH_CHI_THIEU_STANDARDS, True,
+                                    self._gia_co_docx(_gia_day_chuyen(rc_api=1)), verify_that=False)
+        self.assertEqual(rc, 0, out)
+        api = [c for c in goi if Path(c[1]).name == "kiem_ngu_nghia_api.py"]
+        self.assertEqual(len(api), 1, goi)
+        self.assertEqual(api[0][2:], ["--dashboard", api[0][3], "--online", "--goi-api"])
+        self.assertIn("④-quinquies", out)
+        self.assertIn("CHƯA HIỆU CHUẨN", out)
+        self.assertEqual(self.json_cuoi(out)["ngu_nghia_api_ma"], 1)
+        rc, out, goi, _ = self.chay(DASH_CHI_THIEU_STANDARDS, True, self._gia_co_docx(_gia_day_chuyen(rc_api=1)),
+                                    verify_that=False, them_argv=["--khong-api"])
+        self.assertEqual(rc, 0, out)
+        self.assertFalse([c for c in goi if Path(c[1]).name == "kiem_ngu_nghia_api.py"], goi)
+        self.assertIn("--khong-api", out)
+        rc, out, goi, _ = self.chay(DASH_CHI_THIEU_STANDARDS, False, self._gia_co_docx(_gia_day_chuyen(rc_api=1)),
+                                    verify_that=False)
+        self.assertFalse([c for c in goi if Path(c[1]).name == "kiem_ngu_nghia_api.py"], goi)
 
     def test_doi_chung_online_pass_van_verified_va_san_sang(self):
         """Đối chứng: đường --online PASS không bị bản vá đụng tới."""
