@@ -1353,6 +1353,26 @@ def giac_quan_worktree_tich_tu() -> list[tuple[int, str, str, str]]:
     return viec
 
 
+def giac_quan_bo_vang_ngu_nghia() -> list[tuple[int, str, str, str]]:
+    """BỘ VÀNG KIỂM CHÉO NGỮ NGHĨA CHỜ BÁC SĨ (19/11/2026, bác sĩ: «Bộ vàng này hiện chưa có. Hãy giải quyết», chọn «Kết hợp hai
+    cách»). Máy đã soạn đột biến có kiểm soát và rút 40 mục thật phân tầng; phần còn lại là việc của bác sĩ — duyệt danh sách
+    đột biến một lượt và gắn nhãn độc lập mục thật. Logic ở `tools/bo_vang_kiem_ngu_nghia.giac_quan` (một nguồn). Ngoại tuyến.
+    Bộ vàng không đọc được / đề xuất hỏng ⇒ giác quan chết (⚪), KHÔNG phải «không còn việc»."""
+    _SO_GIAC_QUAN["chay"] += 1
+    nhan = ["", "bộ vàng kiểm chéo ngữ nghĩa"]
+    try:
+        sp = _ilu_mea.spec_from_file_location("_bvk_tdxv", Path(__file__).resolve().parent / "bo_vang_kiem_ngu_nghia.py")
+        bvk = _ilu_mea.module_from_spec(sp)
+        sp.loader.exec_module(bvk)
+        viec, chet = bvk.giac_quan()
+    except Exception as exc:  # noqa: BLE001 — cảm biến hỏng phải hiện ra
+        _ghi_chet(nhan, f"lỗi {type(exc).__name__}")
+        return []
+    for c in chet:
+        _ghi_chet(nhan, c)
+    return viec
+
+
 def giac_quan_api_claude(tep: Path | None = None, bay_gio: dt.datetime | None = None) -> list[tuple[int, str, str, str]]:
     """SỨC KHOẺ API CLAUDE (17/11/2026, bác sĩ: «khi API hết hạn báo lại tôi»).
 
@@ -2494,6 +2514,9 @@ def main() -> int:
 
     # ⑦r SỨC KHOẺ API CLAUDE (17/11/2026): lượt gọi gần nhất lỗi ⇒ luật kiểm lạc chủ đề đang không chạy — xem docstring.
     de_xuat += giac_quan_api_claude()  # đúng khuôn (ưu tiên, nhãn 👤, mô tả, lệnh)
+
+    # ⑦r2 BỘ VÀNG KIỂM CHÉO NGỮ NGHĨA (19/11/2026): đột biến chờ duyệt + mục thật chưa nhãn — xem docstring.
+    de_xuat += giac_quan_bo_vang_ngu_nghia()  # đúng khuôn (ưu tiên, nhãn 👤, mô tả, lệnh)
 
     # ⑦s CAFÉ-S AGENT AN TOÀN (17/11/2026): lượt đo thật trượt critical, hoặc agent đã đổi so với vân tay lúc đo — xem docstring.
     de_xuat += giac_quan_cafes_agent_an_toan()  # đúng khuôn (ưu tiên, nhãn 👤, mô tả, lệnh)

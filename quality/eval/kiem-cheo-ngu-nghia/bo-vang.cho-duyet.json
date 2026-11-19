@@ -1,6 +1,6 @@
 {
  "_mo_ta": "Ứng viên bộ vàng cho kiểm chéo ngữ nghĩa (audit/16). MÁY SOẠN, BÁC SĨ GẮN NHÃN: điền nhan_bac_si.dung_quan_the / dung_chieu / du_dieu_kien = true|false cho từng mục. Máy không tự gắn nhãn; khi nhãn còn null, mọi con số báo động giả là CHƯA ĐO.",
- "so_muc": 20,
+ "so_muc": 60,
  "muc": [
   {
    "dashboard": "WebDashboard_EBM_CapNhatTuan_NgoaiTru_20260609.html",
@@ -401,6 +401,766 @@
     "ngay": "2026-10-20",
     "de_xuat_boi": "Claude — bác sĩ xác nhận 20/10/2026: «đồng ý nhãn bộ vàng»"
    }
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_ChamSocGiamNhe_NgoaiTru_20261112.html",
+   "id": "ITEM-24",
+   "title": "KHÔNG dự phòng thường quy thuốc kháng dopamin cho buồn nôn/nôn do opioid — không làm giảm buồn nôn (khuyến cáo mạnh 1B, guideline Trung Quốc 2026)",
+   "population": "Người cao tuổi chăm sóc giảm nhẹ bắt đầu opioid",
+   "action": "Bắt đầu opioid: không kê sẵn thuốc kháng dopamin (metoclopramide/haloperidol; domperidon là tên do nhóm soạn thêm) để dự phòng; dặn người bệnh buồn nôn thường cải thiện trong 48 giờ (bài nêu trong bối cảnh opioid trị khó thở, tr. 10), báo lại để điều trị khi có. Đánh giá vận hành (không có trong bài): nôn kèm chướng bụng/không trung tiện ⇒ nghĩ tắc ruột.",
+   "pmid": "42433014",
+   "doi": "10.1111/jebm.70160",
+   "gradeLevel": "mod",
+   "nguon_muc": "that",
+   "tang": "phu_dinh",
+   "nhan_bac_si": {
+    "dung_quan_the": null,
+    "dung_chieu": null,
+    "du_dieu_kien": null,
+    "ghi_chu": null
+   },
+   "them_ngay": "2026-11-19"
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_ViemGanB_DieuTri_20261107.html",
+   "id": "ITEM-14",
+   "title": "Không điều trị trẻ em ở pha dung nạp miễn dịch",
+   "population": "Trẻ em/vị thành niên nhiễm chu sinh, pha dung nạp miễn dịch",
+   "action": "KHÔNG điều trị trẻ nhiễm chu sinh ở pha dung nạp miễn dịch (đa số trẻ) — chỉ theo dõi ALT/DNA định kỳ.",
+   "pmid": "33720089",
+   "doi": "",
+   "gradeLevel": "mod",
+   "nguon_muc": "that",
+   "tang": "phu_dinh",
+   "nhan_bac_si": {
+    "dung_quan_the": null,
+    "dung_chieu": null,
+    "du_dieu_kien": null,
+    "ghi_chu": null
+   },
+   "them_ngay": "2026-11-19"
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_ViemGanB_DieuTri_20261107.html",
+   "id": "ITEM-06",
+   "title": "Peginterferon chống chỉ định ở xơ gan mất bù",
+   "population": "Người lớn xơ gan mất bù",
+   "action": "KHÔNG kê peginterferon cho bệnh nhân xơ gan mất bù dưới bất kỳ hoàn cảnh nào; dùng NA thay thế.",
+   "pmid": "29405329",
+   "doi": "10.1002/hep.29800",
+   "gradeLevel": "na",
+   "nguon_muc": "that",
+   "tang": "phu_dinh",
+   "nhan_bac_si": {
+    "dung_quan_the": null,
+    "dung_chieu": null,
+    "du_dieu_kien": null,
+    "ghi_chu": null
+   },
+   "them_ngay": "2026-11-19"
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_BenhRuotViem_IBD_NgoaiTru_20261114.html",
+   "id": "ITEM-13",
+   "title": "KHÔNG dùng THIOPURINE (azathioprine/6-mercaptopurine) để KHỞI ĐỘNG lui bệnh (tác dụng chậm) — ACG Crohn 2025 (Crohn hoạt động vừa–nặng nói chung): mạnh, chứng cứ vừa; «ĐƠN TRỊ» theo ACG UC 2025 và ECCO 2026: mạnh; thiopurine dùng để DUY TRÌ sau khởi động bằng corticoid (có điều kiện)",
+   "population": "Người lớn IBD vừa–nặng",
+   "action": "Không khởi trị azathioprine như thuốc «cắt cơn»; người đang dùng azathioprine để duy trì ⇒ theo dõi an toàn (ITEM-14, ITEM-15, ITEM-31).",
+   "pmid": "40701562",
+   "doi": "10.14309/ajg.0000000000003465",
+   "gradeLevel": "mod",
+   "nguon_muc": "that",
+   "tang": "phu_dinh",
+   "nhan_bac_si": {
+    "dung_quan_the": null,
+    "dung_chieu": null,
+    "du_dieu_kien": null,
+    "ghi_chu": null
+   },
+   "them_ngay": "2026-11-19"
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_MachMauNao_TiepCanTongQuat_20261107.html",
+   "id": "ITEM-12",
+   "title": "VKA bắt buộc thay DOAC ở van tim cơ học (RE-ALIGN)",
+   "population": "Bệnh nhân mới thay van tim cơ học",
+   "action": "KHÔNG dùng bất kỳ DOAC nào ở bệnh nhân van tim cơ học — bắt buộc VKA (warfarin). Cùng nguyên tắc áp dụng cho hẹp van hai lá vừa-nặng do thấp (bị loại khỏi mọi thử nghiệm DOAC nền tảng) và hội chứng kháng phospholipid thể ba kháng thể dương tính (rivaroxaban gây hại trong TRAPS).",
+   "pmid": "23991661",
+   "doi": null,
+   "gradeLevel": "high",
+   "nguon_muc": "that",
+   "tang": "phu_dinh",
+   "nhan_bac_si": {
+    "dung_quan_the": null,
+    "dung_chieu": null,
+    "du_dieu_kien": null,
+    "ghi_chu": null
+   },
+   "them_ngay": "2026-11-19"
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_DauXoCo_Fibromyalgia_20261113.html",
+   "id": "ITEM-18",
+   "title": "KHÔNG dùng OPIOID MẠNH và CORTICOSTEROID (cả hormon tăng trưởng, natri oxybate) cho đau xơ cơ — EULAR «strong against», đồng thuận 100%",
+   "population": "Người lớn đau xơ cơ",
+   "action": "ÁP DỤNG (chờ bác sĩ duyệt Cổng A): không khởi trị opioid mạnh (morphin, oxycodon, fentanyl…) hay corticosteroid (uống, tiêm) cho đau xơ cơ. Bệnh nhân ĐANG dùng opioid dài hạn: KHÔNG cắt đột ngột — lập kế hoạch giảm liều có bàn bạc và sàng lọc trầm cảm/ý tưởng tự sát (ITEM-35, ITEM-36).",
+   "pmid": "27377815",
+   "doi": "10.1136/annrheumdis-2016-209724",
+   "gradeLevel": "na",
+   "nguon_muc": "that",
+   "tang": "phu_dinh",
+   "nhan_bac_si": {
+    "dung_quan_the": null,
+    "dung_chieu": null,
+    "du_dieu_kien": null,
+    "ghi_chu": null
+   },
+   "them_ngay": "2026-11-19"
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_TraoNguocDDTQ_GERD_NgoaiTru_20261112.html",
+   "id": "ITEM-18",
+   "title": "ACG 2022 — KHÔNG NÊN: baclofen khi chưa có bằng chứng GERD khách quan; thuốc tăng nhu động (prokinetic) cho GERD trừ khi có bằng chứng KHÁCH QUAN của liệt dạ dày; sucralfate cho GERD (trừ khi mang thai)",
+   "population": "Người lớn GERD, gồm người không đáp ứng PPI",
+   "action": "Không kê thuốc tăng nhu động (ACG bàn metoclopramide, prucalopride; domperidone/itoprid là thuốc hay dùng ở Việt Nam — tên do nhóm soạn thêm) «kèm cho đủ bài» trong GERD khi chưa có bằng chứng khách quan liệt dạ dày; không thêm thường quy thuốc khác cho người không đáp ứng PPI (có điều kiện, chứng cứ vừa); không kê baclofen khi chưa chứng minh GERD; không dùng sucralfate cho GERD ngoài thai kỳ.",
+   "pmid": "34807007",
+   "doi": "10.14309/ajg.0000000000001538",
+   "gradeLevel": "low",
+   "nguon_muc": "that",
+   "tang": "phu_dinh",
+   "nhan_bac_si": {
+    "dung_quan_the": null,
+    "dung_chieu": null,
+    "du_dieu_kien": null,
+    "ghi_chu": null
+   },
+   "them_ngay": "2026-11-19"
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_BenhDongMachChiDuoi_PAD_NgoaiTru_20261114.html",
+   "id": "ITEM-50",
+   "title": "TÁI THÔNG — KHI NÀO KHÔNG và KHI NÀO: PAD KHÔNG triệu chứng ⇒ KHÔNG tái thông chỉ để ngăn tiến triển (COR 3: có hại); đau cách hồi ⇒ chỉ cân nhắc tái thông khi HẠN CHẾ CHỨC NĂNG và ĐÁP ỨNG KHÔNG ĐỦ với điều trị nội khoa + tập có cấu trúc (2a); đã đáp ứng đủ ⇒ không tái thông (COR 3: không lợi ích); chẩn đoán hình ảnh giải phẫu chỉ khi đang tính tái thông (COR 1)",
+   "population": "PAD không triệu chứng; đau cách hồi",
+   "action": "Không chuyển can thiệp chỉ vì ABI thấp hoặc hẹp trên siêu âm; chuyển chuyên khoa mạch khi đau cách hồi vẫn hạn chế sinh hoạt sau một thời gian điều trị nội tối ưu + tập (guideline không nêu mốc; nhóm soạn gợi ý khoảng ≥3 tháng), hoặc khi có CLTI.",
+   "pmid": "38743805",
+   "doi": "10.1161/CIR.0000000000001251",
+   "gradeLevel": "na",
+   "nguon_muc": "that",
+   "tang": "phu_dinh",
+   "nhan_bac_si": {
+    "dung_quan_the": null,
+    "dung_chieu": null,
+    "du_dieu_kien": null,
+    "ghi_chu": null
+   },
+   "them_ngay": "2026-11-19"
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_BenhDongMachChiDuoi_PAD_NgoaiTru_20261114.html",
+   "id": "ITEM-21",
+   "title": "KHÔNG dùng kháng đông đường uống TOÀN LIỀU cho PAD khi KHÔNG có chỉ định khác (COR 3: có hại); DAPT ở PAD có triệu chứng không tái thông gần đây: lợi ích không chắc chắn (2b); sau can thiệp nội mạch: DAPT ít nhất 1 đến 6 tháng là hợp lý (2a); người cần kháng đông toàn liều vì chỉ định khác (vd rung nhĩ) sau tái thông: thêm MỘT kháng tiểu cầu là hợp lý nếu nguy cơ chảy máu không cao (2a)",
+   "population": "PAD (có/không chỉ định kháng đông khác)",
+   "action": "Không kê warfarin/DOAC liều điều trị chỉ vì PAD; DAPT chỉ khi có chỉ định (sau can thiệp nội mạch, hội chứng vành) và có hạn dùng ghi rõ.",
+   "pmid": "38743805",
+   "doi": "10.1161/CIR.0000000000001251",
+   "gradeLevel": "na",
+   "nguon_muc": "that",
+   "tang": "phu_dinh",
+   "nhan_bac_si": {
+    "dung_quan_the": null,
+    "dung_chieu": null,
+    "du_dieu_kien": null,
+    "ghi_chu": null
+   },
+   "them_ngay": "2026-11-19"
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_BenhRuotViem_IBD_NgoaiTru_20261114.html",
+   "id": "ITEM-10",
+   "title": "KHÔNG dùng MESALAMINE UỐNG để khởi động hay duy trì bệnh CROHN nhẹ–vừa — ACG 2025: khuyến cáo MẠNH, chứng cứ VỪA",
+   "population": "Người lớn bệnh Crohn hoạt động nhẹ–vừa",
+   "action": "Người bệnh Crohn đang chỉ dùng mesalamine uống ⇒ chuyển chuyên khoa đánh giá lại phác đồ; không khởi trị mesalamine cho Crohn tại tuyến đầu.",
+   "pmid": "40701562",
+   "doi": "10.14309/ajg.0000000000003465",
+   "gradeLevel": "mod",
+   "nguon_muc": "that",
+   "tang": "phu_dinh",
+   "nhan_bac_si": {
+    "dung_quan_the": null,
+    "dung_chieu": null,
+    "du_dieu_kien": null,
+    "ghi_chu": null
+   },
+   "them_ngay": "2026-11-19"
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_OCD_RoiLoanAmAnhCuongChe_NgoaiTru_20261112.html",
+   "id": "ITEM-18",
+   "title": "CANMAT/ICOCS 2025 — LIỀU TỐI ĐA DUNG NẠP và THỜI GIAN THỬ ĐỦ: đạt liều SSRI tối đa dung nạp và điều trị cấp ÍT NHẤT 12 TUẦN mới đánh giá đúng đáp ứng (mức 1) — phân tích gộp liều cố định cho thấy liều cao hiệu quả hơn và còn cải thiện tới 12 tuần; đáp ứng một phần ⇒ kéo dài; đo mức nặng ban đầu và theo dõi bằng Y-BOCS (≥30 nặng; ≤10 lui bệnh) hoặc OCI-R",
+   "population": "Người lớn OCD bắt đầu SSRI",
+   "action": "ÁP DỤNG: ghi Y-BOCS (hoặc OCI-R) lúc bắt đầu; tăng SSRI tới liều tối đa dung nạp theo nhãn (bài không nêu tốc độ tăng); giữ tổng ít nhất 12 tuần trước khi kết luận; đáp ứng đầy đủ = giảm Y-BOCS ≥35% KÈM CGI-I 1–2 (tr. 12); đáp ứng một phần (25–35%) ⇒ kéo dài; không đáp ứng sau thử đủ ⇒ ITEM-31; trấn an về tác dụng phụ sớm.",
+   "pmid": "42441734",
+   "doi": "10.1016/j.jpsychires.2025.12.039",
+   "gradeLevel": "na",
+   "nguon_muc": "that",
+   "tang": "dieu_kien",
+   "nhan_bac_si": {
+    "dung_quan_the": null,
+    "dung_chieu": null,
+    "du_dieu_kien": null,
+    "ghi_chu": null
+   },
+   "them_ngay": "2026-11-19"
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_ChamSocGiamNhe_NgoaiTru_20261112.html",
+   "id": "ITEM-17",
+   "title": "Mọi người BẮT ĐẦU opioid NÊN được đề nghị dự phòng táo bón bằng nhuận tràng và thuốc chống nôn khi cần (ESMO 2020 — I, A); táo bón ngắn hạn/khó trị dùng nhuận tràng kích thích, táo bón mạn dùng nhuận tràng thẩm thấu (guideline Trung Quốc 2026 — 1B)",
+   "population": "Người ung thư bắt đầu dùng opioid (bối cảnh guideline: opioid cho khó thở)",
+   "action": "Mỗi đơn opioid mới: đề nghị kèm nhuận tràng dự phòng (ESMO ghi «laxatives» chung; chọn kích thích hay thẩm thấu theo guideline Trung Quốc 2026), không chờ táo bón. Theo nguồn khác/đánh giá vận hành (không có trong ESMO): hỏi đi tiêu mỗi lần tái khám; táo bón kéo dài dù đã dùng nhuận tràng ⇒ loại trừ phân ứ/tắc ruột, chuyển chuyên khoa (thuốc đối kháng thụ thể opioid ngoại biên — AGA 2019).",
+   "pmid": "33303485",
+   "doi": "10.1136/esmoopen-2020-001038",
+   "gradeLevel": "na",
+   "nguon_muc": "that",
+   "tang": "dieu_kien",
+   "nhan_bac_si": {
+    "dung_quan_the": null,
+    "dung_chieu": null,
+    "du_dieu_kien": null,
+    "ghi_chu": null
+   },
+   "them_ngay": "2026-11-19"
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_SaSutTriTue_Parkinson_NgoaiTru_20261112.html",
+   "id": "ITEM-25",
+   "title": "AGS Beers 2023: ở người ≥65 tuổi có SA SÚT TRÍ TUỆ/suy giảm nhận thức — TRÁNH thuốc kháng cholinergic, benzodiazepine, Z-drug, thuốc chống loạn thần dùng kéo dài/«khi cần» lặp lại; MÊ SẢNG — tránh thêm corticoid, kháng H2, opioid; PARKINSON — tránh metoclopramide, prochlorperazine, promethazine và thuốc chống loạn thần (trừ clozapine, pimavanserin, quetiapine)",
+   "population": "Người ≥65 tuổi ở ngoại trú, cấp cứu và chăm sóc dài hạn (không áp cho chăm sóc giảm nhẹ cuối đời)",
+   "action": "ÁP DỤNG ở mọi lần kê cho người cao tuổi sa sút trí tuệ hoặc Parkinson: (1) rà và ngừng/thay thuốc kháng cholinergic (kháng histamin thế hệ 1 như diphenhydramin, chlorpheniramin, hydroxyzin; thuốc chống co thắt bàng quang loại cũ; chống trầm cảm ba vòng; trihexyphenidyl); (2) tránh benzodiazepine, Z-drug; (3) không dùng thuốc chống loạn thần cho kích động/hành vi khi chưa thử biện pháp không dùng thuốc; (4) người Parkinson buồn nôn: KHÔNG metoclopramide, prochlorperazine, promethazine; loạn thần trong Parkinson: không haloperidol — chỉ clozapine, pimavanserin, quetiapine theo chuyên khoa.",
+   "pmid": "37139824",
+   "doi": "10.1111/jgs.18372",
+   "gradeLevel": "na",
+   "nguon_muc": "that",
+   "tang": "dieu_kien",
+   "nhan_bac_si": {
+    "dung_quan_the": null,
+    "dung_chieu": null,
+    "du_dieu_kien": null,
+    "ghi_chu": null
+   },
+   "them_ngay": "2026-11-19"
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_HenPheQuan_NguoiLon_20261114.html",
+   "id": "ITEM-01",
+   "title": "ERS 2022 — chẩn đoán hen ở người lớn: đo hô hấp ký trước tiên, FeNO là test bổ trợ",
+   "population": "Người lớn ≥18 tuổi có triệu chứng từng cơn hoặc mạn tính gợi ý hen",
+   "action": "Áp dụng: đo hô hấp ký cho mọi người lớn nghi hen; có tắc nghẽn ⇒ test giãn phế quản. Hô hấp ký bình thường mà vẫn nghi hen ⇒ FeNO (≥50 ppb ủng hộ chẩn đoán) hoặc chuyển làm test kích thích phế quản (tuyến chuyên khoa); PEF 2 tuần chỉ dùng khi không có test chức năng phổi khác (ERS 2022: có điều kiện CHỐNG dùng PEF làm test chính). Không dùng bạch cầu ái toan máu/IgE toàn phần để chẩn đoán (chỉ để phân kiểu hình).",
+   "pmid": "35169025",
+   "doi": "10.1183/13993003.01585-2021",
+   "gradeLevel": "low",
+   "nguon_muc": "that",
+   "tang": "dieu_kien",
+   "nhan_bac_si": {
+    "dung_quan_the": null,
+    "dung_chieu": null,
+    "du_dieu_kien": null,
+    "ghi_chu": null
+   },
+   "them_ngay": "2026-11-19"
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_NgungThoKhiNgu_OSA_NgoaiTru_20261112.html",
+   "id": "ITEM-26",
+   "title": "Hội Giấc ngủ và Hô hấp Hàn Quốc 2026: ĐÁNH GIÁ thừa cân–béo phì ở mọi người nghi OSA (khuyến cáo mạnh) và nên bảo đảm CHIẾN LƯỢC GIẢM CÂN CÓ CẤU TRÚC là thành phần của điều trị OSA kèm BÉO PHÌ (khuyến cáo mạnh, chứng cứ mức A); ăn uống–vận động là đầu tay (mức «khuyến cáo», B); nên cân nhắc GLP-1 RA khi lối sống thất bại (khuyến cáo); cân nhắc phẫu thuật giảm béo khi béo phì nặng (BMI ≥35 kg/m²) và MỌI biện pháp không phẫu thuật đã thất bại (khuyến cáo); theo dõi đều kể cả khi đã cải thiện (mạnh)",
+   "population": "Người lớn OSA kèm thừa cân/béo phì (ngưỡng béo phì châu Á–Thái Bình Dương BMI ≥25 kg/m²)",
+   "action": "ÁP DỤNG (đề xuất — cần bác sĩ duyệt): ở MỌI người nghi/đã chẩn đoán OSA đo cân nặng, BMI (ngưỡng châu Á), vòng eo; người BÉO PHÌ (ngưỡng châu Á BMI ≥25) ⇒ lồng kế hoạch giảm cân có cấu trúc (tuyên bố 3 chỉ cho OSA kèm béo phì; thừa cân chỉ ở bước đánh giá — tuyên bố 2) (mục tiêu cụ thể, ăn giảm năng lượng, vận động, hỗ trợ hành vi) VÀO điều trị OSA ngay từ đầu, song song CPAP nếu có chỉ định — không thay CPAP; lối sống thất bại ⇒ cân nhắc thuốc (GLP-1 RA/tirzepatide — ITEM-28, ITEM-29) hoặc chuyển phẫu thuật giảm béo khi béo phì nặng (BMI ≥35 kg/m²) và mọi biện pháp không phẫu thuật đã thất bại; tiếp tục hẹn theo dõi; đo lại giấc ngủ khi cân nặng thay đổi ≥10% và PSG/HSAT sau 6–12 tháng (tr. 10, 13).",
+   "pmid": "41725293",
+   "doi": "10.21053/ceo.2025-00396",
+   "gradeLevel": "na",
+   "nguon_muc": "that",
+   "tang": "dieu_kien",
+   "nhan_bac_si": {
+    "dung_quan_the": null,
+    "dung_chieu": null,
+    "du_dieu_kien": null,
+    "ghi_chu": null
+   },
+   "them_ngay": "2026-11-19"
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_RA_EULAR2024_20261105.html",
+   "id": "ITEM-05",
+   "title": "EULAR 2025 update: Treat-to-Target (T2T) — đo hoạt tính bệnh & điều chỉnh linh hoạt",
+   "population": "RA mọi giai đoạn, mọi mức độ hoạt tính",
+   "action": "Mục tiêu T2T EULAR 2025 update: (1) Remission = DAS28-CRP <2.6 hoặc SDAI ≤3.3 hoặc CDAI ≤2.8 — ưu tiên. (2) LDA = DAS28 <3.2 — mục tiêu thay thế khi remission không khả thi (bệnh lâu dài, bệnh nền). Đo mỗi 1–3 tháng khi bệnh hoạt động; mỗi 3–6 tháng khi ổn định. Điều chỉnh DMARD trong vòng 3 tháng nếu không đạt mục tiêu.",
+   "pmid": "41826212",
+   "doi": "10.1016/j.ard.2026.01.023",
+   "gradeLevel": "high",
+   "nguon_muc": "that",
+   "tang": "dieu_kien",
+   "nhan_bac_si": {
+    "dung_quan_the": null,
+    "dung_chieu": null,
+    "du_dieu_kien": null,
+    "ghi_chu": null
+   },
+   "them_ngay": "2026-11-19"
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_BenhMachMauNao_HopNhat_20261114.html",
+   "id": "ITEM-02",
+   "title": "Tiêu sợi huyết tĩnh mạch & lấy huyết khối — khung cửa sổ thời gian",
+   "population": "Đột quỵ thiếu máu cục bộ cấp",
+   "action": "Nhận diện sớm, xác định \"last known well\", chuyển ngay đơn vị đột quỵ; tiêu sợi huyết nếu ≤4,5h và không chống chỉ định; chuyển trung tâm can thiệp nếu nghi tắc mạch lớn. Cửa sổ 4,5–9h/thức dậy có triệu chứng chỉ ở trung tâm có chụp tưới máu tự động (COR 2a).",
+   "pmid": "41582814",
+   "doi": "10.1161/STR.0000000000000513",
+   "gradeLevel": "high",
+   "nguon_muc": "that",
+   "tang": "dieu_kien",
+   "nhan_bac_si": {
+    "dung_quan_the": null,
+    "dung_chieu": null,
+    "du_dieu_kien": null,
+    "ghi_chu": null
+   },
+   "them_ngay": "2026-11-19"
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_RA_TimMach_20261113.html",
+   "id": "ITEM-05",
+   "title": "Statin theo nguy cơ đã điều chỉnh như dân số chung; an toàn và hạ LDL/CRP ở VKDT (TRACE RA)",
+   "population": "VKDT >50 tuổi hoặc bệnh >10 năm, chưa xơ vữa lâm sàng/ĐTĐ, n=3002",
+   "action": "Chỉ định statin theo nguy cơ tim mạch đã điều chỉnh cho VKDT (ITEM-02, ITEM-11, ITEM-12); đích LDL theo guideline dân số chung.",
+   "pmid": "30983166",
+   "doi": "10.1002/art.40892",
+   "gradeLevel": "mod",
+   "nguon_muc": "that",
+   "tang": "dieu_kien",
+   "nhan_bac_si": {
+    "dung_quan_the": null,
+    "dung_chieu": null,
+    "du_dieu_kien": null,
+    "ghi_chu": null
+   },
+   "them_ngay": "2026-11-19"
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_ViemCotSongTheTruc_SpA_20261113.html",
+   "id": "ITEM-53",
+   "title": "KCR 2026 — khuyến cáo MẠNH nhưng chứng cứ THẤP/RẤT THẤP: bỏ thuốc lá (rất thấp, KC 4-1), tập thường xuyên (thấp, KC 4-2); sàng lọc trước điều trị và theo dõi định kỳ khi dùng bDMARD/JAKi — nhiễm trùng, lao, xét nghiệm (KC 20, bài không ghi mức chứng cứ)",
+   "population": "Người lớn axSpA tại Hàn Quốc (KC 20: người dùng bDMARD/JAKi)",
+   "action": "Áp dụng: khuyên và hỗ trợ bỏ thuốc lá (KC 4-1); khuyên tập luyện thường xuyên (KC 4-2; loại hình xem ITEM-08, ITEM-10, ITEM-11); trước khi khởi trị bDMARD/JAKi sàng lọc nhiễm trùng, lao, xét nghiệm và theo dõi định kỳ trong khi dùng (KC 20) — danh mục xét nghiệm và viêm gan B theo ITEM-34 (EULAR 2022), không có trong toàn văn KCR.",
+   "pmid": "42812279",
+   "doi": "10.4078/jrd.2026.0126",
+   "gradeLevel": "vlow",
+   "nguon_muc": "that",
+   "tang": "dieu_kien",
+   "nhan_bac_si": {
+    "dung_quan_the": null,
+    "dung_chieu": null,
+    "du_dieu_kien": null,
+    "ghi_chu": null
+   },
+   "them_ngay": "2026-11-19"
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_COPD_NguyCoTimPhoi_DaChuyenKhoa_20261025.html",
+   "id": "ITEM-15",
+   "title": "SUMMIT: ICS/LABA (fluticasone furoate/vilanterol) KHÔNG làm tăng biến cố tim mạch ở COPD có bệnh/nguy cơ tim mạch cao",
+   "population": "COPD trung bình kèm bệnh tim mạch hoặc nguy cơ tim mạch cao (n=16.485)",
+   "action": "Ở COPD có bệnh tim mạch hoặc nguy cơ cao, dùng LABA hoặc ICS/LABA khi có chỉ định không làm tăng biến cố tim mạch (HR 0,93; 0,75–1,14) — không né thuốc hít vì sợ tim. Không có lợi ích sống còn (HR 0,88; 0,74–1,04); biến cố tim (17–18%) và viêm phổi (4–6%) tương đương giữa các nhóm.",
+   "pmid": "27203508",
+   "doi": "10.1016/S0140-6736(16)30069-1",
+   "gradeLevel": "high",
+   "nguon_muc": "that",
+   "tang": "dieu_kien",
+   "nhan_bac_si": {
+    "dung_quan_the": null,
+    "dung_chieu": null,
+    "du_dieu_kien": null,
+    "ghi_chu": null
+   },
+   "them_ngay": "2026-11-19"
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_MachMauNao_DongMachCanh_20261114.html",
+   "id": "ITEM-08",
+   "title": "Mục tiêu huyết áp <130/80 (dự phòng tiên phát) — Class 1",
+   "population": "Người lớn nguy cơ ASCVD cao, chưa có tiền sử đột quỵ",
+   "action": "Quản lý huyết áp là can thiệp dự phòng tiên phát hiệu quả nhất; mục tiêu <130/80 ở người nguy cơ cao, lồng ghép khung Life’s Essential 8.",
+   "pmid": "39429201",
+   "doi": "10.1161/STR.0000000000000475",
+   "gradeLevel": "high",
+   "nguon_muc": "that",
+   "tang": "dieu_kien",
+   "nhan_bac_si": {
+    "dung_quan_the": null,
+    "dung_chieu": null,
+    "du_dieu_kien": null,
+    "ghi_chu": null
+   },
+   "them_ngay": "2026-11-19"
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_SuyTim_NguoiCaoTuoi_20261113.html",
+   "id": "ITEM-06",
+   "title": "ESC 2026: sắt tĩnh mạch được khuyến cáo ở HFrEF (LVEF <50%) có triệu chứng kèm thiếu sắt để giảm triệu chứng, cải thiện chất lượng sống (Class I, Level B1); nên xem xét để giảm nhập viện vì suy tim (Class IIa, Level B1) — thang mức chứng cứ mới (ESC 2023 ghi Level A theo thang cũ); ESC 2026 ủng hộ định nghĩa thiếu sắt TSAT <20%",
+   "population": "HFrEF (LVEF <50%) có triệu chứng kèm thiếu sắt",
+   "action": "Người cao tuổi suy tim LVEF <50% còn triệu chứng: xét nghiệm ferritin và độ bão hoà transferrin (TSAT); thiếu sắt (ESC 2026 ủng hộ TSAT <20%; RCT nền dùng định nghĩa cũ) thì đề xuất sắt tĩnh mạch để giảm triệu chứng, cải thiện chất lượng sống. Chứng cứ RCT ở LVEF <40–45% — áp cho LVEF 45–49% là ngoại suy, bác sĩ cân nhắc theo từng người. Tìm nguyên nhân mất máu tiêu hoá trước khi quy cho suy tim, nhất là người dùng kháng đông hoặc kháng tiểu cầu. Với HFpEF: chưa có khuyến cáo (dữ liệu ít).",
+   "pmid": "42661420",
+   "doi": "10.1093/eurheartj/ehag100",
+   "gradeLevel": "na",
+   "nguon_muc": "that",
+   "tang": "dieu_kien",
+   "nhan_bac_si": {
+    "dung_quan_the": null,
+    "dung_chieu": null,
+    "du_dieu_kien": null,
+    "ghi_chu": null
+   },
+   "them_ngay": "2026-11-19"
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_HoiChungRuotKichThich_IBS_20261104.html",
+   "id": "ITEM-07",
+   "title": "Chất xơ HOÀ TAN (ispaghula/psyllium) — lựa chọn chất xơ duy nhất được khuyến cáo MẠNH; chất xơ không hoà tan làm nặng triệu chứng",
+   "population": "Người lớn và trẻ em mắc hội chứng ruột kích thích",
+   "action": "Đưa chất xơ HOÀ TAN vào bậc 1 cho phần lớn người bệnh, đặc biệt thể táo bón và thể hỗn hợp. Bắt đầu LIỀU THẤP rồi tăng dần trong 2–3 tuần: khởi đầu thấp là điểm mấu chốt vì tăng nhanh gây chướng bụng và trung tiện nhiều, khiến người bệnh bỏ thuốc và kết luận sai rằng 'chất xơ không hợp'. Uống kèm đủ nước. TUYỆT ĐỐI KHÔNG dùng chất xơ không hoà tan (cám lúa mì) — nhóm này làm nặng chướng bụng và đau.",
+   "pmid": "36517261",
+   "doi": "10.1016/j.dld.2022.11.015",
+   "gradeLevel": "na",
+   "nguon_muc": "that",
+   "tang": "dac_biet",
+   "nhan_bac_si": {
+    "dung_quan_the": null,
+    "dung_chieu": null,
+    "du_dieu_kien": null,
+    "ghi_chu": null
+   },
+   "them_ngay": "2026-11-19"
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_SuyTim_ChanDoan_DieuTri_DongMac_20261107.html",
+   "id": "ITEM-04",
+   "title": "Chẹn beta giảm tử vong ở HFrEF (CIBIS-II)",
+   "population": "HFrEF EF≤35%, NYHA III–IV (n=2647)",
+   "action": "Dùng chẹn beta ĐÃ chứng minh (bisoprolol/carvedilol/metoprolol succinate/nebivolol) — không ngoại suy hiệu ứng nhóm sang thuốc khác.",
+   "pmid": "10023943",
+   "doi": "10.1016/S0140-6736(98)11181-9",
+   "gradeLevel": "high",
+   "nguon_muc": "that",
+   "tang": "dac_biet",
+   "nhan_bac_si": {
+    "dung_quan_the": null,
+    "dung_chieu": null,
+    "du_dieu_kien": null,
+    "ghi_chu": null
+   },
+   "them_ngay": "2026-11-19"
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_SuyTim_KhoiTriNhanhGDMT_CaTheHoa_NgoaiTru_20261113.html",
+   "id": "ITEM-28",
+   "title": "ESC 2026: chương trình quản lý suy tim ĐA CHUYÊN KHOA (I, B1); giáo dục và tự quản lý (I, A); can thiệp đa chuyên khoa cải thiện tuân thủ gồm đánh giá hiểu biết sức khoẻ và RÀ SOÁT ĐA THUỐC (I, B2); điều dưỡng và dược sĩ giúp triển khai, tối ưu thuốc",
+   "population": "Người lớn suy tim",
+   "action": "Giao điều dưỡng/dược sĩ phòng khám: hướng dẫn tự theo dõi cân nặng, triệu chứng; đối chiếu đơn; gọi nhắc lịch tăng liều; đánh giá hiểu biết sức khoẻ và rào cản tuân thủ (chi phí, tác dụng phụ).",
+   "pmid": "42661420",
+   "doi": "10.1093/eurheartj/ehag100",
+   "gradeLevel": "na",
+   "nguon_muc": "that",
+   "tang": "dac_biet",
+   "nhan_bac_si": {
+    "dung_quan_the": null,
+    "dung_chieu": null,
+    "du_dieu_kien": null,
+    "ghi_chu": null
+   },
+   "them_ngay": "2026-11-19"
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_SuyTim_ChanDoan_DieuTri_DongMac_20261107.html",
+   "id": "ITEM-03",
+   "title": "ARNI ưu tiên hơn ACEi ở HFrEF (PARADIGM-HF)",
+   "population": "HFrEF EF≤40%, NYHA II–IV (n=8442)",
+   "action": "Dùng ARNI thay ACEi/ARB làm nền tảng ức chế RAS ở HFrEF có triệu chứng.",
+   "pmid": "25176015",
+   "doi": "10.1056/NEJMoa1409077",
+   "gradeLevel": "high",
+   "nguon_muc": "that",
+   "tang": "dac_biet",
+   "nhan_bac_si": {
+    "dung_quan_the": null,
+    "dung_chieu": null,
+    "du_dieu_kien": null,
+    "ghi_chu": null
+   },
+   "them_ngay": "2026-11-19"
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_SoiThan_NgoaiTru_20261112.html",
+   "id": "ITEM-27",
+   "title": "CARI 2026 — khuyến cáo MẠNH chế độ ăn nhiều rau quả, hạn chế đạm động vật ngoài sữa (chứng cứ thấp)",
+   "population": "Người có sỏi thận",
+   "action": "Dặn tăng rau, trái cây; giảm thịt đỏ, nội tạng, hải sản; giữ cân nặng hợp lý.",
+   "pmid": "41858317",
+   "doi": "10.1016/j.ekir.2026.106346",
+   "gradeLevel": "low",
+   "nguon_muc": "that",
+   "tang": "dac_biet",
+   "nhan_bac_si": {
+    "dung_quan_the": null,
+    "dung_chieu": null,
+    "du_dieu_kien": null,
+    "ghi_chu": null
+   },
+   "them_ngay": "2026-11-19"
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_SuyTim_TongHop_20261113.html",
+   "id": "ITEM-12",
+   "title": "Tăng liều GDMT NHANH ngay sau nhập viện là an toàn và hiệu quả — STRONG-HF",
+   "population": "1.078 bệnh nhân vừa nhập viện vì suy tim cấp, chưa được tối ưu điều trị",
+   "action": "Giai đoạn sau xuất viện là 'thời điểm vàng'. Hẹn tái khám trong vòng 1–2 TUẦN sau xuất viện, kiểm tra lâm sàng + sinh hóa rồi tăng liều ngay, thay vì hẹn 1 tháng rồi giữ nguyên đơn cũ. Phân tích thứ cấp cho thấy chiến lược này còn giúp khử sung huyết và giảm nhu cầu lợi tiểu.",
+   "pmid": "36356631",
+   "doi": "10.1016/S0140-6736(22)02076-1",
+   "gradeLevel": "mod",
+   "nguon_muc": "that",
+   "tang": "dac_biet",
+   "nhan_bac_si": {
+    "dung_quan_the": null,
+    "dung_chieu": null,
+    "du_dieu_kien": null,
+    "ghi_chu": null
+   },
+   "them_ngay": "2026-11-19"
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_SuyTim_TongHop_20261113.html",
+   "id": "ITEM-69",
+   "title": "Tập luyện thể lực cá thể hóa dài hạn cho MỌI người bệnh suy tim ổn định (Class I, Level B2)",
+   "population": "Người lớn suy tim, mọi phân suất tống máu, theo phạm vi guideline ESC 2026",
+   "action": "Nguyên văn: «Personalized exercise training outside exercise-based cardiac rehabilitation is recommended for all stable patients on a long-term basis, unless there are specific contraindications, in order to improve exercise capacity and QoL, and reduce the risk of all-cause hospitalization» — Class I, Level B2. Điểm mấu chốt là cụm «outside ... cardiac rehabilitation»: KHÔNG cần trung tâm phục hồi chức năng chính quy mới tập được.",
+   "pmid": "42661420",
+   "doi": "10.1093/eurheartj/ehag100",
+   "gradeLevel": "na",
+   "nguon_muc": "that",
+   "tang": "dac_biet",
+   "nhan_bac_si": {
+    "dung_quan_the": null,
+    "dung_chieu": null,
+    "du_dieu_kien": null,
+    "ghi_chu": null
+   },
+   "them_ngay": "2026-11-19"
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_LupusBanDoHeThong_SLE_NgoaiTru_20261114.html",
+   "id": "ITEM-29",
+   "title": "BSR 2026: người SLE tăng nguy cơ TIM MẠCH ⇒ đánh giá và quản lý yếu tố nguy cơ thay đổi được (tăng huyết áp, rối loạn lipid, đái tháo đường, BMI cao, thuốc lá) LÚC ĐẦU và ÍT NHẤT HẰNG NĂM, dùng công cụ ước tính nguy cơ phù hợp (1B)",
+   "population": "Người SLE",
+   "action": "Hằng năm: huyết áp, lipid, đường huyết/HbA1c, BMI, hút thuốc; tính nguy cơ tim mạch 10 năm (coi SLE là yếu tố tăng nguy cơ — đánh giá vận hành theo ACR bảng 4); cân nhắc đích huyết áp <130/80 mmHg (EULAR 2022, chưa đọc toàn văn).",
+   "pmid": "42336388",
+   "doi": "10.1093/rheumatology/keag223",
+   "gradeLevel": "mod",
+   "nguon_muc": "that",
+   "tang": "dac_biet",
+   "nhan_bac_si": {
+    "dung_quan_the": null,
+    "dung_chieu": null,
+    "du_dieu_kien": null,
+    "ghi_chu": null
+   },
+   "them_ngay": "2026-11-19"
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_ViemGanB_TienLuong_BenhKem_DoiTuongDacBiet_20261105.html",
+   "id": "ITEM-03",
+   "title": "Hướng dẫn thực hành lâm sàng EASL 2025 về quản lý nhiễm virus viêm gan B",
+   "population": "Toàn phổ nhiễm HBV: chẩn đoán, điều trị, tầm soát ung thư gan, nhóm đặc biệt, dự phòng tái hoạt, sau ghép gan, dự phòng",
+   "action": "Nguồn tham chiếu đầy đủ nhất về các mảng mà AASLD 2025 không bao phủ: dự phòng tái hoạt HBV, chăm sóc sau ghép gan, và quản lý nhóm đặc biệt. Dùng song song với AASLD-IDSA 2025.",
+   "pmid": "40348683",
+   "doi": "10.1016/j.jhep.2025.03.018",
+   "gradeLevel": "mod",
+   "nguon_muc": "that",
+   "tang": "dac_biet",
+   "nhan_bac_si": {
+    "dung_quan_the": null,
+    "dung_chieu": null,
+    "du_dieu_kien": null,
+    "ghi_chu": null
+   },
+   "them_ngay": "2026-11-19"
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_HuyetHoc_ThieuMau_DaHongCau_20261113.html",
+   "id": "ITEM-09",
+   "title": "Ngưỡng truyền máu hạn chế 7-8 g/dL là chuẩn cho hầu hết bệnh cảnh",
+   "population": "48 thử nghiệm, 21.433 người tham gia, nhiều bối cảnh lâm sàng (phẫu thuật, hồi sức, xuất huyết tiêu hóa, ung thư máu)",
+   "action": "Áp dụng ngưỡng 7-8 g/dL cho đa số bệnh nhân thiếu máu ổn định. Cochrane nêu rõ chứng cứ CHƯA đủ chắc cho một số bối cảnh: nhồi máu cơ tim, bệnh tim mạch mạn, tổn thương thần kinh, đột quỵ, giảm tiểu cầu, ung thư và bệnh máu ác tính, suy tủy mạn - ở các nhóm này cần cá thể hóa.",
+   "pmid": "34932836",
+   "doi": "10.1002/14651858.CD002042.pub5",
+   "gradeLevel": "high",
+   "nguon_muc": "that",
+   "tang": "dac_biet",
+   "nhan_bac_si": {
+    "dung_quan_the": null,
+    "dung_chieu": null,
+    "du_dieu_kien": null,
+    "ghi_chu": null
+   },
+   "them_ngay": "2026-11-19"
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_BenhTuyenGiap_NgoaiTru_20261112.html",
+   "id": "ITEM-14",
+   "title": "AN TOÀN thuốc kháng giáp: dặn bằng văn bản — SỐT, ĐAU HỌNG (ETA 2018; ATA 2016 cho người lớn — «loét miệng» chỉ có ở ATA KC 63 cho trẻ em) ⇒ ngừng thuốc và làm công thức bạch cầu ngay; VÀNG DA, phân bạc màu, nước tiểu sẫm ⇒ ngừng và xét nghiệm gan (ETA 2018; ATA 2016)",
+   "population": "Người dùng methimazole/carbimazole/PTU",
+   "action": "Áp dụng: mỗi lần kê kháng giáp phát tờ dặn (sốt, đau họng, loét miệng ⇒ ngừng thuốc, đi xét nghiệm CTM trong ngày; vàng da/phân bạc/nước tiểu sẫm/ngứa ⇒ ngừng, xét nghiệm gan). Tác dụng phụ nặng (mất bạch cầu hạt, viêm gan) ⇒ ngừng và không dùng lại kháng giáp (ETA 2018); phản ứng dị ứng nặng ⇒ không đổi sang kháng giáp còn lại (ATA 2016 KC 20); sốt + bạch cầu hạt thấp ⇒ chuyển cấp cứu (đánh giá vận hành).",
+   "pmid": "30283735",
+   "doi": "10.1159/000490384",
+   "gradeLevel": "low",
+   "nguon_muc": "that",
+   "tang": "dac_biet",
+   "nhan_bac_si": {
+    "dung_quan_the": null,
+    "dung_chieu": null,
+    "du_dieu_kien": null,
+    "ghi_chu": null
+   },
+   "them_ngay": "2026-11-19"
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_RA_TimMachChuyenHoaNoiTiet_20261114.html",
+   "id": "ITEM-29",
+   "title": "BSR 2025: có yếu tố nguy cơ độc tính (béo phì, gan nhiễm mỡ, rượu, ĐTĐ…) ⇒ xét nghiệm DÀY hơn lịch chuẩn; ALT/AST >2×ULN tăng rõ ⇒ tạm ngừng csDMARD, báo chuyên khoa (GRADE 1B/1C)",
+   "population": "Người đang dùng csDMARD",
+   "action": "Người VKDT béo phì/gan nhiễm mỡ/uống rượu/ĐTĐ đang dùng methotrexate hoặc leflunomide: rút ngắn khoảng xét nghiệm; ALT/AST >2×ULN và tăng rõ ⇒ tạm ngừng, báo chuyên khoa khớp.",
+   "pmid": "41235543",
+   "doi": "10.1093/rheumatology/keaf522",
+   "gradeLevel": "mod",
+   "nguon_muc": "that",
+   "tang": "dac_biet",
+   "nhan_bac_si": {
+    "dung_quan_the": null,
+    "dung_chieu": null,
+    "du_dieu_kien": null,
+    "ghi_chu": null
+   },
+   "them_ngay": "2026-11-19"
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_COPD_TimMachNoiTiet_20261025.html",
+   "id": "ITEM-05",
+   "title": "Chẹn beta chọn lọc tim không ảnh hưởng FEV1/đáp ứng giãn phế quản",
+   "population": "COPD, tổng hợp 11 RCT liều đơn + 9 RCT dài hạn",
+   "action": "Chẹn beta chọn lọc tim liều điều trị KHÔNG làm giảm FEV1 hay cản trở đáp ứng với thuốc giãn phế quản beta2 — không nên từ chối thường quy vì lý do này.",
+   "pmid": "16235327",
+   "doi": "10.1002/14651858.CD003566.pub2",
+   "gradeLevel": "high",
+   "nguon_muc": "that",
+   "tang": "khac",
+   "nhan_bac_si": {
+    "dung_quan_the": null,
+    "dung_chieu": null,
+    "du_dieu_kien": null,
+    "ghi_chu": null
+   },
+   "them_ngay": "2026-11-19"
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_LoangXuong_NgoaiTru_20261114.html",
+   "id": "ITEM-11",
+   "title": "ACP 2023: BISPHOSPHONATE là thuốc ĐẦU TAY để giảm gãy xương ở phụ nữ sau mãn kinh loãng xương nguyên phát (khuyến cáo mạnh, chứng cứ độ chắc chắn cao)",
+   "population": "Phụ nữ sau mãn kinh được chẩn đoán loãng xương nguyên phát",
+   "action": "Áp dụng: phụ nữ sau mãn kinh loãng xương nguyên phát ⇒ khởi trị bisphosphonate (KC 1a không loại nhóm nguy cơ rất cao — chọn thuốc khác cho nhóm này là KC 3, người soạn ghép vào); ví dụ alendronat uống hằng tuần hoặc zoledronat truyền tĩnh mạch mỗi năm. Theo nhãn thuốc/nguồn khác (không có trong bài): kiểm tra trước độ thanh thải creatinin >35 mL/phút, canxi máu bình thường, thực quản bình thường và ngồi/đứng thẳng được 30 phút (alendronat), khám răng miệng (ITEM-48, ITEM-49).",
+   "pmid": "36592456",
+   "doi": "10.7326/M22-1034",
+   "gradeLevel": "high",
+   "nguon_muc": "that",
+   "tang": "khac",
+   "nhan_bac_si": {
+    "dung_quan_the": null,
+    "dung_chieu": null,
+    "du_dieu_kien": null,
+    "ghi_chu": null
+   },
+   "them_ngay": "2026-11-19"
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_TeNga_TieuKhongTuChu_NguoiCaoTuoi_20261112.html",
+   "id": "ITEM-29",
+   "title": "TIỂU KHÔNG TỰ CHỦ Ở NỮ — ACP: TẬP CƠ SÀN CHẬU là điều trị ĐẦU TAY cho tiểu không tự chủ GẮNG SỨC (khuyến cáo MẠNH, chứng cứ CAO); tập cơ sàn chậu + TẬP BÀNG QUANG cho thể HỖN HỢP (MẠNH, CAO)",
+   "population": "Phụ nữ tiểu không tự chủ thể GẮNG SỨC hoặc HỖN HỢP (phần bàn luận KC1 nói rộng hơn câu khuyến cáo — bài tự lệch); tỷ lệ ~75% ở phụ nữ ≥75 tuổi theo nguồn",
+   "action": "Tiểu không tự chủ gắng sức ⇒ kê tập cơ sàn chậu có hướng dẫn («đúng cơ, đủ liều, ≥3 tháng» là theo nguồn khác/đánh giá vận hành — ACP không nêu cách tập hay thời gian tập); thể hỗn hợp ⇒ tập cơ sàn chậu + tập bàng quang. Người cao tuổi: tập theo nhóm hiệu quả tương đương tập cá nhân (ITEM-32).",
+   "pmid": "25222388",
+   "doi": "10.7326/M13-2410",
+   "gradeLevel": "high",
+   "nguon_muc": "that",
+   "tang": "khac",
+   "nhan_bac_si": {
+    "dung_quan_the": null,
+    "dung_chieu": null,
+    "du_dieu_kien": null,
+    "ghi_chu": null
+   },
+   "them_ngay": "2026-11-19"
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_VKDT_TamThanKinh_20261113.html",
+   "id": "ITEM-23",
+   "title": "Vận động là khuyến cáo MẠNH duy nhất của ACR 2022 — 27 khuyến cáo còn lại đều chỉ ở mức có điều kiện",
+   "population": "Người lớn VKDT; các can thiệp được đặt BỔ TRỢ cho DMARD, không thay thế",
+   "action": "Kê đơn vận động như kê đơn thuốc, và nói rõ đây là khuyến cáo MẠNH — mức cao nhất trong toàn bộ guideline. Hình thức rẻ nhất phù hợp Việt Nam: đi bộ nhanh, đạp xe, bài tập kháng lực bằng dây thun hoặc chai nước tại nhà. Vận động thân-tâm như thái cực quyền và khí công có sẵn trong các nhóm tập dưỡng sinh cộng đồng, tận dụng được ngay.",
+   "pmid": "37227116",
+   "doi": "10.1002/acr.25117",
+   "gradeLevel": "mod",
+   "nguon_muc": "that",
+   "tang": "khac",
+   "nhan_bac_si": {
+    "dung_quan_the": null,
+    "dung_chieu": null,
+    "du_dieu_kien": null,
+    "ghi_chu": null
+   },
+   "them_ngay": "2026-11-19"
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_DaLieu_HS_20261107.html",
+   "id": "ITEM-04",
+   "title": "Hướng dẫn HS Australasian 2024/2025 — điều trị tích cực sớm, tránh đơn trị kéo dài",
+   "population": "Người lớn HS — đồng thuận Delphi 13 chuyên gia da liễu",
+   "action": "Ưu tiên điều trị đa mô thức tích cực SỚM cho thể trung bình-nặng thay vì đơn trị kháng sinh tuần tự kéo dài; leo thang bậc điều trị theo đáp ứng lâm sàng, không chờ thất bại nhiều đợt.",
+   "pmid": "39578415",
+   "doi": "10.1111/ajd.14388",
+   "gradeLevel": "mod",
+   "nguon_muc": "that",
+   "tang": "khac",
+   "nhan_bac_si": {
+    "dung_quan_the": null,
+    "dung_chieu": null,
+    "du_dieu_kien": null,
+    "ghi_chu": null
+   },
+   "them_ngay": "2026-11-19"
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_DauDau_20261112.html",
+   "id": "ITEM-21",
+   "title": "Guideline điều trị cluster headache (EAN 2023)",
+   "population": "Người lớn cluster headache",
+   "action": "Cắt cơn: oxy 100% lưu lượng cao + sumatriptan đường tiêm dưới da/xịt mũi (KHÔNG đường uống, tác dụng quá chậm). Dự phòng: verapamil liều cao + corticosteroid bắc cầu.",
+   "pmid": "37515405",
+   "doi": null,
+   "gradeLevel": "na",
+   "nguon_muc": "that",
+   "tang": "khac",
+   "nhan_bac_si": {
+    "dung_quan_the": null,
+    "dung_chieu": null,
+    "du_dieu_kien": null,
+    "ghi_chu": null
+   },
+   "them_ngay": "2026-11-19"
   }
  ]
 }
