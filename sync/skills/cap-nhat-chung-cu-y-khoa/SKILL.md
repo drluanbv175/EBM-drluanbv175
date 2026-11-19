@@ -1322,6 +1322,10 @@ Chỉ 27 mục tồn có trong sổ nợ (`no-toan-van-apply.json`, hạn 03/11/
 vào sổ. Xem nợ + cách trả: `python3 tools/so_toan_van.py`. Chuỗi máy
 `ops/orchestrator.py --topic` chạy bước «TV» (`tools/toan_van_theo_chu_de.py`): gom bản hợp lệ → đọc sâu → phiếu làn trình
 duyệt cho bài còn thiếu — ĐỌC phiếu đó trước khi thẩm định ứng viên.
+**Mục `apply` KHÔNG PMID (20/11/2026):** nguồn chính thức chỉ có DOI/URL (FDA/MHRA, DailyMed/openFDA, trang guideline) cũng
+cần bằng chứng đã đọc — cổng cảnh báo «ĐỌC NGUỒN CHÍNH THỨC» (chưa chặn). `python3 tools/doc_nguon_chinh_thuc.py tai --ghi`
+(máy chỉ tải miền nhà nước/NXB giấy phép mở; NXB «cấm» chưa uỷ quyền ⇒ bác sĩ đọc rồi `bac-si-da-doc`; còn lại ⇒ làn trình
+duyệt `huong-dan`, NXB chưa kiểm phải khai `--dieu-khoan`).
 
 **Tuyên bố độ phủ (LÔ I):** mỗi gói phát hành dán khối từ `python3 tools/tuyen_bo_do_phu.py`.
 

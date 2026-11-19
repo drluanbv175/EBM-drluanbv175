@@ -1,0 +1,462 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""ĐỌC NGUỒN CHÍNH THỨC cho mục «Áp dụng ngay» KHÔNG có PMID (20/11/2026).
+
+VÌ SAO CÓ
+=========
+Bác sĩ (20/11/2026, «Làm 2,3,6»): mở rộng bảo đảm đọc toàn văn (BH161) sang các mục không PMID. Đo 20/11: 164/843 mục
+«Áp dụng ngay» ở bản ĐÃ PASS mới nhất mỗi chủ đề không có PMID — phần lớn là trang chính thức (FDA/MHRA Drug Safety, trang
+guideline) chỉ có `url`, vài mục chỉ có `doi`. `verify_dashboard.kiem_toan_van_apply` và `so_toan_van.py` chỉ đo PMID ⇒ nhóm
+này chưa từng có bằng chứng đã đọc nguồn gốc. Công cụ này tạo bằng chứng; cổng `kiem_doc_nguon_chinh_thuc_apply` đọc nó.
+
+BẰNG CHỨNG (ghi vào `EBM-Dashboards/toan_van_oa/nguon_chinh_thuc/<băm khoá>.json`):
+  tai             máy tải TRỌN trang (urllib, nhận diện là công cụ — KHÔNG giả dạng trình duyệt), bóc chữ thân trang, đủ
+                  ≥ 1500 ký tự và tiêu đề không phải trang chặn/lỗi ⇒ hồ sơ `cach: may_tai` (độ dài + sha256 của chữ thân).
+                  Chỉ LƯU BẢN SAO chữ khi trang thuộc miền giấy phép mở (cơ quan nhà nước — `MIEN_GIAY_PHEP_MO`); miền khác
+                  chỉ lưu độ dài + băm. Miền chặn truy cập tự động (FDA, EMA — `verify_dashboard.MIEN_CHAN_TRUY_CAP_TU_DONG`)
+                  không tải ⇒ chuyển sang làn trình duyệt.
+                  CỔNG ĐIỀU KHOẢN NXB TRƯỚC KHI TẢI (doctrine `_CONNECTOR-CHUNG-CU.md` §2septies — `lan_doc`): máy CHỈ tải
+                  miền cơ quan nhà nước (`MIEN_GIAY_PHEP_MO`) hoặc NXB khai giấy phép mở cấp NXB (`GIAY_PHEP_MO_CAP_NXB`);
+                  NXB trong bảng «cấm» (`DIEU_KHOAN_NXB` — Elsevier, ESC, OUP, ADA…) ⇒ còn uỷ quyền đọc của bác sĩ thì làn
+                  trình duyệt, không thì BÁC SĨ ĐỌC TRỰC TIẾP; NXB/miền chưa kiểm ⇒ làn trình duyệt, Claude đọc trang
+                  điều khoản trước và nạp kèm `--dieu-khoan`.
+  nap-trinh-duyet trang đã mở bằng TRÌNH DUYỆT THẬT (khung trình duyệt của Claude; trang chặn bot thì BÁC SĨ tự bấm — Claude
+                  không giải CAPTCHA); độ dài + sha256 tính TRONG trang (`huong-dan` in đoạn mã) ⇒ `cach: trinh_duyet`.
+  bac-si-da-doc   bác sĩ tự đọc nguồn ⇒ dòng `nguon` trong `trinh_duyet/bac-si-da-doc.jsonl` kèm kết luận của bác sĩ
+                  (không hết hạn). Agent chỉ chép NGUYÊN VĂN lời bác sĩ — không tự điền.
+
+Dùng:
+    python3 tools/doc_nguon_chinh_thuc.py liet-ke [--tat-ca] [--json]
+    python3 tools/doc_nguon_chinh_thuc.py tai [--ghi] [--toi-da N]
+    python3 tools/doc_nguon_chinh_thuc.py huong-dan
+    python3 tools/doc_nguon_chinh_thuc.py nap-trinh-duyet --url URL [--doi DOI] --tieu-de "…" --so-ky-tu N --sha256 HEX \
+            [--dieu-khoan "<căn cứ điều khoản>"] [--ghi]
+    python3 tools/doc_nguon_chinh_thuc.py bac-si-da-doc --nguon "<DOI|URL>" --ghi-chu "<kết luận của bác sĩ>" [--ghi]
+Chạy khô mặc định (`--ghi` mới ghi). Mã thoát: 0 xong · 1 có nguồn chưa đọc được / đầu vào bị từ chối · 2 không đo được.
+Cần bác sĩ kiểm chứng.
+"""
+from __future__ import annotations
+
+import argparse
+import datetime as dt
+import hashlib
+import html as _html
+import importlib.util
+import json
+import os
+import re
+import sys
+import time
+import urllib.error
+import urllib.parse
+import urllib.request
+from pathlib import Path
+
+for _s in (sys.stdout, sys.stderr):
+    try:
+        _s.reconfigure(encoding="utf-8")
+    except (AttributeError, ValueError):
+        pass
+
+REPO = Path(__file__).resolve().parents[1]
+VD_NGUON = REPO / "sync" / "skills" / "cap-nhat-chung-cu-y-khoa" / "tools" / "verify_dashboard.py"
+TAC_NHAN = "EBM-Copilot/1.0 (doc nguon chinh thuc de kiem chung y khoa; cong cu, khong phai trinh duyet)"
+# Miền cơ quan nhà nước — nội dung công bố theo giấy phép mở/miền công cộng (FDA/CDC/NIH: public domain; gov.uk: Open Government
+# Licence; WHO: CC BY-NC-SA 3.0 IGO; EMA: cho phép tái sử dụng kèm ghi nguồn) ⇒ được lưu bản sao chữ để đối chiếu về sau.
+MIEN_GIAY_PHEP_MO = ("gov.uk", "fda.gov", "cdc.gov", "nih.gov", "who.int", "ema.europa.eu", "hhs.gov")
+_TIEU_DE_CHAN = re.compile(r"just a moment|attention required|access denied|request blocked|forbidden|page not found|"
+                           r"not found|error 40\d|error 50\d|captcha|are you a robot|verify you are human|sign in|log in",
+                           re.I)
+_THE_BO = re.compile(r"<(script|style|noscript|nav|header|footer|aside|form|svg)\b.*?</\1\s*>", re.I | re.S)
+
+
+def _nap(ten: str, duong: Path):
+    sp = importlib.util.spec_from_file_location(ten, duong)
+    m = importlib.util.module_from_spec(sp)
+    sys.modules[ten] = m
+    sp.loader.exec_module(m)
+    return m
+
+
+def vd():
+    return _nap("_dnct_vd", VD_NGUON)
+
+
+def dtcn():
+    """Mô-đun bảng điều khoản NXB (`tools/doc_toan_van_co_nguoi.py`) — nguồn DUY NHẤT của DIEU_KHOAN_NXB / uỷ quyền."""
+    return _nap("_dnct_dtcn", REPO / "tools" / "doc_toan_van_co_nguoi.py")
+
+
+def lan_doc(url: str, doi: str = "", *, V=None, DT=None, uy_quyen_fn=None) -> dict:
+    """Làn được phép đọc một nguồn: {lan: may|trinh_duyet|bac_si, ly_do, can_dieu_khoan}.
+
+    Thứ tự (fail-closed): bảng «cấm» (tiền tố DOI hoặc miền) TRƯỚC — có uỷ quyền đọc còn hiệu lực ⇒ chỉ làn trình duyệt, không
+    ⇒ bác sĩ đọc trực tiếp; miền chặn truy cập tự động ⇒ làn trình duyệt; miền cơ quan nhà nước / NXB giấy phép mở cấp NXB ⇒ máy
+    tải; còn lại = CHƯA KIỂM điều khoản ⇒ làn trình duyệt và phải khai căn cứ điều khoản khi nạp."""
+    V = V or vd()
+    DT = DT or dtcn()
+    uy_quyen_fn = uy_quyen_fn or DT.uy_quyen_bac_si
+    ten, d = DT.nxb_cua(doi or "", url or "")
+    if ten:
+        if (d or {}).get("ket_luan") == "cam" and uy_quyen_fn(ten):
+            return {"lan": "trinh_duyet", "can_dieu_khoan": False,
+                    "ly_do": f"NXB «{ten}» cấm dùng nội dung với AI nhưng còn uỷ quyền đọc của bác sĩ — chỉ làn trình duyệt, "
+                             "máy không tải"}
+        return {"lan": "bac_si", "can_dieu_khoan": False,
+                "ly_do": f"NXB «{ten}» cấm (hoặc không rõ ⇒ xử như cấm) dùng nội dung với AI, chưa có uỷ quyền đọc ⇒ BÁC SĨ đọc "
+                         "trực tiếp rồi ghi bac-si-da-doc; Claude không mở trang"}
+    host = mien_cua(url or "")
+    if host in V.MIEN_CHAN_TRUY_CAP_TU_DONG:          # ĐÚNG tên máy như cổng (api.fda.gov — openFDA — không bị chặn)
+        return {"lan": "trinh_duyet", "can_dieu_khoan": False, "ly_do": "miền chặn truy cập tự động (FDA/EMA)"}
+    if thuoc_mien(host, MIEN_GIAY_PHEP_MO):
+        return {"lan": "may", "can_dieu_khoan": False, "ly_do": "miền cơ quan nhà nước (giấy phép mở/miền công cộng)"}
+    t2, _ = DT.giay_phep_mo_cap_nxb(url or "")
+    if t2:
+        return {"lan": "may", "can_dieu_khoan": False, "ly_do": f"NXB «{t2}» khai giấy phép mở cho mọi nội dung trên miền"}
+    return {"lan": "trinh_duyet", "can_dieu_khoan": True,
+            "ly_do": "NXB/miền CHƯA kiểm điều khoản ⇒ Claude đọc trang điều khoản trước (doctrine §2septies), nạp kèm "
+                     "--dieu-khoan; máy không tự tải"}
+
+
+def goc_du_lieu(ten: str) -> Path:
+    try:
+        p = _nap("_dnct_bst", REPO / "tools" / "ban_sao_tran.py").duong_goc(ten, REPO)
+    except Exception:  # noqa: BLE001
+        p = None
+    if p is None and os.environ.get("EBM_WORKSPACE_ROOT"):
+        p = Path(os.environ["EBM_WORKSPACE_ROOT"]) / ten       # worktree ngoài OneDrive đọc dữ liệu cây chính
+    return p or (REPO / ten)
+
+
+def kho_mac_dinh() -> Path:
+    return goc_du_lieu("EBM-Dashboards") / "toan_van_oa"
+
+
+def ten_ho_so(khoa: str) -> str:
+    return hashlib.sha256(khoa.encode("utf-8")).hexdigest()[:20] + ".json"
+
+
+# ───────────────────────── quét mục ─────────────────────────
+
+def quet_muc(dashboards: list[Path], V=None) -> list[dict]:
+    """Mục decision='apply' KHÔNG có PMID: {dashboard, item, khoa, url, doi}. Khoá None ⇒ không truy nguyên được."""
+    V = V or vd()
+    ra = []
+    for f in dashboards:
+        blk = V.extract_data_block(Path(f).read_text(encoding="utf-8", errors="replace"))
+        if not blk:
+            continue
+        for ch in V.split_items(blk):
+            if V.field(ch, "decision") != "apply" or V.PMID_RE.match((V.field(ch, "pmid") or "").strip()):
+                continue
+            doi, url = V.field(ch, "doi"), V.field(ch, "url")
+            ra.append({"dashboard": Path(f).stem, "item": V.field(ch, "id") or "(?)",
+                       "khoa": V.khoa_nguon_chinh_thuc(doi, url), "url": (url or "").strip(), "doi": (doi or "").strip()})
+    return ra
+
+
+def chon_dashboard(tat_ca: bool) -> list[Path]:
+    dash = goc_du_lieu("EBM-Dashboards")
+    if tat_ca:
+        return sorted(dash.glob("WebDashboard_*.html"))
+    return _nap("_dnct_dn", REPO / "tools" / "do_nhay_kiem_ngu_nghia.py").chon_dashboard(dash)
+
+
+def nhom_theo_khoa(muc: list[dict], co: set) -> dict[str, dict]:
+    ra: dict[str, dict] = {}
+    for m in muc:
+        if not m["khoa"]:
+            continue
+        x = ra.setdefault(m["khoa"], {"khoa": m["khoa"], "url": m["url"], "doi": m["doi"], "muc": [],
+                                      "da_doc": m["khoa"] in co})
+        x["muc"].append(f"{m['dashboard'].replace('WebDashboard_EBM_VanDeCuThe_', '')} {m['item']}")
+    return ra
+
+
+# ───────────────────────── tải trang ─────────────────────────
+
+def boc_chu(html: str) -> tuple[str, str]:
+    """(tiêu đề, chữ thân trang đã gộp khoảng trắng) — bỏ script/style/nav/header/footer/aside/form."""
+    m = re.search(r"<title[^>]*>(.*?)</title>", html, re.I | re.S)
+    tieu_de = _html.unescape(re.sub(r"\s+", " ", m.group(1))).strip() if m else ""
+    than = _THE_BO.sub(" ", html)
+    than = re.sub(r"<[^>]+>", " ", than)
+    return tieu_de, re.sub(r"\s+", " ", _html.unescape(than)).strip()
+
+
+def mien_cua(url: str) -> str:
+    return urllib.parse.urlsplit(url).netloc.lower().split(":")[0]
+
+
+def thuoc_mien(host: str, danh_sach) -> bool:
+    return any(host == d or host.endswith("." + d) for d in danh_sach)
+
+
+def tai_trang(url: str, timeout: int = 60) -> tuple[str, str, bytes]:
+    """(url cuối sau chuyển hướng, loại nội dung, byte). Lỗi mạng/HTTP ⇒ ném OSError/urllib.error (người gọi xử lý)."""
+    req = urllib.request.Request(url, headers={"User-Agent": TAC_NHAN,
+                                               "Accept": "text/html,application/xhtml+xml,application/pdf,application/json"})
+    with urllib.request.urlopen(req, timeout=timeout) as r:  # noqa: S310 — URL từ dashboard đã qua cổng, chỉ http(s)
+        return r.geturl(), (r.headers.get("Content-Type") or "").lower(), r.read(30_000_000)
+
+
+def _chu_json(x) -> list[str]:
+    if isinstance(x, str):
+        return [x]
+    if isinstance(x, dict):
+        return [t for v in x.values() for t in _chu_json(v)]
+    if isinstance(x, list):
+        return [t for v in x for t in _chu_json(v)]
+    return []
+
+
+def boc_noi_dung(loai: str, du_lieu: bytes, url: str = "") -> tuple[str, str]:
+    """(tiêu đề, chữ) theo loại nội dung: HTML · PDF (pypdf) · JSON (openFDA: gộp mọi chuỗi). Loại khác ⇒ ValueError."""
+    if "pdf" in loai or url.lower().split("?")[0].endswith(".pdf"):
+        try:
+            import io
+            from pypdf import PdfReader
+        except ImportError as exc:
+            raise ValueError("thiếu pypdf để đọc PDF") from exc
+        doc = PdfReader(io.BytesIO(du_lieu))
+        chu = re.sub(r"\s+", " ", " ".join((trang.extract_text() or "") for trang in doc.pages)).strip()
+        tieu_de = str((doc.metadata or {}).get("/Title") or "").strip() or url.rsplit("/", 1)[-1]
+        return tieu_de, chu
+    if "json" in loai:
+        try:
+            d = json.loads(du_lieu.decode("utf-8", errors="replace"))
+        except ValueError as exc:
+            raise ValueError("JSON hỏng") from exc
+        if isinstance(d, dict) and d.get("error"):
+            return "error", ""
+        ket = d.get("results") if isinstance(d, dict) else None
+        chu = re.sub(r"\s+", " ", " ".join(_chu_json(ket if ket else d))).strip()
+        return (url.split("?")[0].rsplit("/", 1)[-1] if chu else "error"), chu
+    if "html" in loai or not loai:
+        return boc_chu(du_lieu.decode("utf-8", errors="replace"))
+    raise ValueError(f"loại nội dung chưa hỗ trợ ({loai})")
+
+
+def danh_gia_trang(tieu_de: str, chu: str, V=None) -> str | None:
+    """Lý do TỪ CHỐI (None = trang đủ làm bằng chứng)."""
+    V = V or vd()
+    if _TIEU_DE_CHAN.search(tieu_de or ""):
+        return f"tiêu đề là trang chặn/lỗi («{tieu_de[:60]}»)"
+    if len(chu) < V.SO_KY_TU_TOI_THIEU_NGUON:
+        return f"chữ thân trang quá ngắn ({len(chu)} < {V.SO_KY_TU_TOI_THIEU_NGUON} ký tự) — có thể là trang chặn hay trang dẫn"
+    return None
+
+
+def ho_so(khoa: str, url: str, url_cuoi: str, tieu_de: str, chu: str, cach: str, ban_sao: bool) -> dict:
+    return {"khoa": khoa, "url": url, "url_cuoi": url_cuoi, "tieu_de": tieu_de, "cach": cach, "so_ky_tu": len(chu),
+            "sha256": hashlib.sha256(chu.encode("utf-8")).hexdigest(), "ban_sao": ban_sao,
+            "luc": dt.datetime.now().isoformat(timespec="seconds")}
+
+
+def ghi_ho_so(kho: Path, hs: dict, chu: str | None = None) -> Path:
+    thu_muc = kho / vd().THU_MUC_NGUON_CHINH_THUC
+    thu_muc.mkdir(parents=True, exist_ok=True)
+    p = thu_muc / ten_ho_so(hs["khoa"])
+    p.write_text(json.dumps(hs, ensure_ascii=False, indent=1), encoding="utf-8")
+    if chu is not None:
+        p.with_suffix(".txt").write_text(chu, encoding="utf-8")
+    return p
+
+
+def tai(nhom: dict[str, dict], kho: Path, *, ghi: bool, toi_da: int | None = None, nghi: float = 2.0,
+        tai_fn=tai_trang, ngu=time.sleep, lan_fn=None) -> dict:
+    """Tải trang cho các nguồn CHƯA có bằng chứng, CHỈ khi `lan_doc` cho phép máy tải. Trả {doc_duoc, tu_choi:[(khoa, lý do)],
+    trinh_duyet:[khoa], bac_si:[(khoa, lý do)]}."""
+    V = vd()
+    lan_fn = lan_fn or (lambda url, doi: lan_doc(url, doi, V=V))
+    viec = [x for x in nhom.values() if not x["da_doc"]]
+    if toi_da is not None:
+        viec = viec[:max(0, toi_da)]
+    kq = {"doc_duoc": [], "tu_choi": [], "trinh_duyet": [], "bac_si": []}
+    da_tai = 0
+    for x in viec:
+        url = x["url"] or (("https://doi.org/" + x["khoa"][4:]) if x["khoa"].startswith("doi:") else "")
+        if not url:
+            kq["tu_choi"].append((x["khoa"], "không có URL để tải"))
+            continue
+        lan = lan_fn(url, x.get("doi") or (x["khoa"][4:] if x["khoa"].startswith("doi:") else ""))
+        if lan["lan"] == "bac_si":
+            kq["bac_si"].append((x["khoa"], lan["ly_do"]))
+            continue
+        if lan["lan"] != "may":
+            kq["trinh_duyet"].append(x["khoa"])
+            continue
+        if da_tai:
+            ngu(nghi)
+        da_tai += 1
+        try:
+            url_cuoi, loai, du_lieu = tai_fn(url)
+            tieu_de, chu = boc_noi_dung(loai, du_lieu, url_cuoi)
+        except (OSError, urllib.error.URLError, ValueError) as exc:
+            kq["tu_choi"].append((x["khoa"], f"tải lỗi: {type(exc).__name__}: {str(exc)[:80]} — chuyển làn trình duyệt"))
+            kq["trinh_duyet"].append(x["khoa"])
+            continue
+        sau = lan_fn(url_cuoi, x.get("doi") or "")
+        if sau["lan"] != "may":                     # chuyển hướng ra khỏi miền được phép tải ⇒ bỏ nội dung, không ghi
+            (kq["bac_si"].append((x["khoa"], sau["ly_do"])) if sau["lan"] == "bac_si" else kq["trinh_duyet"].append(x["khoa"]))
+            kq["tu_choi"].append((x["khoa"], f"chuyển hướng sang {mien_cua(url_cuoi)} — {sau['ly_do']}"))
+            continue
+        ly_do = danh_gia_trang(tieu_de, chu, V)
+        if ly_do:
+            kq["tu_choi"].append((x["khoa"], ly_do + " — chuyển làn trình duyệt"))
+            kq["trinh_duyet"].append(x["khoa"])
+            continue
+        ban_sao = thuoc_mien(mien_cua(url_cuoi), MIEN_GIAY_PHEP_MO)
+        if ghi:
+            ghi_ho_so(kho, ho_so(x["khoa"], url, url_cuoi, tieu_de, chu, "may_tai", ban_sao), chu if ban_sao else None)
+        kq["doc_duoc"].append(x["khoa"])
+    return kq
+
+
+# ───────────────────────── làn trình duyệt & bác sĩ ─────────────────────────
+
+MA_TRONG_TRANG = ("(async()=>{const t=document.body.innerText.replace(/\\s+/g,' ').trim();"
+                  "const h=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(t));"
+                  "return {tieu_de:document.title,so_ky_tu:t.length,"
+                  "sha256:[...new Uint8Array(h)].map(b=>b.toString(16).padStart(2,'0')).join('')}})()")
+
+
+def nap_trinh_duyet(kho: Path, url: str, tieu_de: str, so_ky_tu: int, sha256: str, *, ghi: bool, doi: str = "",
+                    dieu_khoan: str | None = None, lan_fn=None) -> tuple[int, str]:
+    V = vd()
+    if V.khoa_nguon_chinh_thuc(None, url) is None:
+        return 1, "URL không hợp lệ (cần http/https)"
+    k = V.khoa_nguon_chinh_thuc(doi, url)            # có DOI ⇒ khoá theo DOI (khớp khoá của mục trong dashboard)
+    lan = (lan_fn or (lambda u, d: lan_doc(u, d, V=V)))(url, doi)
+    if lan["lan"] == "bac_si":
+        return 1, f"từ chối — {lan['ly_do']}"
+    if lan["can_dieu_khoan"] and len((dieu_khoan or "").strip()) < 15:
+        return 1, ("từ chối — NXB/miền chưa kiểm điều khoản: đọc trang điều khoản trước rồi khai --dieu-khoan \"<cho phép rõ "
+                   "/ giấy phép CC của trang / cơ quan nhà nước…>\" (≥ 15 ký tự)")
+    if _TIEU_DE_CHAN.search(tieu_de or "") or not (tieu_de or "").strip():
+        return 1, f"tiêu đề rỗng hoặc là trang chặn/lỗi («{tieu_de[:60]}») — trang thật chưa hiện, không ghi"
+    if so_ky_tu < V.SO_KY_TU_TOI_THIEU_NGUON:
+        return 1, f"chữ thân trang quá ngắn ({so_ky_tu} < {V.SO_KY_TU_TOI_THIEU_NGUON})"
+    if not re.fullmatch(r"[0-9a-f]{64}", sha256 or ""):
+        return 1, "sha256 phải là 64 ký tự hex tính trong trang (xem `huong-dan`)"
+    hs = {"khoa": k, "url": url, "url_cuoi": url, "tieu_de": tieu_de.strip(), "cach": "trinh_duyet", "so_ky_tu": so_ky_tu,
+          "sha256": sha256, "ban_sao": False, "luc": dt.datetime.now().isoformat(timespec="seconds"), "lan": lan["ly_do"]}
+    if dieu_khoan:
+        hs["dieu_khoan"] = dieu_khoan.strip()
+    if not ghi:
+        return 0, f"(chạy khô) sẽ ghi bằng chứng làn trình duyệt cho {k}"
+    return 0, f"✓ đã ghi {ghi_ho_so(kho, hs)}"
+
+
+def bac_si_da_doc(kho: Path, nguon: str, ghi_chu: str | None, *, ghi: bool) -> tuple[int, str]:
+    V = vd()
+    n = (nguon or "").strip()
+    k = n if re.match(r"^(?:doi:10\.|url:https?://)", n) else (V.khoa_nguon_chinh_thuc(n, None) or V.khoa_nguon_chinh_thuc(None, n))
+    if k is None:
+        return 1, "nguồn phải là DOI (10.xxxx/…) hoặc URL http(s)"
+    if not ghi_chu or len(ghi_chu.strip()) < 10:
+        return 1, "cần --ghi-chu là KẾT LUẬN của bác sĩ sau khi đọc (≥ 10 ký tự) — agent không tự điền"
+    dong = {"nguon": k, "ghi_chu": ghi_chu.strip(), "luc": dt.datetime.now().isoformat(timespec="seconds")}
+    if not ghi:
+        return 0, f"(chạy khô) sẽ ghi «bác sĩ đã đọc» cho {k}"
+    tep = kho / "trinh_duyet" / "bac-si-da-doc.jsonl"
+    tep.parent.mkdir(parents=True, exist_ok=True)
+    with tep.open("a", encoding="utf-8") as fh:
+        fh.write(json.dumps(dong, ensure_ascii=False) + "\n")
+    return 0, f"✓ đã ghi «bác sĩ đã đọc» cho {k} → {tep}"
+
+
+def huong_dan() -> str:
+    return "\n".join([
+        "LÀN TRÌNH DUYỆT — nguồn chính thức máy không tải được (FDA/EMA chặn truy cập tự động, trang chặn bot, trang ngắn):",
+        "  1. Claude mở URL trong khung trình duyệt; trang chặn bot («I am not a bot», CAPTCHA) thì BÁC SĨ tự bấm.",
+        "  2. Trang thật hiện ra ⇒ chạy đoạn mã sau trong trang (javascript) để lấy tiêu đề, độ dài, sha256 của chữ thân trang:",
+        "     " + MA_TRONG_TRANG,
+        "  0. TRƯỚC KHI MỞ: điều khoản NXB (doctrine _CONNECTOR-CHUNG-CU.md §2septies). NXB «cấm» chưa uỷ quyền ⇒ KHÔNG mở,",
+        "     bác sĩ đọc trực tiếp; NXB/miền chưa kiểm ⇒ đọc trang điều khoản trước, nạp kèm --dieu-khoan.",
+        "  3. python3 tools/doc_nguon_chinh_thuc.py nap-trinh-duyet --url URL [--doi DOI] --tieu-de \"…\" --so-ky-tu N \\",
+        "        --sha256 HEX [--dieu-khoan \"<căn cứ>\"] --ghi",
+        "Bác sĩ đã tự đọc nguồn: bac-si-da-doc --nguon \"<DOI|URL>\" --ghi-chu \"<kết luận của bác sĩ>\" --ghi",
+    ])
+
+
+# ───────────────────────── CLI ─────────────────────────
+
+def main(argv: list[str] | None = None, *, kho: Path | None = None, dashboards: list[Path] | None = None,
+         tai_fn=tai_trang) -> int:
+    ap = argparse.ArgumentParser(description="Đọc nguồn chính thức cho mục apply không PMID (chạy khô mặc định)")
+    sub = ap.add_subparsers(dest="lenh", required=True)
+    p = sub.add_parser("liet-ke")
+    p.add_argument("--tat-ca", action="store_true", help="mọi bản dashboard (mặc định: bản ĐÃ PASS mới nhất mỗi chủ đề)")
+    p.add_argument("--json", action="store_true")
+    p = sub.add_parser("tai")
+    p.add_argument("--tat-ca", action="store_true")
+    p.add_argument("--ghi", action="store_true")
+    p.add_argument("--toi-da", type=int)
+    sub.add_parser("huong-dan")
+    p = sub.add_parser("nap-trinh-duyet")
+    p.add_argument("--url", required=True)
+    p.add_argument("--doi", default="", help="DOI của mục (khoá nguồn theo DOI khi mục có DOI)")
+    p.add_argument("--dieu-khoan", help="căn cứ điều khoản đã đọc (bắt buộc với NXB/miền chưa kiểm)")
+    p.add_argument("--tieu-de", required=True)
+    p.add_argument("--so-ky-tu", type=int, required=True)
+    p.add_argument("--sha256", required=True)
+    p.add_argument("--ghi", action="store_true")
+    p = sub.add_parser("bac-si-da-doc")
+    p.add_argument("--nguon", required=True)
+    p.add_argument("--ghi-chu")
+    p.add_argument("--ghi", action="store_true")
+    a = ap.parse_args(argv)
+    kho = kho or kho_mac_dinh()
+    if a.lenh == "huong-dan":
+        print(huong_dan())
+        return 0
+    if a.lenh == "nap-trinh-duyet":
+        ma, tb = nap_trinh_duyet(kho, a.url, a.tieu_de, a.so_ky_tu, a.sha256, ghi=a.ghi, doi=a.doi, dieu_khoan=a.dieu_khoan)
+        print(tb)
+        return ma
+    if a.lenh == "bac-si-da-doc":
+        ma, tb = bac_si_da_doc(kho, a.nguon, a.ghi_chu, ghi=a.ghi)
+        print(tb)
+        return ma
+    if not kho.is_dir():
+        print(f"⚪ không thấy kho toàn văn {kho} — không đo được")
+        return 2
+    V = vd()
+    dashboards = dashboards if dashboards is not None else chon_dashboard(a.tat_ca)
+    muc = quet_muc(dashboards, V)
+    nhom = nhom_theo_khoa(muc, V.bang_chung_nguon_chinh_thuc(kho))
+    khong_khoa = [m for m in muc if not m["khoa"]]
+    if a.lenh == "liet-ke":
+        da = sum(1 for x in nhom.values() if x["da_doc"])
+        if a.json:
+            print(json.dumps({"so_muc": len(muc), "so_nguon": len(nhom), "da_doc": da, "khong_khoa": len(khong_khoa),
+                              "nguon": list(nhom.values())}, ensure_ascii=False, indent=1))
+        else:
+            print(f"Nguồn chính thức của mục apply không PMID: {len(muc)} mục · {len(nhom)} nguồn · {da} đã có bằng chứng đọc"
+                  + (f" · {len(khong_khoa)} mục không truy nguyên được" if khong_khoa else ""))
+            ky = {"may": "máy", "trinh_duyet": "trình duyệt", "bac_si": "bác sĩ"}
+            dem: dict[str, int] = {}
+            for x in sorted(nhom.values(), key=lambda x: (x["da_doc"], x["khoa"])):
+                u = x["url"] or (("https://doi.org/" + x["khoa"][4:]) if x["khoa"].startswith("doi:") else "")
+                ln = "" if x["da_doc"] else lan_doc(u, x["doi"], V=V)["lan"]
+                dem[ln] = dem.get(ln, 0) + (0 if x["da_doc"] else 1)
+                print(f"  {'✓' if x['da_doc'] else '·'} [{ky.get(ln, 'đã đọc')}] {x['khoa'][:100]}  ({len(x['muc'])} mục)")
+            print("  Làn của nguồn chưa đọc: " + " · ".join(f"{ky[k]} {v}" for k, v in dem.items() if k))
+        return 0 if da == len(nhom) and not khong_khoa else 1
+    kq = tai(nhom, kho, ghi=a.ghi, toi_da=a.toi_da, tai_fn=tai_fn)
+    print(f"{'' if a.ghi else '(chạy khô) '}tải được {len(kq['doc_duoc'])} · cần làn trình duyệt {len(set(kq['trinh_duyet']))}"
+          f" · bác sĩ đọc trực tiếp {len(kq['bac_si'])} · từ chối {len(kq['tu_choi'])}")
+    for k, ly_do in kq["tu_choi"]:
+        print(f"  ✗ {k[:100]} — {ly_do}")
+    for k, ly_do in kq["bac_si"]:
+        print(f"  👤 {k[:100]} — {ly_do}")
+    if kq["trinh_duyet"]:
+        print("  → làn trình duyệt: python3 tools/doc_nguon_chinh_thuc.py huong-dan")
+    if not a.ghi and kq["doc_duoc"]:
+        print("  thêm --ghi để ghi bằng chứng")
+    return 0 if not kq["trinh_duyet"] and not kq["tu_choi"] and not kq["bac_si"] else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
