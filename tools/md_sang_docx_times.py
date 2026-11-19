@@ -256,7 +256,15 @@ def _ap_chuan_trinh_bay(doc, co_chu: float) -> bool:
     return True
 
 
-def dung_docx(md: str, co_chu: float, trang_de_cuong: bool = False) -> "Document":
+_ANH_RE = re.compile(r"^!\[([^\]]*)\]\(([^)\s]+)\)\s*$")
+_TEN_BIEU_BANG_RE = re.compile(r"^\*\*(?:Bảng|Hình|Biểu đồ|Sơ đồ)\s+\d+(?:\.\d+)*\.\s.+\*\*$")
+
+
+def dung_docx(md: str, co_chu: float, trang_de_cuong: bool = False, thu_muc_anh: Path | None = None,
+              ho_so: bool = False) -> "Document":
+    """Dựng Word. `thu_muc_anh`: gốc của đường dẫn ảnh «![…](tệp.png)» (thường là thư mục tệp .md). `ho_so` (tệp ra nằm
+    trong `exports/`): bảng theo chuẩn trình bày hồ sơ (11pt) và áp `chuan_trinh_bay` như chế độ đề cương — 19/11/2026,
+    bốn bản Word G1 của BTM dựng bằng công cụ này ra bảng 12pt (cỡ thân − 1) bị bộ đo báo đỏ «chuẩn 11»."""
     doc = Document()
     # Trạng thái chế độ đề cương: đang ở trang bìa? đoạn kế tiếp có ngắt trang trước?
     trang = {"bia": trang_de_cuong, "ngat": False}
@@ -351,7 +359,7 @@ def dung_docx(md: str, co_chu: float, trang_de_cuong: bool = False) -> "Document
                 i += 1
             if trang["ngat"]:
                 _moi(doc.add_paragraph())
-            co_bang = CO_CHU_BANG_DE_CUONG if trang_de_cuong else co_chu - 1
+            co_bang = CO_CHU_BANG_DE_CUONG if (trang_de_cuong or ho_so) else co_chu - 1
             bang = doc.add_table(rows=1, cols=len(dau))
             bang.style = "Table Grid"
             for j, o in enumerate(dau):
@@ -401,11 +409,47 @@ def dung_docx(md: str, co_chu: float, trang_de_cuong: bool = False) -> "Document
             _viet_inline(p, " ".join(noi_dung), co=co_chu)
             continue
 
+        # 19/11/2026 (bác sĩ: «phần trình bày biểu bảng chưa có và chưa đúng chuẩn»): hình «![…](tệp)» ⇒ ảnh thật căn
+        # giữa (≤ 15 cm, vừa lề 3-2 cm); thiếu tệp ⇒ dòng nghiêng nói rõ, không im lặng bỏ hình.
+        m_anh = _ANH_RE.match(tho)
+        if m_anh:
+            tep = (thu_muc_anh or Path(".")) / m_anh.group(2)
+            p = _moi(doc.add_paragraph())
+            p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            p.paragraph_format.keep_with_next = True
+            if tep.is_file():
+                rong = 15.0
+                try:
+                    from PIL import Image  # noqa: PLC0415
+
+                    with Image.open(tep) as im:
+                        w, h = im.size
+                    if h and w / h < 1.25:
+                        rong = 11.0
+                except Exception:  # noqa: BLE001 — thiếu Pillow: dùng bề rộng chuẩn
+                    pass
+                p.add_run().add_picture(str(tep), width=Cm(rong))
+            else:
+                _viet_inline(p, f"[Thiếu tệp hình: {tep.name}]", co=co_chu)
+            i += 1
+            continue
+
+        # Tên bảng/hình/biểu đồ «**Bảng 5.1. …**» ⇒ đoạn đậm căn giữa (tên bảng giữ liền với bảng ngay dưới).
+        if _TEN_BIEU_BANG_RE.match(tho):
+            p = _moi(doc.add_paragraph())
+            p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            p.paragraph_format.keep_with_next = tho.startswith("**Bảng")
+            p.paragraph_format.space_after = Pt(6)
+            _viet_inline(p, tho, co=co_chu)
+            i += 1
+            continue
+
         # Đoạn văn thường — gộp các dòng liền nhau
         khoi = [tho]
         i += 1
         while (i < len(dong_md) and dong_md[i].strip()
-               and not dong_md[i].strip().startswith(("#", "|", ">", "---"))
+               and not dong_md[i].strip().startswith(("#", "|", ">", "---", "!["))
+               and not _TEN_BIEU_BANG_RE.match(dong_md[i].strip())
                and not re.match(r"^(\s*)([-*•]|\d+[.)])\s+", dong_md[i])):
             khoi.append(dong_md[i].strip())
             i += 1
@@ -416,6 +460,7 @@ def dung_docx(md: str, co_chu: float, trang_de_cuong: bool = False) -> "Document
 
     if trang_de_cuong:
         _trinh_bay_de_cuong(doc)
+    if trang_de_cuong or ho_so:
         _ap_chuan_trinh_bay(doc, co_chu)
     return doc
 
@@ -449,7 +494,9 @@ def main(argv: list[str] | None = None) -> int:
     if a.co_chu is None:
         a.co_chu = co_chu_mac_dinh(ra)
 
-    doc = dung_docx(a.nguon.read_text(encoding="utf-8"), a.co_chu, a.trang_de_cuong)
+    ho_so = "exports" in Path(ra).resolve().parts
+    doc = dung_docx(a.nguon.read_text(encoding="utf-8"), a.co_chu, a.trang_de_cuong,
+                    thu_muc_anh=a.nguon.resolve().parent, ho_so=ho_so)
     doc.save(str(ra))
     if a.trang_de_cuong:
         ctb, nguon = _nap_chuan_trinh_bay()
