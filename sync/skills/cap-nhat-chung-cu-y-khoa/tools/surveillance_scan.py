@@ -99,8 +99,19 @@ def _la_host_ncbi(url: str) -> bool:
 # viết đúng cú pháp Europe PMC trả 31–269. Trước bản vá, khi NCBI chặn, 4 làn thẩm quyền và 3 tầng chứng
 # cứ mạnh biến mất mà báo cáo vẫn ghi PASS (alerts 01/09, 07/09).
 # Bộ dịch HỮU HẠN: gặp thẻ lạ thì RAISE (fail-closed, chủ đề FAIL rõ ràng) — không đoán, không bỏ thẻ.
+# VÁ 19/11/2026 (kiểm toàn diện hệ chứng cứ): thẻ MeSH dịch sang `KW:`, KHÔNG phải `MESH:`. Đo thật 19/11:
+#   • `MESH:` chỉ trả 0,4–3% số bài PubMed gắn MeSH đó (Dyslipidemias: MESH 374 vs PubMed [mh:noexp] 17.022;
+#     Liver Neoplasms: 1.774 vs 200.992) ⇒ làn dự phòng gần như MÙ với mọi truy vấn MeSH;
+#   • `KW:` khớp sát PubMed [mh:noexp] (17.456 vs 17.022; 215.196 vs 200.992) và 54/60 PMID mẫu `KW:"Dyslipidemias"`
+#     đúng là có MeSH đó trong PubMed (phần còn lại là từ khoá tác giả);
+#   • 106/1485 truy vấn watchlist thật dùng [MeSH Major Topic]/[mesh] — trước bản vá RAISE (chủ đề mất giám sát khi
+#     NCBI chặn). Europe PMC KHÔNG có trường «chủ đề chính» (danh mục /fields không có trường MeSH nào) ⇒ [majr]/
+#     [MeSH Major Topic] dịch thành `KW:` = TẬP RỘNG HƠN (thêm nhiễu, không bỏ sót) — ở làn dự phòng vốn đã
+#     PASS_DEGRADED, rộng hơn an toàn hơn mù. Europe PMC cũng không mở rộng cây MeSH như PubMed [mh] (≈ [mh:noexp]).
+_THE_MESH = {"mh", "mesh", "mesh terms", "mh:noexp", "mesh:noexp", "mesh terms:noexp",
+             "majr", "mesh major topic", "majr:noexp", "mesh major topic:noexp"}
 _THE_EPMC_TRUONG = {"pt": "PUB_TYPE", "ptyp": "PUB_TYPE", "ta": "JOURNAL", "ti": "TITLE",
-                    "title": "TITLE", "ad": "AFF", "cn": "AUTH", "mh": "MESH"}
+                    "title": "TITLE", "ad": "AFF", "cn": "AUTH", **{the: "KW" for the in _THE_MESH}}
 _THE_EPMC_TIEU_DE_TOM_TAT = {"tiab", "tw"}
 _RE_TOKEN_TRUY_VAN = re.compile(r'\s*("[^"]*"|\(|\)|\[[^\]]*\]|[^\s()\[\]"]+)')
 
@@ -160,7 +171,7 @@ def dich_pubmed_sang_europepmc(query: str) -> str:
                     raise ValueError(f"thẻ [dp] chỉ hỗ trợ năm 4 chữ số, gặp {cum!r}")
                 out.append(f"PUB_YEAR:{cum}")
             elif the in _THE_EPMC_TRUONG:
-                q = f'"{cum}"' if (" " in cum or the in ("pt", "ptyp", "ta", "ad", "cn", "mh")) else cum
+                q = f'"{cum}"' if (" " in cum or the in ("pt", "ptyp", "ta", "ad", "cn") or the in _THE_MESH) else cum
                 out.append(f"{_THE_EPMC_TRUONG[the]}:{q}")
             else:
                 raise ValueError(f"thẻ PubMed [{the}] chưa có bản dịch sang Europe PMC (truy vấn: {query[:120]!r})")

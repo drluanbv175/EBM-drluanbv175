@@ -470,6 +470,30 @@ def tra(cau_hoi: str, cards: list[dict], vq: set[str]) -> list[dict]:
     return ket
 
 
+def _la_tu_ghep(cp: tuple, ci: dict) -> bool:
+    """Cặp (a, b) có phải TỪ GHÉP thật của kho không (dùng cho luật «từ ghép bắt buộc kề nhau»).
+
+    VÁ 19/11/2026 (kiểm toàn diện, bộ vàng tụt 80/80 → 73/80): luật cũ «từng kề nhau ở ≥1 tiêu đề» MONG MANH khi kho lớn —
+    MỘT tiêu đề «…kháng đông rung nhĩ…» biến cặp vắt ranh giới cụm «đông | rung» thành «từ ghép» ⇒ mọi thẻ viết khác
+    («Kháng đông đường uống cho rung nhĩ (DOAC ưu tiên)») bị loại, câu «chống đông rung nhĩ DOAC» ra rỗng. Nay đòi bằng
+    chứng tỉ lệ: trong các tiêu đề có CẢ HAI vế, chúng kề nhau ≥50%, HOẶC kề nhau ở ≥3 tiêu đề với tỉ lệ ≥10%. Đo trên kho
+    thật 3.248 thẻ: cặp giả «đông-rung» 2/42 (0,05) ⇒ không phải từ ghép; từ ghép thật có thành phần phổ biến vẫn giữ
+    («chống đông» 23/87, «tăng huyết» 24/74, «tăng cân» 11/69, «lợi tiểu» 8/18). Cặp hai vế giống nhau («đau đầu») giữ luật
+    cũ — tỉ lệ vô nghĩa khi a = b."""
+    ke = ci["df_cap"].get(cp, 0)
+    if ke < 1:
+        return False
+    a, b = cp
+    if a == b:
+        return True
+    bo_nho = ci.setdefault("_tu_ghep", {})
+    if cp not in bo_nho:
+        cung = sum(1 for t in ci["the"] if a in t["chinh"] and b in t["chinh"])
+        ty_le = ke / cung if cung else 1.0
+        bo_nho[cp] = ty_le >= 0.5 or (ke >= 3 and ty_le >= 0.1)
+    return bo_nho[cp]
+
+
 def tra_chi_tiet(cau_hoi: str, cards: list[dict]) -> tuple[list[dict], str]:
     """Như `tra` nhưng trả thêm loại kết cục rỗng: 'khop' | 'khong_co' (không thẻ nào ĐẾN GẦN chủ đề) | 'khop_yeu' (có thẻ
     đã qua neo + phủ tiêu đề ≥50% nhưng dưới ngưỡng tin cậy — KHÔNG hiển thị, chỉ để ghi sổ). 'khop_yeu' là CẬN-TRÚNG thật:
@@ -525,7 +549,7 @@ def tra_chi_tiet(cau_hoi: str, cards: list[dict]) -> tuple[list[dict], str]:
     # Cặp là TỪ GHÉP khi chính cặp đó từng kề nhau ở tiêu đề ≥1 thẻ trong kho («đau đầu», «lợi tiểu», «suy giáp»). Cặp ngang
     # qua ranh giới cụm («chống đông | rung nhĩ», «dài hạn | COPD», «béo phì | semaglutide») không bao giờ kề ở kho nên không
     # bị đòi — nếu đòi thì mọi câu ghép hai cụm đều trượt.
-    cap_ghep = [cp for cp in cap_cau if ci["df_cap"].get(cp, 0) >= 1]
+    cap_ghep = [cp for cp in cap_cau if _la_tu_ghep(cp, ci)]
     # Cặp cách nhau MỘT từ đệm trong câu hỏi («cai THUỐC lá», «thận NHÂN tạo»): từng gặp cách-một-từ ở kho thì thẻ có cả hai vế
     # phải có chúng trong khoảng ≤2 từ — «cai … lá» rải rác («cải thiện … van ba lá») không phải «cai thuốc lá».
     cap_cach = list(dict.fromkeys((a, b) for a, x, b in zip(goc, goc[1:], goc[2:])

@@ -63,7 +63,13 @@ def test_dich_tung_the():
     assert d("outpatient*[tiab]") == "(TITLE:outpatient* OR ABSTRACT:outpatient*)"
     assert d('"National Institute for Health and Care Excellence"[ad]') == 'AFF:"National Institute for Health and Care Excellence"'
     assert d('"World Health Organization"[cn]') == 'AUTH:"World Health Organization"'
-    assert d("adult[mh]") == 'MESH:"adult"'
+    # 19/11/2026: MeSH ⇒ KW (đo thật: MESH: chỉ 0,4–3% số bài PubMed; KW khớp sát, 54/60 PMID mẫu có đúng MeSH đó)
+    assert d("adult[mh]") == 'KW:"adult"'
+    assert d('"Dyslipidemias"[MeSH Major Topic]') == 'KW:"Dyslipidemias"'
+    assert d('"Liver Neoplasms"[mesh]') == 'KW:"Liver Neoplasms"'
+    assert d('"Diabetes Mellitus"[MeSH Terms]') == 'KW:"Diabetes Mellitus"'
+    assert d("Obesity[majr]") == 'KW:"Obesity"'
+    assert "MESH:" not in d('"Hypertension"[mh] OR "Hypertension"[majr]')
 
 
 def test_cum_nhieu_tu_tinh_tu_toan_tu_gan_nhat():
