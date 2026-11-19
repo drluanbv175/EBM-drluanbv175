@@ -558,6 +558,8 @@ def main() -> int:
     ap.add_argument("--json", action="store_true", help="in kết quả dạng JSON")
     ap.add_argument("--khong-endnote", action="store_true",
                     help="bỏ bước ⑧ ghi EndNote — cho lượt lịch (ranh giới quyền lượt lịch BH173: lượt lịch không ghi EndNote)")
+    ap.add_argument("--khong-api", action="store_true",
+                    help="bỏ bước ④-quinquies (kiểm ngữ nghĩa bằng Claude API, tính phí) cho lượt này")
     a = ap.parse_args()
 
     dash = Path(a.dashboard).resolve()
@@ -691,6 +693,27 @@ def main() -> int:
         if rc == 1:
             print("   🟠 Có mục cần đọc lại nguồn gốc (quần thể/điều kiện/chiều) — chạy lại lệnh trên để xem"
                   " đoạn nguồn; không chặn xuất.")
+
+    # ── ④-quinquies Kiểm ngữ nghĩa bằng Claude API (bác sĩ 20/11/2026, «Làm 2,3,6» — mục 3) ──
+    # Quần thể · chiều · điều kiện của mục `apply` có PMID, mô hình đọc tóm tắt nguồn. CHỈ CẢNH BÁO như K3: không đổi
+    # rc_final, không chặn xuất. CHƯA HIỆU CHUẨN (bộ vàng chưa có nhãn độc lập của bác sĩ) — mọi dòng in ra mang nhãn đó.
+    # Gọi API chỉ khi chính sách sync/api-khi-can.json → tu_chay.ngu_nghia_xuat_goi = true; giữ mù mục bộ vàng chờ nhãn.
+    KNA = ROOT / "tools" / "kiem_ngu_nghia_api.py"
+    if not a.online:
+        print("④-quinquies Bỏ qua kiểm ngữ nghĩa API (không có --online — cần tóm tắt nguồn).")
+    elif a.khong_api:
+        print("④-quinquies Bỏ qua kiểm ngữ nghĩa API (--khong-api).")
+    elif not KNA.exists():
+        print("④-quinquies ⚠ Bỏ qua: thiếu tools/kiem_ngu_nghia_api.py")
+    else:
+        print("④-quinquies Kiểm ngữ nghĩa bằng Claude API (quần thể/chiều/điều kiện — CHƯA HIỆU CHUẨN, chỉ cảnh báo)…")
+        rc, out = run([py, str(KNA), "--dashboard", str(dash), "--online", "--goi-api"])
+        result["ngu_nghia_api_ma"] = rc
+        tong = [dong for dong in out.splitlines() if dong.startswith("Tổng:")]
+        print("   " + (tong[-1] if tong else (out.strip().splitlines() or ["không rõ"])[-1][:160]))
+        if rc == 1:
+            print("   🟠 API nghi một số mục lệch nguồn — chạy lại lệnh trên để xem lý do từng mục; đây là GỢI Ý chưa hiệu"
+                  " chuẩn, bác sĩ đọc lại nguồn rồi quyết (không chặn xuất).")
 
     # ── ④-quater Tin cậy cao nhất · mới nhất · toàn văn (bác sĩ giao 06/11/2026) ──
     # «Luôn đảm bảo những chứng cứ có độ tin cậy cao nhất và mới nhất» + «… hãy lấy toàn văn luôn». CHỈ CẢNH BÁO như K3:

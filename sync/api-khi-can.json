@@ -3,9 +3,11 @@
   "tu_chay": {
     "chu_de": true,
     "de_cuong": true,
-    "cafes": true
+    "cafes": true,
+    "ngu_nghia_xuat_goi": true
   },
   "chu_de_toi_da_moi_luot": 60,
   "cafes_cach_ngay_toi_thieu": 30,
-  "nen_cach_gio_toi_thieu": 6
+  "nen_cach_gio_toi_thieu": 6,
+  "_ghi_chu_ngu_nghia_xuat_goi": "THÊM 20/11/2026 — bác sĩ «Làm 2,3,6» (mục 3: nối bộ kiểm ngữ nghĩa bằng Claude API vào bước xuất gói ở mức CẢNH BÁO). Đọc bởi tools/kiem_ngu_nghia_api.py (chay_buoc_xuat) khi xuat_goi_cap_nhat.py --online chạy bước ④-quinquies; KHÔNG thuộc vòng tools/api_khi_can.py. Trần 40 lượt mới/dashboard; kết quả CHƯA HIỆU CHUẨN, không chặn xuất; mục bộ vàng chờ nhãn bị bỏ qua để giữ mù. Đặt false để tắt."
 }
