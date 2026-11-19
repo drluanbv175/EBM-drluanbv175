@@ -12209,6 +12209,63 @@ def bh182_cong_thay_moi_muc_khong_co_muc_khoa_nhay():
     return True, "cổng chặn mục khoá nháy, không báo oan · kho không còn dashboard nào có mục khoá nháy"
 
 
+def bh183_word_ho_so_bang_11pt_va_co_hinh():
+    """19/11 — kiểm toàn diện: bốn bản Word G1 mới của BTM (đề xuất kiểm định phiếu trích, MT4 tác động ngân sách, kinh tế
+    y tế, phản biện đề cương) dựng bằng `md_sang_docx_times.py` không cờ ⇒ bảng 12pt (cỡ thân − 1) trong khi chuẩn trình
+    bày hồ sơ là 11pt — bộ đo 11 cổng × 5 trục báo 🔴 ở cả G1 lẫn G10. Cùng ngày bác sĩ chê «phần trình bày biểu bảng
+    chưa có và chưa đúng chuẩn»: chương «Dự kiến kết quả» nay có sơ đồ/biểu đồ thật (`![…](bieu-bang/….png)`) mà công cụ
+    này không chèn ảnh. Vá: tệp ra nằm trong `exports/` ⇒ bảng 11pt + chuẩn trình bày; dòng ảnh ⇒ ảnh thật căn giữa; tên
+    bảng/hình ⇒ căn giữa. Kiểm HÀNH VI: dựng Word thật vào một thư mục `exports/` tạm từ Markdown có bảng + ảnh."""
+    import struct
+    import tempfile as _tf
+    import zipfile
+    import zlib
+
+    try:
+        import docx  # noqa: F401
+    except ImportError:
+        return True, "⚪ không có python-docx trên máy này — không dựng thử được (không phải đạt)"
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("_bh183_md_docx", REPO / "tools/md_sang_docx_times.py")
+    md = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(md)
+
+    def _png(w: int, h: int) -> bytes:
+        tho = b"".join(b"\x00" + b"\xff\xff\xff" * w for _ in range(h))
+
+        def _khoi(t: bytes, d: bytes) -> bytes:
+            return struct.pack(">I", len(d)) + t + d + struct.pack(">I", zlib.crc32(t + d) & 0xffffffff)
+        return (b"\x89PNG\r\n\x1a\n" + _khoi(b"IHDR", struct.pack(">IIBBBBB", w, h, 8, 2, 0, 0, 0))
+                + _khoi(b"IDAT", zlib.compress(tho)) + _khoi(b"IEND", b""))
+
+    with _tf.TemporaryDirectory() as d:
+        thu = Path(d) / "exports" / "de-tai"
+        (thu / "bieu-bang").mkdir(parents=True)
+        (thu / "bieu-bang" / "hinh-5-1.png").write_bytes(_png(40, 20))
+        nguon = thu / "G1_DE_XUAT_THU.md"
+        nguon.write_text("# 5. DỰ KIẾN KẾT QUẢ\n\n![Hình 5.1](bieu-bang/hinh-5-1.png)\n\n**Hình 5.1. Sơ đồ chọn đối tượng**"
+                         "\n\n**Bảng 5.1. Đặc điểm chung**\n\n| Đặc điểm | n (%) |\n|---|---|\n| Tuổi | … |\n",
+                         encoding="utf-8")
+        ra = nguon.with_suffix(".docx")
+        md.main([str(nguon), "--ra", str(ra)])
+        if not ra.is_file():
+            return False, "md_sang_docx_times không dựng được Word"
+        with zipfile.ZipFile(ra) as z:
+            co_anh = any(n.startswith("word/media/") for n in z.namelist())
+            xml = z.read("word/document.xml").decode("utf-8")
+        import docx as _docx
+        bang = _docx.Document(str(ra)).tables[0]
+        co = {r.font.size.pt for c in bang.rows[1].cells for p_ in c.paragraphs for r in p_.runs if r.font.size}
+    if not co_anh:
+        return False, "dòng ![…](…) không thành ảnh trong Word — hình của chương dự kiến kết quả bị mất"
+    if co != {11.0}:
+        return False, f"bảng của Word hồ sơ (exports/) cỡ {sorted(co)} pt — chuẩn trình bày hồ sơ là 11pt"
+    i = xml.find("Hình 5.1. Sơ đồ")
+    if i < 0 or 'w:val="center"' not in xml[max(0, xml.rfind("<w:p>", 0, i)):i]:
+        return False, "tên hình không căn giữa"
+    return True, "Word hồ sơ: bảng 11pt, hình chèn thật, tên hình/bảng căn giữa"
+
+
 BAI_HOC = [
     ("BH01", "12/08", "Cổng không được `return` sớm che luật item", bh01_khong_return_som),
     ("BH02", "12/08", "Parser giữ nguyên giá trị có nháy kép", bh02_parser_giu_nguyen_nhay_kep),
@@ -12379,6 +12436,7 @@ BAI_HOC = [
     ("BH180", "17/11", "Gọi API Claude không cắt cụt, không nuốt, không đo sai (cổng kiểm lạc chủ đề max_tokens=2000 ⇒ dashboard 83 mục cụt ở 2000/2000, JSON hỏng quy về «skipped» nên hòm việc im lặng, «uncertain» bị nuốt; CAFÉ-S max_tokens=1500, thiếu agent thì đo model trần): max ≥ 16000 + effort, cụt ⇒ error, báo mục không chắc, ca cụt là ⚪", bh180_goi_api_khong_cat_cut_khong_nuot_khong_do_sai),
     ("BH181", "17/11", "Kiểm thử không chạm khoá và nhật ký API THẬT (test chạy xuat_goi --online ⇒ tiến trình con đọc kho khoá thật, ghi đè nhật ký sức khoẻ thật; mẫu có mục là gọi API thật mỗi lượt CI): dưới pytest từ chối, EBM_KIEM_API_THAT=1 mới mở", bh181_kiem_thu_khong_cham_khoa_va_nhat_ky_that),
     ("BH182", "17/11", "Cổng thấy MỌI mục — chặn mục viết khoá có nháy (VKDT_TamThanKinh ITEM-63…68 kiểu {\"id\": …} vô hình với cổng, quét chủ đề, hub; cổng PASS 12 ngày): luật 2b chặn cứng, kho không còn mục khoá nháy", bh182_cong_thay_moi_muc_khong_co_muc_khoa_nhay),
+    ("BH183", "19/11", "Word hồ sơ dựng bằng md_sang_docx_times đúng chuẩn trình bày (4 bản Word G1 BTM ra bảng 12pt — đỏ ở G1/G10) và chèn được hình/biểu đồ của chương dự kiến kết quả: exports/ ⇒ bảng 11pt; ảnh thật; tên căn giữa", bh183_word_ho_so_bang_11pt_va_co_hinh),
     ("BH122", "27/09", "Chu trình chứng cứ không kéo 🔴 «rút bỏ hẳn» cho ca đính-chính-bị-rút bác sĩ đã ký", bh122_chu_trinh_khong_ra_do_gia_cho_dinh_chinh_da_ky),
     ("BH150", "02/10", "Làn trình duyệt có người: FDA 401 là mã chặn bot; máy mở trang, bác sĩ tự xác nhận, máy ghi bằng chứng; lô không dừng vì chặn bot; Scopus/WoS/DynaMed chỉ thành ứng viên khi xác minh được", bh150_lan_trinh_duyet_co_nguoi_chan_bot_va_tai_khoan_bac_si),
     ("BH123", "27/09", "Sổ xác minh nhận bằng chứng trình duyệt thật cho miền chặn kiểm tự động, đúng như cổng", bh123_so_xac_minh_nhan_bang_chung_trinh_duyet_nhu_cong),
