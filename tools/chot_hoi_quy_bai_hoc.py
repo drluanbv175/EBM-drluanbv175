@@ -12276,6 +12276,51 @@ def bh183_word_ho_so_bang_11pt_va_co_hinh():
     return True, "Word hồ sơ: bảng 11pt, hình chèn thật, tên hình/bảng căn giữa"
 
 
+def bh184_ban_thao_tap_chi_khong_nhan_may_va_do_trang():
+    """19/11 — gói nộp Tạp chí Y Dược Thực hành 175 của đề tài BTM: agent `viet-ban-thao` làm theo luật cũ, chèn nhãn
+    «[BẢN NHÁP AI — …]» và dòng ghi chú «>» vào chính bản thảo, thư gửi, cam kết (trái lời bác sĩ 17/11: văn bản người đọc
+    không mang dấu vết soạn thảo/máy); bảng kiểm đếm tay ghi số trang «chưa đo được» trong khi Word đếm 15 trang (thể lệ
+    ≤ 10). Vá: nhãn nguồn gốc ghi ở tệp hướng dẫn điền của gói; trước khi trả gói chạy `kiem_ban_thao_tap_chi.py`.
+    Kiểm: (1) doctrine của agent không còn dặn chèn nhãn trong ngoặc vuông và có gọi công cụ kiểm; (2) khi repo y khoa có
+    công cụ, bản thảo mang nhãn bị chặn, bản sạch qua."""
+    import importlib.util
+    import tempfile as _tf
+
+    ag = REPO / ".claude/agents/viet-ban-thao.md"
+    try:
+        van = ag.read_text(encoding="utf-8")
+    except OSError:
+        return False, "không đọc được .claude/agents/viet-ban-thao.md"
+    if "[BẢN NHÁP AI" in van:
+        return False, "viet-ban-thao còn dặn chèn nhãn «[BẢN NHÁP AI …]» vào văn bản nộp"
+    if "kiem_ban_thao_tap_chi.py" not in van or "HUONG_DAN_DIEN_GOI_NOP" not in van:
+        return False, "viet-ban-thao chưa dạy ghi nhãn ở tệp hướng dẫn điền và chạy kiem_ban_thao_tap_chi.py"
+    cong_cu = REPO / "medical-ebm-automation/tools/kiem_ban_thao_tap_chi.py"
+    if not cong_cu.is_file():
+        return True, "⚪ doctrine đúng; repo y khoa trên máy này chưa có kiem_ban_thao_tap_chi.py — chưa thử hành vi"
+    try:
+        import docx  # noqa: F401
+    except ImportError:
+        return True, "⚪ doctrine đúng; không có python-docx — chưa thử hành vi công cụ"
+    spec = importlib.util.spec_from_file_location("_bh184_kbt", cong_cu)
+    kb = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(kb)
+    sach = ("# TIÊU ĐỀ BÀI\n\n## TÓM TẮT\n\n**Kết quả:** [CẦN SỐ]%.\n\n**Từ khoá:** a, b.\n\n## ABSTRACT\n\n"
+            "**Keywords:** a, b.\n\n## 1. ĐẶT VẤN ĐỀ\n\nNền [1].\n\n## TÀI LIỆU THAM KHẢO\n\n[1] A (2024). B. *C*, 1, 1.\n")
+    co_nhan = sach.replace("## TÓM TẮT", "> [BẢN NHÁP AI — TÁC GIẢ PHẢI VIẾT LẠI & CHỊU TRÁCH NHIỆM]\n\n## TÓM TẮT")
+    with _tf.TemporaryDirectory() as d:
+        a, b = Path(d) / "sach.md", Path(d) / "nhan.md"
+        a.write_text(sach, encoding="utf-8")
+        b.write_text(co_nhan, encoding="utf-8")
+        ma_sach = kb.kiem(a, "Tạp chí Y Dược Thực hành 175")["ma"]
+        ma_nhan = kb.kiem(b, "Tạp chí Y Dược Thực hành 175")["ma"]
+    if ma_nhan != 1:
+        return False, f"bản thảo mang nhãn «BẢN NHÁP AI» không bị chặn (mã {ma_nhan})"
+    if ma_sach != 0:
+        return False, f"bản thảo sạch bị chặn giả (mã {ma_sach})"
+    return True, "agent ghi nhãn ở tệp hướng dẫn; công cụ chặn nhãn máy trong bản thảo, cho qua bản sạch"
+
+
 BAI_HOC = [
     ("BH01", "12/08", "Cổng không được `return` sớm che luật item", bh01_khong_return_som),
     ("BH02", "12/08", "Parser giữ nguyên giá trị có nháy kép", bh02_parser_giu_nguyen_nhay_kep),
@@ -12447,6 +12492,7 @@ BAI_HOC = [
     ("BH181", "17/11", "Kiểm thử không chạm khoá và nhật ký API THẬT (test chạy xuat_goi --online ⇒ tiến trình con đọc kho khoá thật, ghi đè nhật ký sức khoẻ thật; mẫu có mục là gọi API thật mỗi lượt CI): dưới pytest từ chối, EBM_KIEM_API_THAT=1 mới mở", bh181_kiem_thu_khong_cham_khoa_va_nhat_ky_that),
     ("BH182", "17/11", "Cổng thấy MỌI mục — chặn mục viết khoá có nháy (VKDT_TamThanKinh ITEM-63…68 kiểu {\"id\": …} vô hình với cổng, quét chủ đề, hub; cổng PASS 12 ngày): luật 2b chặn cứng, kho không còn mục khoá nháy", bh182_cong_thay_moi_muc_khong_co_muc_khoa_nhay),
     ("BH183", "19/11", "Word hồ sơ dựng bằng md_sang_docx_times đúng chuẩn trình bày (4 bản Word G1 BTM ra bảng 12pt — đỏ ở G1/G10) và chèn được hình/biểu đồ của chương dự kiến kết quả: exports/ ⇒ bảng 11pt; ảnh thật; tên căn giữa", bh183_word_ho_so_bang_11pt_va_co_hinh),
+    ("BH184", "19/11", "Bản thảo nộp tạp chí không mang nhãn/ghi chú máy (gói YDTH175 BTM chèn «[BẢN NHÁP AI]» vào bản thảo, thư, cam kết) và số trang do Word đếm (đếm tay ghi «chưa đo», Word 15/10 trang)", bh184_ban_thao_tap_chi_khong_nhan_may_va_do_trang),
     ("BH122", "27/09", "Chu trình chứng cứ không kéo 🔴 «rút bỏ hẳn» cho ca đính-chính-bị-rút bác sĩ đã ký", bh122_chu_trinh_khong_ra_do_gia_cho_dinh_chinh_da_ky),
     ("BH150", "02/10", "Làn trình duyệt có người: FDA 401 là mã chặn bot; máy mở trang, bác sĩ tự xác nhận, máy ghi bằng chứng; lô không dừng vì chặn bot; Scopus/WoS/DynaMed chỉ thành ứng viên khi xác minh được", bh150_lan_trinh_duyet_co_nguoi_chan_bot_va_tai_khoan_bac_si),
     ("BH123", "27/09", "Sổ xác minh nhận bằng chứng trình duyệt thật cho miền chặn kiểm tự động, đúng như cổng", bh123_so_xac_minh_nhan_bang_chung_trinh_duyet_nhu_cong),
