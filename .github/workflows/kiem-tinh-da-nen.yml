@@ -79,18 +79,16 @@ jobs:
       # 0 test đang pass bị che (đo: 258 pass giữ nguyên trước/sau). Lượt đầu bật riêng
       # ubuntu; cùng ngày mở sang windows sau khi rà: không test nào dùng symlink/chmod,
       # PYTHONUTF8 đã ép, conftest ĐO thuộc tính filesystem thật (không đoán theo os)
-      # nên test dedup .Codex≡.codex tự chạy đúng trên NTFS. Đây chính là phép đo
+      # nên test phụ thuộc filesystem tự chạy đúng trên NTFS. Đây chính là phép đo
       # windows mà ghi chú cũ đòi — đo bằng chính CI, có người canh kết quả.
-      # Sinh mirror Codex TRƯỚC khi test: test_agent_sync_health_is_green kiểm «mirror
-      # khớp nguồn» — trên checkout tươi mirror chưa tồn tại (nó là bản tự sinh, cố ý
-      # không track). Sinh ở đây cũng biến chính đường sync thành thứ được CI kiểm thật.
+      # (Bước sinh mirror Codex trước test đã GỠ 19/11/2026 cùng bản sao Codex; test sức khoẻ agent đọc thẳng nguồn.)
       # 02/11/2026 — + pypdf: tầng Unpaywall của gom_toan_van_dashboard.py đọc chữ PDF để KIỂM ĐỊNH DANH trước khi ghi kho
       # (PDF của bài khác từng vào kho thành toàn văn của PMID 38099896). Thiếu pypdf ⇒ cổng từ chối mọi PDF (đúng, fail-closed)
       # và các test lưu PDF đỏ — CI phải chạy CHÍNH cổng đó, không skip.
       - name: Bộ test tools/ (bản sao trần, skip có khai báo)
         run: |
           pip install pytest pypdf
-          python tools/sync_agents_to_codex.py
+          python tools/kiem_suc_khoe_agent.py
           python -m pytest tools/ -q -rs
 
   # MỘT tên kiểm tra ổn định cho «bảo vệ nhánh»: bật required check chỉ cần khai `ci-ok`, đổi ma trận không phải sửa lại cài đặt.

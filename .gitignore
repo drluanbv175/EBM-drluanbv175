@@ -4,10 +4,8 @@
 # Mọi thứ khác ở gốc (medical-ebm-automation/ đã có git riêng — 2.3GB, dashboard,
 # video TikTok, evidence pack .zip, sổ cái EBM_MASTER...) CỐ Ý bị loại trừ.
 #
-# KHÔNG track .Codex/ (và .codex/ — Windows git core.ignorecase=true nên 2 thư mục
-# này bị coi là cùng 1 pattern, không thể phân biệt qua .gitignore): .Codex/agents/*.toml
-# chỉ là bản mirror TỰ SINH từ .claude/agents/*.md qua tools/sync_agents_to_codex.py —
-# tái tạo lại bất cứ lúc nào bằng lệnh đó, không cần version-control bản sinh ra.
+# KHÔNG track .Codex/ / .codex/ — bản sao agent Codex TỰ SINH cũ (công cụ sinh đã GỠ 19/11/2026 vì bác sĩ không
+# còn dùng Codex). Máy nào còn thư mục cũ thì `/*` bên dưới vẫn bỏ qua nó; xoá tay khi chắc.
 
 # 1) Ignore tất cả ở gốc trước
 /*

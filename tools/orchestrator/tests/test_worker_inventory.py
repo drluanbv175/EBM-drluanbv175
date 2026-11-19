@@ -79,8 +79,8 @@ class TestBioResearchDefaultRoots(unittest.TestCase):
             self.assertNotIn("claude-cowork", root.parts,
                              f"đường dò cũ đã sai vẫn còn sót: {root}")
             self.assertEqual(root.name, "life-sciences", root)
-        # Đúng 2 root — một cho mỗi kho cache (Claude + Codex), khớp khuôn duong().
-        self.assertEqual(len(roots), 2, roots)
+        # Đúng 1 root — kho cache Claude (kho Codex đã gỡ 19/11/2026), khớp khuôn duong().
+        self.assertEqual(len(roots), 1, roots)
 
     def test_bio_research_skills_found_recursively_under_life_sciences(self):
         """Mô phỏng CẤU TRÚC ĐÃ VÁ (chưa quan sát được trên máy thật vì plugin

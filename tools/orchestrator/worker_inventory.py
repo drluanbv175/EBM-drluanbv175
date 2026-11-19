@@ -62,11 +62,11 @@ class WorkerInventory:
         # binding đều báo «chưa cài» — nghĩa là nhạc trưởng sẽ luôn ghi LOCAL_FALLBACK và
         # KHÔNG BAO GIỜ dùng plugin vừa cài. Cùng họ lỗi «đo đúng, nhưng đo nhầm chỗ» của
         # BH74 (catalog quét sai thư mục đang phục vụ).
-        # Thứ tự: Claude trước (nơi `claude plugin install` ghi), Codex sau (máy có Codex CLI).
-        caches = (home / ".claude/plugins/cache", home / ".codex/plugins/cache")
+        # Kho Codex `~/.codex/plugins/cache` đã GỠ khỏi danh sách 19/11/2026 — bác sĩ không còn dùng Codex.
+        caches = (home / ".claude/plugins/cache",)
 
         def duong(*hau_to: str) -> tuple[Path, ...]:
-            """Cùng một hậu tố, tra ở CẢ HAI kho — thứ tự quyết định bản nào thắng."""
+            """Cùng một hậu tố, tra ở mọi kho đã khai — thứ tự quyết định bản nào thắng."""
             return tuple(c / h for c in caches for h in hau_to)
 
         self.provider_roots = provider_roots or {
@@ -94,7 +94,6 @@ class WorkerInventory:
             "openmed-skills": duong("openmed-skills"),
             "medsci-project": duong("medsci-skills/medsci-project"),
             "humanizer": duong("humanizer"),
-            "codex": duong("openai-codex/codex"),
         }
 
     @staticmethod

@@ -24,7 +24,6 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 AGENTS_SRC = ROOT / ".claude" / "agents"
-AGENTS_CODEX = ROOT / ".Codex" / "agents"
 DASH = ROOT / "EBM-Dashboards"
 MASTER = ROOT / "EBM_MASTER"
 HUB_DASH = MASTER / "WEB_DASHBOARDS"
@@ -41,8 +40,6 @@ VENV_PY = (
 )
 DEFAULT_FILES = [
     ROOT / "THU-MUC-MAC-DINH.md",
-    ROOT / "Đồng bộ Claude-Codex.bat",
-    ROOT / "Đồng bộ Claude-Codex.command",
     ROOT / "Kiểm tra môi trường EBM.bat",
     ROOT / "Kiểm tra môi trường EBM.command",
     ROOT / "Cài môi trường EBM.bat",
@@ -158,13 +155,10 @@ def count_agent_guardrails() -> dict[str, int]:
         p for p in AGENTS_SRC.glob("*.md")
         if p.name != "README.md" and not p.name.startswith("_")
     ]
-    toml_files = list(AGENTS_CODEX.glob("*.toml"))
     marker = "EBM-MANDATORY-FINAL-GUARDRAIL"
     return {
         "source_agents": len(src_files),
-        "codex_agents": len(toml_files),
         "source_guardrail": sum(marker in p.read_text(encoding="utf-8", errors="ignore") for p in src_files),
-        "codex_guardrail": sum(marker in p.read_text(encoding="utf-8", errors="ignore") for p in toml_files),
         "source_disclaimer": sum("Cần bác sĩ kiểm chứng" in p.read_text(encoding="utf-8", errors="ignore") for p in src_files),
     }
 
@@ -430,35 +424,22 @@ def chatgpt_integration_failures() -> list[str]:
     return failures
 
 
-def claude_codex_sync_health() -> tuple[bool, str, list[str]]:
-    """Run the standalone Claude/Codex sync health gate and return a compact status."""
-    checker = ROOT / "tools" / "check_claude_codex_sync_health.py"
+def agent_health() -> tuple[bool, str, list[str]]:
+    """Chạy cổng sức khoẻ đội agent (`kiem_suc_khoe_agent.py --json`) và trả trạng thái gọn.
+
+    Thay `claude_codex_sync_health` (19/11/2026): bản sao agent Codex đã gỡ — bác sĩ không còn dùng Codex."""
+    checker = ROOT / "tools" / "kiem_suc_khoe_agent.py"
     if not checker.exists():
-        return False, "thiếu tools/check_claude_codex_sync_health.py", [
-            "thiếu cổng kiểm tra Claude/Codex sync health"
-        ]
+        return False, "thiếu tools/kiem_suc_khoe_agent.py", ["thiếu cổng kiểm sức khoẻ agent"]
     code, out = run([sys.executable, str(checker), "--json"], cwd=ROOT)
-    if code != 0:
-        try:
-            data = json.loads(out)
-            return False, "FAIL", list(data.get("errors", []))
-        except json.JSONDecodeError:
-            return False, "FAIL", [out.strip()[:500] or "không đọc được output sync health"]
     try:
         data = json.loads(out)
     except json.JSONDecodeError:
-        return False, "FAIL", ["output sync health không phải JSON hợp lệ"]
-    status = str(data.get("status", "FAIL"))
-    targets = data.get("targets", [])
-    source = data.get("source", {})
-    summary = (
-        f"{status}: {source.get('agents', '?')} nguồn, "
-        + ", ".join(
-            f"{target.get('label', '?')}={target.get('agent_toml', '?')}"
-            for target in targets
-        )
-    )
-    return status == "PASS", summary, list(data.get("errors", []))
+        return False, "FAIL", [out.strip()[:500] or "không đọc được output sức khoẻ agent"]
+    status = str(data.get("trang_thai", "FAIL"))
+    summary = (f"{status}: {data.get('so_agent', '?')} agent, guardrail {data.get('co_guardrail', '?')}, "
+               f"disclaimer {data.get('co_disclaimer', '?')}")
+    return code == 0 and status == "PASS", summary, list(data.get("loi", []))
 
 
 def routine_layer_failures() -> list[str]:
@@ -926,26 +907,17 @@ def main() -> int:
     hard_errors: list[str] = []
     warnings: list[str] = []
 
-    agent_sync_code, sync_out = run([sys.executable, "tools/sync_agents_to_codex.py", "--check"])
-    if agent_sync_code != 0:
-        hard_errors.append("Agent sync drift/FAIL")
 
     guard = count_agent_guardrails()
     n_autogen = registered_autogen_count()
     expected_agents = CORE_AGENT_COUNT + n_autogen
-    if guard["source_agents"] != guard["codex_agents"]:
-        hard_errors.append(
-            f"Sync lệch: {guard['source_agents']} agent nguồn ≠ "
-            f"{guard['codex_agents']} Codex")
-    elif guard["source_agents"] != expected_agents:
+    if guard["source_agents"] != expected_agents:
         hard_errors.append(
             f"Số lượng agent = {guard['source_agents']}, kỳ vọng {expected_agents} "
             f"({CORE_AGENT_COUNT} lõi + {n_autogen} tự sinh đã đăng ký). "
             "Có agent thêm/bớt KHÔNG qua registry _TU-SINH-AGENT-REGISTRY.json.")
     if guard["source_guardrail"] != guard["source_agents"]:
         hard_errors.append("Chưa đủ guardrail trong agent nguồn")
-    if guard["codex_guardrail"] != guard["codex_agents"]:
-        hard_errors.append("Chưa đủ guardrail trong agent Codex")
     if guard["source_disclaimer"] != guard["source_agents"]:
         hard_errors.append("Chưa đủ disclaimer trong agent nguồn")
 
@@ -980,11 +952,9 @@ def main() -> int:
     if chatgpt_failures:
         hard_errors.append("Tích hợp ChatGPT thiếu/chưa chuẩn: " + "; ".join(chatgpt_failures))
 
-    sync_health_ok, sync_health_summary, sync_health_errors = claude_codex_sync_health()
+    sync_health_ok, sync_health_summary, sync_health_errors = agent_health()
     if not sync_health_ok:
-        hard_errors.append(
-            "Claude/Codex sync health FAIL: " + "; ".join(sync_health_errors)
-        )
+        hard_errors.append("Sức khoẻ agent FAIL: " + "; ".join(sync_health_errors))
 
     routine_failures = routine_layer_failures()
     if routine_failures:
@@ -1139,11 +1109,9 @@ def main() -> int:
     print("================================================================")
     print("AUDIT TỔNG THỂ — EBM Copilot")
     print("================================================================")
-    print("Agent sync:", "PASS" if agent_sync_code == 0 else "FAIL")
     print(
         "Agent guardrail: "
-        f"{guard['source_guardrail']}/{guard['source_agents']} nguồn, "
-        f"{guard['codex_guardrail']}/{guard['codex_agents']} Codex; "
+        f"{guard['source_guardrail']}/{guard['source_agents']} nguồn; "
         f"disclaimer {guard['source_disclaimer']}/{guard['source_agents']}"
     )
     print(f"Dashboard offline: {checked_dash} kiểm, {len(dash_failures)} lỗi")
@@ -1158,7 +1126,7 @@ def main() -> int:
         _skip if any(x.startswith("File đồng bộ") for x in khong_do_duoc) else "PASS"))
     print("ChatGPT integration:", "FAIL" if chatgpt_failures else (
         _skip if any(x.startswith("Tích hợp ChatGPT") for x in khong_do_duoc) else "PASS"))
-    print("Claude/Codex sync health:", sync_health_summary)
+    print("Sức khoẻ agent:", sync_health_summary)
     print("Routine layer (Scheduled/):", "PASS" if not routine_failures else "FAIL: " + "; ".join(routine_failures))
     print("Antifacts:", antifacts_msg if antifacts_ok else "FAIL")
     print("Repo compile:", "PASS" if compile_ok else "FAIL")

@@ -1,7 +1,7 @@
 export const meta = {
   name: 'hoi-dong-cong',
   description: 'Hội đồng MỘT cổng G0–G10: đánh giá chéo đầu ra các agent + tranh biện điểm quyết định trước kết luận (tư vấn, không mở cổng)',
-  whenToUse: 'Bác sĩ đồng ý triệu tập hội đồng cho MỘT cổng của một đề tài sau khi các nhiệm vụ của cổng đã có đầu ra. args: {study, gate, ho_so?, gom_giam_khao?, dp?, max_vong?, max_agent?, chay_thu?, trong_tai?: "subagent"|"codex"}. Tốn ≈6 triệu token cho một cổng 4 nhiệm vụ (đo 07/10/2026) — hỏi trước; ước tính trước bằng `hoi_dong_cong.py uoc-tinh`, họp với ho_so = `hoi_dong_cong.py ho-so --json` (máy lập hồ sơ, chỉ họp phần chưa có biên bản còn hiệu lực).',
+  whenToUse: 'Bác sĩ đồng ý triệu tập hội đồng cho MỘT cổng của một đề tài sau khi các nhiệm vụ của cổng đã có đầu ra. args: {study, gate, ho_so?, gom_giam_khao?, dp?, max_vong?, max_agent?, chay_thu?, trong_tai?: "subagent"}. Tốn ≈6 triệu token cho một cổng 4 nhiệm vụ (đo 07/10/2026) — hỏi trước; ước tính trước bằng `hoi_dong_cong.py uoc-tinh`, họp với ho_so = `hoi_dong_cong.py ho-so --json` (máy lập hồ sơ, chỉ họp phần chưa có biên bản còn hiệu lực).',
   phases: [
     { title: 'Hồ sơ cổng', detail: 'điều phối cổng chấm sống (chỉ đọc), liệt kê đầu ra có thật + kết luận dự kiến cho từng điểm quyết định' },
     { title: 'Đánh giá chéo', detail: 'người chấm chuyên môn theo ma trận + giám khảo độc lập, rubric RQ1–RQ8' },
@@ -22,13 +22,15 @@ const GATE = a.gate
 const DIEU_PHOI = `dieu-phoi-${GATE.toLowerCase()}`
 const MAX_VONG = Math.min(Math.max(Number(a.max_vong || 1), 1), 2)
 const MAX_AGENT = Math.max(Number(a.max_agent || 16), 4)
-// 07/10/2026 — trọng tài Codex (bác sĩ giao): mô hình KHÁC phán qua tools/trong_tai_codex.py (sandbox chỉ-đọc, schema
-// chặt, kiểm bằng chính luật biên bản). Chế độ này GỬI trích đoạn hồ sơ cấp đầu của đề tài tới dịch vụ Codex.
-if (a.trong_tai !== undefined && !['subagent', 'codex'].includes(a.trong_tai)) {
-  throw new Error('args.trong_tai phải là "subagent" hoặc "codex"')
+// Trọng tài Codex (thêm 07/10/2026) đã GỠ 19/11/2026 — bác sĩ không còn dùng Codex; không gửi hồ sơ ra dịch vụ Codex.
+if (a.trong_tai === 'codex') {
+  throw new Error('args.trong_tai "codex" đã gỡ 19/11/2026 (bác sĩ không còn dùng Codex) — dùng "subagent" hoặc bỏ trống')
 }
-const CHE_DO = a.trong_tai === 'codex' ? 'codex' : 'subagent'
-const TEN_TRONG_TAI = CHE_DO === 'codex' ? 'codex:trong-tai-tranh-bien' : 'trong-tai-tranh-bien'
+if (a.trong_tai !== undefined && a.trong_tai !== 'subagent') {
+  throw new Error('args.trong_tai chỉ nhận "subagent"')
+}
+const CHE_DO = 'subagent'
+const TEN_TRONG_TAI = 'trong-tai-tranh-bien'
 const Y = 'medical-ebm-automation'
 // 10/10/2026 — HỌP TIẾT KIỆM (bác sĩ: «việc họp rất tốn token, hãy hoàn thiện theo cách thông minh nhất»). Hồ sơ do
 // MÁY lập: `python3 tools/hoi_dong_cong.py ho-so --study … --gate … --json` (0 agent) truyền qua args.ho_so ⇒ bỏ agent
@@ -107,10 +109,6 @@ const PHAN_QUYET = { type: 'object', required: ['tung_luan_diem', 'ket_qua', 'ke
   chuyen_bac_si: { type: 'array', items: { type: 'object', required: ['van_de', 'vi_sao'], properties: {
     van_de: { type: 'string' }, vi_sao: { type: 'string' } } } },
   giai_phap_tot_nhat: GIAI_PHAP, bai_hoc_he_thong: BAI_HOC } }
-const KQ_CODEX = { type: 'object', required: ['ok'], properties: {
-  ok: { type: 'boolean' }, phan_quyet: PHAN_QUYET, loi: { type: 'string' },
-  nguon_trong_tai: { type: 'object', properties: { cong_cu: { type: 'string' }, codex: { type: 'string' },
-    model: { type: 'string' }, luc: { type: 'string' } } } } }
 const KQ_GHI = { type: 'object', required: ['ket_qua'], properties: {
   ket_qua: { type: 'array', items: { type: 'object', properties: { loai: { type: 'string' }, ma: { type: 'string' },
     ma_thoat: { type: 'number' }, dau_ra: { type: 'string' } } } }, tom_tat: { type: 'string' },
@@ -138,7 +136,7 @@ if (a.chay_thu && HS) {
     ghi_chu: `Số agent + token: python3 tools/hoi_dong_cong.py uoc-tinh --study ${STUDY} --gate ${GATE}` }
 }
 if (a.chay_thu) {
-  const vaiTrongTai = CHE_DO === 'codex' ? 'trọng tài Codex (tools/trong_tai_codex.py)' : 'trọng tài'
+  const vaiTrongTai = 'trọng tài'
   return { chay_thu: true, study: STUDY, gate: GATE, dieu_phoi: DIEU_PHOI, max_vong: MAX_VONG, max_agent: MAX_AGENT,
     trong_tai: CHE_DO,
     ke_hoach: ['1 hồ sơ cổng', '2 người chấm × mỗi nhiệm vụ áp dụng', MAX_VONG >= 2 ? `mỗi DP: phản biện + đề xuất đáp + phản biện vòng 2 + ${vaiTrongTai}` : `mỗi DP: phản biện + ${vaiTrongTai}`,
@@ -239,27 +237,6 @@ async function tranh(d) {
       const pb2 = await vongPB(d, 2, [...vong, { so: 2, ben: 'de_xuat', luan_diem: dx2.luan_diem }])
       if (pb2) vong.push({ so: 2, ben: 'de_xuat', luan_diem: dx2.luan_diem }, { so: 2, ben: 'phan_bien', luan_diem: pb2.luan_diem })
     }
-  }
-  if (CHE_DO === 'codex') {
-    // Vai trọng tài KHÔNG tự phán: chạy trình Codex (mô hình khác) và trả NGUYÊN VĂN phán quyết đã qua luật biên bản.
-    const nhap = { loai: 'tranh_bien', diem_quyet_dinh: { ma: d.ma }, tai_lieu_xet: d.tai_lieu_xet,
-      ket_luan_de_xuat: d.ket_luan_de_xuat, vai: { de_xuat: DIEU_PHOI, phan_bien: 'phan-bien-tranh-bien' }, vong,
-      ...(d.nguon ? { nguon_bat_dong: d.nguon_id || `(id biên bản đánh giá ${d.nguon} — điều phối cổng điền khi ghi)` } : {}) }
-    const kq = await goi(
-      `${CHUNG}\nBạn là trong-tai-tranh-bien ở CHẾ ĐỘ CODEX — KHÔNG tự phán, KHÔNG sửa phán quyết. ` +
-      '1) Ghi BẢN NHÁP dưới đây NGUYÊN VĂN ra một tệp trong thư mục tạm của hệ điều hành (KHÔNG ghi vào exports/). ' +
-      `2) Chạy \`python3 tools/trong_tai_codex.py --study ${STUDY} --gate ${GATE} --tep <tệp đó> --json\` (KHÔNG --ghi — ` +
-      'điều phối cổng ghi ở bước biên bản). 3) Mã thoát 0 và hop_le=true ⇒ ok=true, phan_quyet = bien_ban.phan_quyet ' +
-      'NGUYÊN VĂN (bỏ trường trong_tai), nguon_trong_tai = bien_ban.nguon_trong_tai. Mã 2 (không chạy được) hoặc 3 (vi ' +
-      'phạm luật) ⇒ ok=false, loi = mã thoát + thông điệp — KHÔNG tự phán thay, KHÔNG chạy lại với Claude.\n' +
-      `BẢN NHÁP: ${JSON.stringify(nhap)}`,
-      { label: `trọng tài Codex ${d.ma}`, phase: 'Tranh biện', agentType: 'trong-tai-tranh-bien', schema: KQ_CODEX })
-    if (!kq || !kq.ok || !kq.phan_quyet) {
-      boQua.push(`trọng tài Codex ${d.ma}`)
-      log(`⛔ Trọng tài Codex ${d.ma}: ${(kq && kq.loi) || 'không chạy được'} — không ghi biên bản tranh biện này`)
-      return null
-    }
-    return { d, vong, pq: kq.phan_quyet, nguon: kq.nguon_trong_tai || null }
   }
   const pq = await goi(
     `${CHUNG}\nBạn là trong-tai-tranh-bien (ngữ cảnh mới). Điểm quyết định ${d.ma}; kết luận dự kiến «${d.ket_luan_de_xuat}»; ` +

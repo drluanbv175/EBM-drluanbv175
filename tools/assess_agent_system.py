@@ -241,7 +241,7 @@ def build_criteria(deep: bool, py: str) -> List[Dict]:
         lambda: (deep and p_run([py, str(TOOLS / "generate_agent.py"), "--name",
                                  "probe-check", "--description", "probe", "--role",
                                  "probe", "--dry-run"], "generate_agent chạy (dry-run)", 60)) or
-                p_exists(TOOLS / "sync_agents_to_codex.py", "Sync mở rộng có mặt"),
+                p_exists(TOOLS / "kiem_suc_khoe_agent.py", "Kiểm sức khoẻ agent có mặt"),
     ])
     crit("S5", "Giám sát, guardrail, kiểm soát rủi ro", "system", [
         lambda: (deep and p_run([py, str(TOOLS / "audit_ebm_system.py")],
@@ -279,8 +279,8 @@ def build_criteria(deep: bool, py: str) -> List[Dict]:
                                 "Pipeline cập nhật chứng cứ lâm sàng PASS", 60)) or
                 p_exists(TOOLS / "verify_clinical_evidence_update_pipeline.py", "Verifier pipeline cập nhật chứng cứ lâm sàng có mặt"),
         lambda: (deep and p_run([py, str(TOOLS / "verify_claude_code_repo_alignment.py")],
-                                "Repo/Claude Code/Codex alignment PASS", 60)) or
-                p_exists(TOOLS / "verify_claude_code_repo_alignment.py", "Verifier đồng bộ repo/Claude Code/Codex có mặt"),
+                                "Repo/Claude Code alignment PASS", 60)) or
+                p_exists(TOOLS / "verify_claude_code_repo_alignment.py", "Verifier hợp đồng repo/Claude Code có mặt"),
         lambda: p_contains_all(
             TOOLS / "build_research_readiness_evidence.py",
             ["EvidenceRow", "blocking_failure_count", "verify_controlled_research_automation.py", "verify_clinical_evidence_update_pipeline.py", "verify_lessons_rubric_alignment.py", "Cần bác sĩ kiểm chứng"],
@@ -315,9 +315,9 @@ STATUS_ICON = {"strong": "🟢", "partial": "🟡", "gap": "🔴", "absent": "�
 CAVEATS: Dict[str, List[str]] = {
     "A2": ["2026-09-02 (cập nhật): `tools/orchestrator/` là control-plane CHẠY ĐƯỢC cho CẢ HAI "
            "nhánh (lâm sàng 8 bước có nhánh điều kiện + nghiên cứu G0–G10), grounded vào registry "
-           "50 agent .md THẬT (không hardcode), bộ test offline PASS. `--execute` đã nối "
-           "`LLMExecutor` với Codex CLI ở phiên `--ephemeral` chỉ-đọc, artifact có revision và "
-           "critic Q1–Q7 chạy phiên tách biệt; output sai schema/lỗi runtime fail-closed. GIỚI HẠN "
+           "50 agent .md THẬT (không hardcode), bộ test offline PASS. `--execute` (Codex CLI) đã GỠ "
+           "19/11/2026 — bác sĩ không còn dùng Codex; `LLMExecutor` chỉ chạy với client được tiêm, "
+           "output sai schema/lỗi runtime fail-closed. GIỚI HẠN "
            "CÒN LẠI: cùng họ mô hình không thay hội đồng bác sĩ; đường này không tự chạy dữ liệu "
            "thật, không tự ký Cổng A/B/G và không thay research pipeline sản xuất."],
     "S2": ["2026-07-04 (vá): orchestrator control-plane nay tham chiếu THẲNG 50 agent .md qua "

@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""Đồng bộ skill tự động giữa nguồn git, Claude Code, Codex và Cowork.
+"""Đồng bộ skill tự động giữa nguồn git, Claude Code và Cowork.
 
-Nguồn duy nhất là ``sync/skills``. Claude Code và Codex dùng liên kết trực tiếp,
+(Tên tệp giữ nguyên vì hook SessionStart và nhiều công cụ gọi đúng tên này. Runtime Codex ``~/.codex/skills`` đã GỠ
+khỏi lệnh này 19/11/2026 — bác sĩ không còn dùng Codex; liên kết cũ trong ``~/.codex`` để nguyên, bác sĩ tự xoá khi chắc.)
+
+Nguồn duy nhất là ``sync/skills``. Claude Code dùng liên kết trực tiếp,
 nên sửa file hiện có có hiệu lực ngay. Skill mới được nối ở SessionStart hoặc
 watcher nền. Runtime Cowork được cập nhật bằng công cụ fail-closed hiện có.
 
@@ -19,7 +22,7 @@ làm hỏng toàn bộ lượt chạy vì trỏ vào thứ KHÔNG có trong repo
   · ``sync_plugins``   → ``tools/dong_bo_plugin_claude_codex.py`` (nay đã có)
   · ``sync_cowork``    → cờ ``--nguon-la-chuan`` chưa từng tồn tại trong
     ``dong_bo_skill.py`` (đã bổ sung đúng hợp đồng ghi ở AGENTS.md)
-Việc CHÍNH của lệnh này là nối skill vào hai runtime; một bước phụ thiếu nguyên
+Việc CHÍNH của lệnh này là nối skill vào runtime Claude Code; một bước phụ thiếu nguyên
 liệu phải được BÁO RÕ chứ không được biến lượt nối skill thành công thành thất bại.
 Riêng bước phụ HỎNG (chạy nhưng trả lỗi) vẫn fail-closed như cũ.
 """
@@ -190,23 +193,6 @@ def don_lien_ket_mo_coi(source_root: Path, destination: Path, apply: bool) -> li
     return ket_qua
 
 
-def co_codex_tren_may() -> bool:
-    """Máy này có Codex để hỏi «plugin nào đang cài» không (cùng ứng viên build_catalog dùng).
-
-    KHÔNG suy từ thông điệp lỗi của build_catalog (BH82: khai báo tường minh, không đoán
-    qua chuỗi) — hỏi thẳng sự có mặt của binary hoặc cấu hình dự phòng.
-    """
-    ung_vien = (
-        os.environ.get("EBM_CODEX_BIN"),
-        __import__("shutil").which("codex"),
-        "/Applications/ChatGPT.app/Contents/Resources/codex",
-        str(Path.home() / ".local/bin/codex"),
-    )
-    if any(u and Path(u).is_file() for u in ung_vien):
-        return True
-    return (Path.home() / ".codex/config.toml").is_file()
-
-
 def co_the_dung_cache_claude_code() -> bool:
     """Máy này có cache Claude Code để build_catalog.py dùng làm TẦNG BA dự phòng không
     (thêm 05/09/2026, cùng lúc build_catalog.py học cách đọc thẳng cache này).
@@ -296,11 +282,11 @@ def plugin_thieu_ma_may_nay_khong_can(script: Path) -> list[str]:
 
 
 def rebuild_router(source_root: Path, quiet: bool) -> int:
-    """Dựng lại catalog từ trạng thái plugin thật — Codex trước, cache Claude Code sau."""
+    """Dựng lại catalog từ trạng thái plugin thật — cache Claude Code (nguồn Codex đã gỡ 19/11/2026)."""
 
     script = source_root / ROUTER_NAME / "scripts/build_catalog.py"
-    if script.is_file() and not co_codex_tren_may() and not co_the_dung_cache_claude_code():
-        # Máy không có CẢ Codex LẪN cache Claude Code (installed_plugins.json) thì
+    if script.is_file() and not co_the_dung_cache_claude_code():
+        # Máy không có cache Claude Code (installed_plugins.json) thì
         # build_catalog.py chắc chắn không dựng được gì — bản catalog đã commit là
         # nguyên liệu đúng để đóng gói. Trước 05/09/2026, nhánh này bỏ qua bất cứ khi nào
         # KHÔNG có Codex, kể cả khi máy hoàn toàn có thể tự dựng qua cache Claude Code
@@ -312,7 +298,7 @@ def rebuild_router(source_root: Path, quiet: bool) -> int:
         # Claude Code thì vẫn GỌI build_catalog.py (nó tự chọn tầng đọc phù hợp); chỉ khi
         # THIẾU CẢ HAI mới giữ nguyên bản đã commit như cũ.
         if not quiet:
-            print("⚠ Máy này không có Codex lẫn cache Claude Code — giữ catalog router đã "
+            print("⚠ Máy này không có cache Claude Code — giữ catalog router đã "
                   "commit, không dựng lại.")
         return 0
     if not script.is_file():
@@ -414,7 +400,7 @@ def sync_cowork(quiet: bool) -> int:
 
 
 def sync_plugins(apply: bool, quiet: bool) -> int:
-    """Giữ plugin Codex không cũ hơn registry Claude."""
+    """Đối chiếu kho plugin của máy với sổ khai ý định (sync/plugin-manifest.json)."""
 
     cong_cu = REPO / "tools/dong_bo_plugin_claude_codex.py"
     if not cong_cu.is_file():
@@ -434,13 +420,12 @@ def parse_args() -> argparse.Namespace:
 
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--ap-dung", action="store_true", help="tạo liên kết và cập nhật runtime")
-    parser.add_argument("--dong-bo-plugin", action="store_true", help="kiểm/nâng plugin Claude → Codex")
+    parser.add_argument("--dong-bo-plugin", action="store_true", help="đối chiếu kho plugin với sổ khai")
     parser.add_argument("--im-khi-on", action="store_true", help="im lặng khi hệ thống đã khớp")
     parser.add_argument("--bo-qua-runtime", action="store_true", help="không đẩy sang Cowork runtime")
     parser.add_argument("--bo-qua-dong-goi", action="store_true", help="không dựng catalog/ZIP router")
     parser.add_argument("--source", type=Path, default=DEFAULT_SOURCE)
     parser.add_argument("--claude-skills", type=Path, default=Path.home() / ".claude/skills")
-    parser.add_argument("--codex-skills", type=Path, default=Path.home() / ".codex/skills")
     return parser.parse_args()
 
 
@@ -452,12 +437,12 @@ def main() -> int:
         sources = skill_sources(args.source)
         results = [
             ensure_link(source, destination, args.ap_dung)
-            for destination in (args.claude_skills, args.codex_skills)
+            for destination in (args.claude_skills,)
             for source in sources
         ]
         mo_coi = [
             item
-            for destination in (args.claude_skills, args.codex_skills)
+            for destination in (args.claude_skills,)
             for item in don_lien_ket_mo_coi(args.source, destination, args.ap_dung)
         ]
     except (OSError, RuntimeError) as exc:
@@ -468,7 +453,7 @@ def main() -> int:
     pending = [item for item in results if item.status == "CAN_NOI"]
     changed = [item for item in results if item.status == "DA_NOI"]
     if changed and not args.im_khi_on:
-        print(f"✓ Đã liên kết {len(changed)} skill vào Claude/Codex")
+        print(f"✓ Đã liên kết {len(changed)} skill vào Claude")
     for item in conflicts:
         print(f"✗ {item.runtime}/{item.skill}: {item.detail}", file=sys.stderr)
     for item in mo_coi:

@@ -1,25 +1,19 @@
 """Lớp thực thi agent cho control-plane EBM.
 
-``DryRunExecutor`` phục vụ CI/offline. ``LLMExecutor`` gọi một client độc lập; client mặc
-định là ``CodexCliClient`` và chạy ``codex exec`` trong sandbox chỉ-đọc, phiên tạm thời.
-Nhờ vậy bộ điều phối có thể sinh bản nháp thật nhưng không được tự sửa repo, ký cổng hoặc
-ghi dữ liệu người bệnh. Mọi lần chạy thật phải được người dùng bật rõ bằng CLI ``--execute``.
+``DryRunExecutor`` phục vụ CI/offline. ``LLMExecutor`` gọi một client ĐƯỢC TIÊM (giao diện
+``GenerationClient``). Client mặc định cũ ``CodexCliClient`` (``codex exec`` chỉ-đọc) đã GỠ 19/11/2026 —
+bác sĩ không còn dùng Codex; nhánh ``--execute`` của CLI vì thế đã tắt. Bộ điều phối vẫn không được tự
+sửa repo, ký cổng hoặc ghi dữ liệu người bệnh.
 """
 
 from __future__ import annotations
 
 import json
-import os
-import shutil
 import subprocess
-import sys
-import tempfile
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from pathlib import Path
 from typing import Any, Protocol
 
-from . import ROOT
 from .evidence_prefetch import prefetch_citation_receipts
 from .registry import Registry
 from .tools_registry import ToolRegistry
@@ -82,87 +76,6 @@ class GenerationClient(Protocol):
     def generate(self, prompt: str, *, output_schema: dict[str, Any] | None = None) -> str | dict: ...
 
 
-class CodexCliClient:
-    """Chạy một phiên ``codex exec`` tách biệt, tạm thời và chỉ-đọc.
-
-    Không dùng shell, không in environment và không truyền secret trên dòng lệnh. Xác thực
-    dùng phiên Codex hiện có của máy. ``output_schema`` chỉ dùng cho lượt chấm cấu trúc.
-    """
-
-    # Vá 15/09/2026 (workflow kiểm tra toàn diện): đường dẫn app bundle CHỈ có
-    # ý nghĩa trên macOS — trước bản vá không có guard `sys.platform` nào trong
-    # cả file, nên tools/kiem_tuong_thich_da_nen.py (R5) báo vàng ở MỌI lần quét
-    # dù hành vi thật không sai (đây chỉ là phương án lùi SAU khi shutil.which
-    # thất bại, có kiểm .exists() + RuntimeError rõ ràng ngay bên dưới). Thêm
-    # guard tường minh để chốt đa nền hạ đúng mức và người đọc biết ngay đường
-    # dẫn này không áp dụng ngoài macOS.
-    _APP_BINARY_MACOS = Path("/Applications/ChatGPT.app/Contents/Resources/codex")
-
-    def __init__(self, *, model: str | None = None, timeout_seconds: int = 600) -> None:
-        self.model = model
-        self.timeout_seconds = timeout_seconds
-        found = shutil.which("codex")
-        if found:
-            self.binary = Path(found)
-        elif sys.platform == "darwin":
-            self.binary = self._APP_BINARY_MACOS
-        else:
-            # Không có vị trí cài đặt cố định ngoài PATH trên Windows/Linux —
-            # bản ChatGPT desktop gắn kèm CLI codex chỉ có đường dẫn ổn định
-            # trên macOS. Đường dẫn dưới đây chắc chắn không .exists() nên
-            # thông điệp lỗi rõ ràng ở generate() vẫn kích hoạt bình thường.
-            self.binary = Path("codex")
-
-    def generate(self, prompt: str, *, output_schema: dict[str, Any] | None = None) -> str | dict:
-        if not self.binary.exists():
-            raise RuntimeError("Không tìm thấy Codex CLI; cần cài Codex/ChatGPT desktop trên máy chạy.")
-        with tempfile.TemporaryDirectory(prefix="ebm-codex-") as tmp:
-            tmp_dir = Path(tmp)
-            output_path = tmp_dir / "last-message.txt"
-            cmd = [
-                str(self.binary), "exec", "--ephemeral", "--ignore-user-config",
-                "--skip-git-repo-check", "--color", "never",
-                "--sandbox", "read-only", "--cd", str(tmp_dir),
-                "--output-last-message", str(output_path),
-            ]
-            if self.model:
-                cmd += ["--model", self.model]
-            if output_schema is not None:
-                schema_path = tmp_dir / "schema.json"
-                schema_path.write_text(json.dumps(output_schema, ensure_ascii=False), encoding="utf-8")
-                cmd += ["--output-schema", str(schema_path)]
-            cmd.append("-")
-            # Không chuyển toàn bộ environment của tiến trình cha (có thể chứa API key/
-            # SMTP secret) cho critic/generator. Auth Codex desktop vẫn đọc từ HOME/CODEX_HOME.
-            allowed_env = {"PATH", "HOME", "CODEX_HOME", "USER", "LOGNAME", "TMPDIR", "LANG", "LC_ALL"}
-            env = {key: value for key, value in os.environ.items() if key in allowed_env}
-            env.update(PYTHONUTF8="1", PYTHONIOENCODING="utf-8")
-            proc = subprocess.run(
-                cmd,
-                cwd=str(tmp_dir),
-                env=env,
-                input=prompt,
-                capture_output=True,
-                text=True,
-                encoding="utf-8",
-                errors="replace",
-                timeout=self.timeout_seconds,
-                check=False,
-            )
-            if proc.returncode != 0:
-                detail = (proc.stderr or proc.stdout or "lỗi không có thông điệp")[-1200:]
-                raise RuntimeError(f"Codex CLI thất bại (mã {proc.returncode}): {detail}")
-            text = output_path.read_text(encoding="utf-8", errors="replace").strip()
-            if not text:
-                raise RuntimeError("Codex CLI không trả nội dung cuối.")
-            if output_schema is None:
-                return text
-            try:
-                return json.loads(text)
-            except json.JSONDecodeError as exc:
-                raise RuntimeError("Codex CLI trả JSON không hợp lệ dù đã áp output schema.") from exc
-
-
 _GENERATION_SCHEMA: dict[str, Any] = {
     "type": "object",
     "additionalProperties": False,
@@ -177,12 +90,16 @@ _GENERATION_SCHEMA: dict[str, Any] = {
 }
 
 
+
+
 class LLMExecutor(AgentExecutor):
-    """Thực thi agent thật qua client được tiêm hoặc Codex CLI cục bộ."""
+    """Thực thi agent thật qua client được tiêm (không còn client mặc định — Codex CLI đã gỡ 19/11/2026)."""
 
     def __init__(self, client: GenerationClient | None = None, *, model: str | None = None,
                  timeout_seconds: int = 600) -> None:
-        self.client = client or CodexCliClient(model=model, timeout_seconds=timeout_seconds)
+        if client is None:
+            raise RuntimeError("LLMExecutor cần client được tiêm — client mặc định Codex CLI đã gỡ 19/11/2026.")
+        self.client = client
 
     @staticmethod
     def _prompt(agent: str, spec_text: str, tool_ids: list[str], context: dict[str, Any]) -> str:
@@ -267,7 +184,7 @@ Trả đúng JSON theo schema được cấp. `content` là bản nháp hoàn ch
                 needs_input=str(raw.get("needs_input") or ""),
                 content=str(raw.get("content") or ""),
                 provenance={
-                    "executor": "codex-cli",
+                    "executor": "injected-client",
                     "mode": "ephemeral-read-only",
                     "executed_tools": context.get("executed_tools", []),
                     "tool_receipts": context.get("tool_receipts", {}),
@@ -281,6 +198,6 @@ Trả đúng JSON theo schema được cấp. `content` là bản nháp hoàn ch
                 agent=agent,
                 status="error",
                 summary=f"Thực thi LLM thất bại: {str(exc)[:600]}",
-                needs_input="Kiểm tra Codex CLI/xác thực/runtime; không tự mở cổng.",
-                provenance={"executor": "codex-cli", "mode": "fail-closed"},
+                needs_input="Kiểm tra client/xác thực/runtime; không tự mở cổng.",
+                provenance={"executor": "injected-client", "mode": "fail-closed"},
             )

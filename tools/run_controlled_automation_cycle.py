@@ -92,8 +92,8 @@ def control_steps() -> list[ControlStep]:
         ControlStep(
             step_id="agent_sync",
             phase="sync",
-            command=["tools/check_claude_codex_sync_health.py"],
-            proves="Agent nguồn Claude Code và Codex mirror đồng bộ, đủ guardrail/disclaimer.",
+            command=["tools/kiem_suc_khoe_agent.py"],
+            proves="Agent nguồn Claude Code có frontmatter hợp lệ, đủ guardrail/disclaimer.",
             limitation="Không đánh giá chất lượng từng câu trả lời.",
         ),
         ControlStep(

@@ -5,7 +5,7 @@
 VÌ SAO CÓ (21/08/2026). Hệ có ĐỦ công cụ cho từng làn, nhưng **không có lối vào
 duy nhất**: muốn máy này khớp máy kia, bác sĩ phải nhớ và gõ đúng thứ tự chín thứ
 rời rạc — `sync_safety_check` · `link-skills` · `dong_bo_skill_claude_codex` ·
-`enforce_agent_guardrails` · `sync_agents_to_codex` · `dong_bo_plugin_claude_codex`
+`enforce_agent_guardrails` · `kiem_suc_khoe_agent` · `dong_bo_plugin_claude_codex`
 · `dong_bo_hook_sessionstart` · `sync_memory` · `kiem_plugin_day_du`. Lệnh gộp duy
 nhất đang có là `upgrade_verify.py`, nhưng nó kiểm HỆ AGENT (27 bước) và **không
 chạm một làn đồng bộ nào**. Một quy trình phải nhớ chín bước là quy trình sẽ bị bỏ
@@ -186,24 +186,23 @@ def lan_git(im: bool) -> KetQua:
 
 
 def lan_agent(ap_dung: bool, im: bool) -> KetQua:
-    """Agent .claude/agents/*.md → .Codex/agents/*.toml, đúng thứ tự doctrine ghi:
-    enforce → sync → check. Chế độ KIỂM chỉ chạy `--check` (không sinh lại mirror)."""
-    kq = KetQua("Agent → Codex")
+    """Đội agent .claude/agents: enforce guardrail (khi --ap-dung) → kiểm sức khoẻ (frontmatter/guardrail/disclaimer).
+    Bản sao agent Codex (`.Codex/agents`) đã GỠ 19/11/2026 — bác sĩ không còn dùng Codex."""
+    kq = KetQua("Agent")
     if not im:
-        print("\n── Agent → Codex " + "─" * 43)
+        print("\n── Agent " + "─" * 51)
     if ap_dung:
-        for f, co in (("enforce_agent_guardrails.py", []), ("sync_agents_to_codex.py", [])):
-            duong_dan = REPO / "tools" / f
-            if not duong_dan.is_file():
-                kq.bo_qua = f"chưa có tools/{f}"
-                return kq
-            ma, _ = chay([PY, str(duong_dan), *co], im)
-            kq.ma = max(kq.ma, ma)
-    kiem = REPO / "tools/sync_agents_to_codex.py"
+        duong_dan = REPO / "tools" / "enforce_agent_guardrails.py"
+        if not duong_dan.is_file():
+            kq.bo_qua = "chưa có tools/enforce_agent_guardrails.py"
+            return kq
+        ma, _ = chay([PY, str(duong_dan)], im)
+        kq.ma = max(kq.ma, ma)
+    kiem = REPO / "tools/kiem_suc_khoe_agent.py"
     if not kiem.is_file():
-        kq.bo_qua = "chưa có tools/sync_agents_to_codex.py"
+        kq.bo_qua = "chưa có tools/kiem_suc_khoe_agent.py"
         return kq
-    ma, _ = chay([PY, str(kiem), "--check"], im)
+    ma, _ = chay([PY, str(kiem)], im)
     kq.ma = max(kq.ma, ma)
     return kq
 
@@ -274,10 +273,10 @@ def cac_lan(ap_dung: bool = False, im: bool = False) -> list[tuple[str, object]]
     return [
         ("An toàn đồng bộ", cong_cu("An toàn đồng bộ", "sync_safety_check.py", [])),
         ("Git (kênh giữa 2 máy)", lambda: lan_git(im)),
-        ("Skill → Claude + Codex", cong_cu("Skill → Claude + Codex",
+        ("Skill → Claude", cong_cu("Skill → Claude",
                                            "dong_bo_skill_claude_codex.py", khi_ap_dung + khi_im)),
-        ("Agent → Codex", lambda: lan_agent(ap_dung, im)),
-        ("Plugin (2 máy + Codex)", cong_cu("Plugin (2 máy + Codex)",
+        ("Agent", lambda: lan_agent(ap_dung, im)),
+        ("Plugin (2 máy)", cong_cu("Plugin (2 máy)",
                                            "dong_bo_plugin_claude_codex.py", khi_ap_dung + khi_im)),
         ("Hook SessionStart", cong_cu("Hook SessionStart", "dong_bo_hook_sessionstart.py",
                                       khi_ap_dung)),

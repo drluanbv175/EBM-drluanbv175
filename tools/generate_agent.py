@@ -229,12 +229,11 @@ def _run(cmd: List[str]) -> subprocess.CompletedProcess:
 
 
 def register_and_sync() -> Dict[str, Any]:
-    """Chạy enforce (cấy guardrail) → sync Codex → check → audit. Trả tóm tắt."""
+    """Chạy enforce (cấy guardrail) → kiểm sức khoẻ agent → audit. Trả tóm tắt."""
     py = sys.executable
     steps = {
         "enforce": [py, str(TOOLS / "enforce_agent_guardrails.py")],
-        "sync": [py, str(TOOLS / "sync_agents_to_codex.py")],
-        "check": [py, str(TOOLS / "sync_agents_to_codex.py"), "--check"],
+        "check": [py, str(TOOLS / "kiem_suc_khoe_agent.py")],
         "audit": [py, str(TOOLS / "audit_ebm_system.py")],
     }
     result: Dict[str, Any] = {}
@@ -271,7 +270,7 @@ def generate(spec: Dict[str, Any], *, register: bool = False,
     print(f"   Ghi registry: {REGISTRY.relative_to(ROOT)}")
 
     if register:
-        print("🔧 Đăng ký: enforce → sync → check → audit ...")
+        print("🔧 Đăng ký: enforce → check → audit ...")
         res = register_and_sync()
         out["registered"] = True
         out["register_result"] = res
@@ -282,8 +281,7 @@ def generate(spec: Dict[str, Any], *, register: bool = False,
     else:
         print("   ↪ Chưa đăng ký. Chạy lại với --register, hoặc thủ công:")
         print("       python tools/enforce_agent_guardrails.py")
-        print("       python tools/sync_agents_to_codex.py && "
-              "python tools/sync_agents_to_codex.py --check")
+        print("       python tools/kiem_suc_khoe_agent.py")
         print("       python tools/audit_ebm_system.py")
     print("   ⚠ Agent ở trạng thái [TỰ SINH — CHỜ BÁC SĨ DUYỆT]. "
           "Bác sĩ rà + xoá dòng cảnh báo để chuyển chính thức.")

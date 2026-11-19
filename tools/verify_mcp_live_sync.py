@@ -51,9 +51,8 @@ MIRROR_PRE_COMMIT = MIRROR / ".githooks" / "pre-commit"
 
 ROOT_HOOK_MARKERS = (
     "COMPLETION_SYNC_FAIL_CLOSED=1",
-    "git diff --name-only -- .claude/agents .Codex/agents .codex/agents",
-    "tools/sync_agents_to_codex.py --check",
-    "tools/check_claude_codex_sync_health.py",
+    "git diff --name-only -- .claude/agents",
+    "tools/kiem_suc_khoe_agent.py",
     "tools/verify_claude_code_repo_alignment.py",
 )
 MIRROR_HOOK_MARKERS = (
@@ -207,7 +206,7 @@ def main() -> int:
                     + ", ".join(missing)
                 )
             else:
-                notes.append("Repo y khoa: pre-commit bắt buộc Claude Code ↔ Codex cùng đạt.")
+                notes.append("Repo y khoa: pre-commit gọi chốt workspace trước commit.")
 
     system_name = platform.system()
     if system_name != "Darwin":

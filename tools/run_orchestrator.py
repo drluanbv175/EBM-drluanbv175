@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""CLI cho Orchestrator EBM (dry-run mặc định; ``--execute`` chạy Codex thật).
+"""CLI cho Orchestrator EBM (dry-run; nhánh ``--execute`` chạy Codex CLI đã GỠ 19/11/2026).
 
 Dùng:
   python tools/run_orchestrator.py "Tôi có bệnh nhân nam 68 tuổi ĐTĐ2 + eGFR 40, thêm thuốc gì?"
@@ -11,7 +11,6 @@ Dùng:
   python tools/run_orchestrator.py --validate            # tự kiểm điều phối ⇄ registry
   python tools/run_orchestrator.py --resume <session_id> # khôi phục một phiên
   python tools/run_orchestrator.py --list                # liệt kê phiên đã lưu
-  python tools/run_orchestrator.py "..." --execute       # agent thật + cổng 2 lớp
   thêm --json để in máy đọc.
 
 Mã thoát = mã hợp đồng DỪNG (0 released · 1 returned · 2 gate_pending · 3 blocked · 4 unknown).
@@ -29,7 +28,6 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from orchestrator.context import ContextStore  # noqa: E402
-from orchestrator.agent_adapter import LLMExecutor  # noqa: E402
 from orchestrator.orchestrator import Orchestrator  # noqa: E402
 
 # Ép stdout/stderr UTF-8 an toàn (kể cả Python cũ hơn không có PYTHONUTF8=1) — vá crash
@@ -116,12 +114,7 @@ def main() -> int:
                     help="Chấm output THẬT (.md) qua cổng rule-based → cắt bản ghi APPRAISAL "
                          "+ re-route nếu TRẢ-VỀ-SỬA (D1+D3 operational, không cần LLM)")
     ap.add_argument("--execute", action="store_true",
-                    help="Chạy agent thật qua Codex CLI chỉ-đọc + critic Q1–Q7 độc lập")
-    ap.add_argument("--model", help="Model cho agent sinh nội dung (mặc định theo cấu hình Codex)")
-    ap.add_argument("--grader-model",
-                    help="Model cho phiên critic độc lập (mặc định theo cấu hình Codex)")
-    ap.add_argument("--timeout-seconds", type=int, default=600,
-                    help="Timeout mỗi lượt Codex CLI; mặc định 600 giây")
+                    help="ĐÃ GỠ 19/11/2026 (chạy agent qua Codex CLI) — giữ cờ để báo rõ thay vì lỗi argparse")
     ap.add_argument("--output", metavar="FILE",
                     help="Ghi artifact cuối; chỉ ghi khi phiên không bị blocked")
     ap.add_argument("--no-persist", action="store_true",
@@ -212,14 +205,9 @@ def main() -> int:
 
     executor = None
     if args.execute:
-        # Hai client/phiên tách biệt: generator và critic không chia hội thoại.
-        from orchestrator.guardrail_bridge import IndependentClinicalGrader, make_live_guardrail_verdict
-        executor = LLMExecutor(model=args.model, timeout_seconds=args.timeout_seconds)
-        grader = IndependentClinicalGrader(
-            model=args.grader_model,
-            timeout_seconds=args.timeout_seconds,
-        )
-        verdict_fn = make_live_guardrail_verdict(grader)
+        print("⚪ Nhánh --execute (chạy agent thật qua Codex CLI) đã GỠ 19/11/2026 — bác sĩ không còn dùng Codex. "
+              "Dùng dry-run, hoặc chạy agent trong phiên Claude Code.", file=sys.stderr)
+        return 4
 
     session = orch.handle(
         args.request,

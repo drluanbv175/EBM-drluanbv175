@@ -5,7 +5,7 @@ Có **2 môi trường tách biệt**, cơ chế đồng bộ khác nhau:
 | Môi trường | Là gì | Đồng bộ thế nào |
 |---|---|---|
 | **Cowork** (Claude Desktop) | Skills y khoa + harness bạn upload qua giao diện | **Tự động** qua tài khoản |
-| **Code + Codex** | Skill riêng trong `~/.claude/skills` và `~/.codex/skills` | **Tự động** từ `sync/skills/` bằng liên kết + watcher |
+| **Code** | Skill riêng trong `~/.claude/skills` | **Tự động** từ `sync/skills/` bằng liên kết + watcher |
 
 > ⚠️ **Hai nguồn chân lý song song — nay đã có làn đối chiếu (06/09/2026).**
 > Bảng trên nói đúng, nhưng nó cũng nói ra một điều lâu nay không ai kiểm: bundle
@@ -29,9 +29,9 @@ Lệnh này phủ **9 làn theo đúng thứ tự phụ thuộc** — xem bằng
 |---|---|---|
 | ① | An toàn đồng bộ | conflict-copy OneDrive · git hỏng · file lõi chưa tải. **🔴 là DỪNG TẤT CẢ** |
 | ② | Git | commit chưa đẩy/chưa kéo — máy kia sẽ không thấy |
-| ③ | Skill → Claude + Codex | `sync/skills/` → 2 runtime |
-| ④ | Agent → Codex | enforce → sync → check |
-| ⑤ | Plugin | đối chiếu 2 máy qua sổ khai chung + chiếu sang Codex |
+| ③ | Skill → Claude | `sync/skills/` → `~/.claude/skills` |
+| ④ | Agent | enforce guardrail → kiểm sức khoẻ agent (bản sao Codex gỡ 19/11/2026) |
+| ⑤ | Plugin | đối chiếu 2 máy qua sổ khai chung |
 | ⑥ | Hook SessionStart | cơ chế tự động đi giữa 2 máy (đích: `.claude/settings.local.json`) |
 | ⑦ | Bộ nhớ Claude | mirror 2 chiều, file mới hơn thắng |
 | ⑧ | Kho công cụ | kho plugin so mốc chuẩn máy này |
@@ -54,7 +54,7 @@ bash sync/link-skills.sh          # macOS/Linux — symlink
 sync\link-skills.ps1              # Windows — junction (bấm đúp link-skills.cmd cũng được)
 ```
 
-Cả hai script nối **cả `~/.claude/skills` lẫn `~/.codex/skills`** (sửa 21/08/2026 — trước đó chỉ nối Claude, nên Codex trắng skill trên cả hai máy).
+Cả hai script nối `~/.claude/skills` (runtime `~/.codex/skills` thêm 21/08/2026 đã GỠ 19/11/2026 — bác sĩ không còn dùng Codex).
 
 Sửa file của skill đã liên kết có hiệu lực ngay. Hook `SessionStart` tự bắt skill mới, thay đổi registry plugin, cập nhật Cowork và dựng lại catalog/ZIP. Không dùng LaunchAgent đọc OneDrive vì macOS chặn tiến trình nền chưa có Full Disk Access. Kiểm tay (chạy được trên **cả hai** máy từ 21/08/2026):
 
@@ -66,7 +66,7 @@ python3 tools/dong_bo_skill_claude_codex.py --dong-bo-plugin
 
 | Việc | Lệnh | Vì sao |
 |---|---|---|
-| Nối skill vào Claude + Codex | `bash sync/link-skills.sh` · `sync\link-skills.ps1` | nguồn duy nhất `sync/skills/` |
+| Nối skill vào Claude | `bash sync/link-skills.sh` · `sync\link-skills.ps1` | nguồn duy nhất `sync/skills/` |
 | Nhận hook `SessionStart` | `python3 tools/dong_bo_hook_sessionstart.py --ap-dung` | 8 chốt trỏ venv/kho plugin RIÊNG từng máy nên nằm ở `.claude/settings.local.json` (không qua git) |
 | Dời bản cũ (MỘT LẦN, trước `git pull`) | `mv .claude/settings.json .claude/settings.local.json && git pull` | từ 01/09/2026 `.claude/settings.json` đi qua git và chỉ khai hook phiên **cloud**; bản cũ chưa track sẽ làm pull từ chối. Hook ở hai file cộng dồn — không mất chốt nào |
 | Đối chiếu kho plugin | `python3 tools/dong_bo_plugin_claude_codex.py` | biết máy này thiếu plugin nào so với **sổ khai chung** |
@@ -116,7 +116,7 @@ Skills của Cowork lưu trên **tài khoản Claude** (server), không phải f
 
 ---
 
-## 2) Code (CLI) và Codex — liên kết tự động
+## 2) Code (CLI) — liên kết tự động
 
 Cấu hình runtime vẫn nằm trên từng máy, nhưng skill riêng dùng liên kết tới nguồn OneDrive. Chạy script cài đặt một lần trên mỗi máy; các lần sửa sau không cần chép lại.
 

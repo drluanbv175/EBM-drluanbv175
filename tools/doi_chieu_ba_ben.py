@@ -6,7 +6,7 @@ VÌ SAO CÓ
 =========
 Hệ EBM có ba nơi giữ skill, và trước công cụ này chỉ có hai cặp được kiểm:
 
-    repo  --link-skills.sh-->  ~/.claude/skills, ~/.codex/skills      (đã có)
+    repo  --link-skills.sh-->  ~/.claude/skills                       (đã có)
     repo  --dong_bo_skill.py-> Claude Desktop local-agent-mode        (đã có)
     repo  <--- ??? --->        bundle tài khoản (cloud)               (KHÔNG AI KIỂM)
 
@@ -479,8 +479,7 @@ def main(argv=None) -> int:
     else:
         in_ket_qua(kq, str(bundle), str(hub))
         in_tac_vu(kiem_tac_vu(goc_repo, cloud))
-        in_cuc_bo({"~/.claude/skills": Path.home() / ".claude" / "skills",
-                   "~/.codex/skills": Path.home() / ".codex" / "skills"}, hub)
+        in_cuc_bo({"~/.claude/skills": Path.home() / ".claude" / "skills"}, hub)   # ~/.codex/skills gỡ 19/11/2026
 
     if kq["khac_han"]:
         return 2

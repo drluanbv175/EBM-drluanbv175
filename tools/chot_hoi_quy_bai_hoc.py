@@ -2673,8 +2673,8 @@ def bh70_bo_dong_bo_khong_tro_vao_thu_khong_co():
     if sai_co:
         return False, f"{len(sai_co)} cờ không được chấp nhận: {sai_co[0]}"
 
-    # (b) hai script cài đặt phải nối CẢ HAI runtime — bỏ sót Codex thì máy đó
-    #     không thấy skill nào, đúng tình trạng Windows trước 21/08.
+    # (b) hai script cài đặt phải nối runtime Claude (`.claude/skills`). Từ 21/08 tới 19/11/2026 còn đòi cả
+    #     `.codex/skills`; runtime Codex đã GỠ 19/11/2026 (bác sĩ không còn dùng Codex) nên nay chỉ đòi Claude.
     #
     # KIỂM BẰNG HÀNH VI, KHÔNG ĐẾM CHUỖI. Bản đầu của chốt này chỉ hỏi «chuỗi
     # .codex có trong file không» — và đột biến gỡ Codex khỏi vòng lặp vẫn XANH,
@@ -2722,7 +2722,7 @@ def bh70_bo_dong_bo_khong_tro_vao_thu_khong_co():
             if kq.returncode != 0:
                 sh_loi = f"link-skills.sh chạy lỗi: {(kq.stderr or '').strip()[:120]}"
             else:
-                for runtime in (".claude", ".codex"):
+                for runtime in (".claude",):
                     d = Path(tam) / runtime / "skills"
                     n = sum(1 for x in d.iterdir() if x.is_symlink()) if d.is_dir() else 0
                     if n == 0:
@@ -2747,7 +2747,7 @@ def bh70_bo_dong_bo_khong_tro_vao_thu_khong_co():
             if kq.returncode != 0:
                 ps_loi = f"link-skills.ps1 chạy lỗi: {(kq.stderr or '').strip()[:120]}"
             else:
-                for runtime in (".claude", ".codex"):
+                for runtime in (".claude",):
                     d = Path(tam) / runtime / "skills"
                     n = sum(1 for _x in d.iterdir()) if d.is_dir() else 0
                     if n == 0:
@@ -2758,7 +2758,7 @@ def bh70_bo_dong_bo_khong_tro_vao_thu_khong_co():
         ma_ps = "\n".join(
             d for d in ps.read_text(encoding="utf-8-sig").splitlines()
             if not d.lstrip().startswith("#") and not d.lstrip().startswith("Write-Host"))
-        for runtime in (".claude", ".codex"):
+        for runtime in (".claude",):
             if f"{runtime}\\skills" not in ma_ps:
                 ps_loi = (f"link-skills.ps1 không nối {runtime}\\skills trong phần MÃ "
                           f"(chữ trong chú thích hay dòng in không tính)")
@@ -4110,8 +4110,8 @@ _CAN_NGUYEN_LIEU_NGOAI_REPO = frozenset({
 # «tái phát» mỗi lần mở phiên (3 dòng đỏ giả — đúng «bức tường đỏ giả» BH08/BH82 cấm). KHÔNG đưa vào danh sách trên: nhánh
 # lùi `tran` ở đó sẽ ⚪ hoá luôn lỗi TRONG repo (doctrine/agent) của chúng trên mọi phiên Cloud. Luật HẸP: ⚪ CHỈ KHI thông
 # điệp nêu đích danh `medical-ebm-automation` VÀ engine thật sự vắng; mọi thất bại khác vẫn ✗ ở mọi máy.
-# +BH144 (01/10/2026): soi mirror `.codex/agents` mà repo y khoa track — vắng engine thì không kiểm được gì.
-_CAN_ENGINE_NEU_TEN = frozenset({"BH88", "BH108", "BH109", "BH144"})
+# (BH144 — mirror .codex/agents — đã rút 19/11/2026 cùng Codex.)
+_CAN_ENGINE_NEU_TEN = frozenset({"BH88", "BH108", "BH109"})  # BH144 rút 19/11/2026
 
 # VÁ 26/09/2026 (đột biến lộ ra): BH56 nằm trong danh sách trên vì nửa «chỉ mục RAG tươi» cần
 # EBM-Dashboards/, nhưng nửa «công cụ MỒ CÔI» soi doctrine agent NẰM TRONG GIT — trên Cloud gỡ dây gọi
@@ -4298,7 +4298,7 @@ def bh84_hook_phien_cloud_di_qua_git_khong_dung_may_that():
       ① hai file đi qua git · settings.local.json vẫn bị ignore · script có bit thực thi
         trong index · settings.json thật sự GỌI script (BH41: không ai gọi = không tồn tại)
       ② KHÔNG remote ⇒ thoát 0 và HOME tạm không có gì mới
-      ③ remote + fixture ⇒ skill được nối vào CẢ $HOME/.claude/skills lẫn $HOME/.codex/skills
+      ③ remote + fixture ⇒ skill được nối vào $HOME/.claude/skills (runtime Codex gỡ 19/11/2026)
         bằng đúng làn ③ (dong_bo_skill_claude_codex.py), và settings.json nhận đúng khoá
         ĐÃ KHAI (so với bản khai, không so với số viết cứng)
       ④ chốt bài học chỉ chạy trên bản trần: còn một gốc dữ liệu ⇒ KHÔNG gọi; vắng ⇒ gọi;
@@ -4390,7 +4390,7 @@ def bh84_hook_phien_cloud_di_qua_git_khong_dung_may_that():
         # bài học BH70 lặp lại: bộ đồng bộ không được trỏ vào thứ không có mặt.
         shutil.copy2(REPO / "tools/doc_settings.py", P / "tools/doc_settings.py")
         shutil.copy2(REPO / "tools/ban_sao_tran.py", P / "tools/ban_sao_tran.py")
-        # Làn ③ thật (không stub): hook phải nối được cả hai runtime bằng đúng công cụ
+        # Làn ③ thật (không stub): hook phải nối được runtime Claude bằng đúng công cụ
         # bác sĩ dùng trên máy — ba file này thuần stdlib, chạy trong fixture ~0,3 s.
         for ten in ("dong_bo_skill_claude_codex.py", "dong_bo_skill.py", "lien_ket_da_nen.py"):
             shutil.copy2(REPO / "tools" / ten, P / "tools" / ten)
@@ -4399,11 +4399,8 @@ def bh84_hook_phien_cloud_di_qua_git_khong_dung_may_that():
         dau = Path(td) / "da-goi-chot"
         (P / "tools/chot_hoi_quy_bai_hoc.py").write_text(
             f"open({str(dau)!r}, 'w').write('x')\n", encoding="utf-8")
-        # Stub sinh mirror Codex: chỉ để lại DẤU. Bản clone tươi không có mirror
-        # (gitignore) ⇒ alignment FAIL ⇒ BH83 đỏ ở mọi phiên cloud — hook phải gọi nó.
-        dau_mirror = Path(td) / "da-sinh-mirror"
-        (P / "tools/sync_agents_to_codex.py").write_text(
-            f"open({str(dau_mirror)!r}, 'w').write('x')\n", encoding="utf-8")
+        # (Stub «sinh mirror Codex» đã GỠ 19/11/2026 cùng bản sao Codex — hook không còn nguyên liệu đó;
+        # bước ④ của hook tự bỏ qua vì `tools/sync_agents_to_codex.py` không còn.)
         # pip3 giả: chốt hồi quy KHÔNG được ra mạng. Máy thiếu docx/bs4/lxml thì hook
         # sẽ gọi pip3 — ở đây nó gặp shim này và đi tiếp, không cài gì.
         (shim / "pip3").write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
@@ -4421,11 +4418,8 @@ def bh84_hook_phien_cloud_di_qua_git_khong_dung_may_that():
             return False, ("cây còn gốc dữ liệu (không phải bản trần) mà hook vẫn gọi chốt bài học "
                            "— tường đỏ giả 32 mục quay lại")
 
-        if not dau_mirror.exists():
-            return False, "hook không sinh lại mirror Codex — clone tươi sẽ FAIL agent_sync_health, BH83 đỏ mọi phiên cloud"
-
         # ③ nối skill + khôi phục khoá đã khai
-        for rt in (".claude/skills", ".codex/skills"):
+        for rt in (".claude/skills",):
             lk = home / rt / "skill-thu"
             if not (lk / "SKILL.md").is_file():
                 return False, f"remote mà skill riêng KHÔNG được nối vào ~/{rt} — cổng plugin sẽ FAIL router runtime"
@@ -4793,10 +4787,9 @@ def bh88_cua_vao_nhac_truong_mo_cho_loi_bac_si_that():
         return False, ("WorkerInventory không tra ~/.claude/plugins/cache — nơi "
                        "`claude plugin install` GHI; mọi worker sẽ báo «chưa cài» và "
                        "nhạc trưởng không bao giờ dùng plugin đã cài")
-    if not any(".codex/plugins/cache" in g.as_posix() for g in goc):
-        return False, "WorkerInventory bỏ mất kho Codex — máy có Codex CLI sẽ mất worker"
+    # (Đòi kho `~/.codex/plugins/cache` đã GỠ 19/11/2026 — bác sĩ không còn dùng Codex.)
     return True, (f"{len(CAU_BAC_SI_NOI)} câu bác sĩ nói đều vào đúng cửa; đích việc lẻ/công cụ "
-                  "phân giải được; việc lẻ mạnh không vượt cờ đỏ; inventory tra cả hai kho")
+                  "phân giải được; việc lẻ mạnh không vượt cờ đỏ; inventory tra kho Claude")
 
 
 def bh89_worker_inventory_doc_ca_lenh_lan_skill():
@@ -5018,8 +5011,8 @@ def bh91_dieu_phoi_lam_sang_co_tu_sinh_agent():
       ③ Đoạn đó phải nêu RÕ agent tự sinh vẫn qua Cổng A/B (không có đường tắt cổng cứng
          cho tuyến lâm sàng) — thiếu câu này là lặp đúng lỗi mà BH39 từng khoá ở tuyến
          chứng cứ: thêm năng lực mới mà không buộc nó vào cổng an toàn sẵn có.
-      ④ File vẫn phải qua được `enforce_agent_guardrails.py`/`sync_agents_to_codex.py
-         --check` — thêm đoạn mới không được làm hỏng khung agent chuẩn.
+      ④ File vẫn phải qua được `kiem_suc_khoe_agent.py` (thay `sync_agents_to_codex.py --check` từ 19/11/2026,
+         khi bản sao Codex gỡ) — thêm đoạn mới không được làm hỏng khung agent chuẩn.
     """
     import subprocess
 
@@ -5053,14 +5046,14 @@ def bh91_dieu_phoi_lam_sang_co_tu_sinh_agent():
     if "LẶP LẠI" not in doan_sinh and "lặp lại" not in doan_sinh:
         return False, "đoạn TỰ SINH AGENT không nói rõ điều kiện LẶP LẠI — rủi ro sinh cho ca đơn lẻ"
 
-    r = subprocess.run([sys.executable, str(REPO / "tools" / "sync_agents_to_codex.py"), "--check"],
+    r = subprocess.run([sys.executable, str(REPO / "tools" / "kiem_suc_khoe_agent.py")],
                         capture_output=True, text=True, timeout=60, cwd=REPO, encoding="utf-8", errors="replace")
     if r.returncode != 0:
         out = (r.stdout or "") + (r.stderr or "")
-        return False, f"sync_agents_to_codex.py --check FAIL sau khi sửa dieu-phoi-lam-sang.md: {out[-300:]}"
+        return False, f"kiem_suc_khoe_agent.py FAIL sau khi sửa dieu-phoi-lam-sang.md: {out[-300:]}"
 
     return True, ("dieu-phoi-lam-sang.md nay dạy _TU-SINH-AGENT.md, đúng sau CA NGOÀI VÙNG "
-                  "PHỦ, buộc Cổng A/B, khung agent vẫn PASS sync_agents_to_codex --check")
+                  "PHỦ, buộc Cổng A/B, khung agent vẫn PASS kiem_suc_khoe_agent")
 
 
 
@@ -10769,7 +10762,6 @@ def bh141_router_thieu_plugin_ma_may_nay_khong_can_khong_bao_loi():
             sk.write_text(json.dumps({"plugin": {p: {"can_o_may": c} for p, c in khai.items()}}), encoding="utf-8")
             with (mock.patch.object(Path, "home", return_value=home), mock.patch.object(DB, "SO_KHAI", sk),
                   mock.patch.object(DB, "_ten_may", return_value=may),
-                  mock.patch.object(DB, "co_codex_tren_may", return_value=False),
                   contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO())):
                 rc = DB.rebuild_router(nguon, quiet=True)
             return rc, dau.exists()
@@ -11554,144 +11546,7 @@ def bh143_child_repo_memory_has_own_mirror():
     return True, ""
 
 
-# Nhãn đường dẫn của mirror mà repo y khoa TRACK — chữ thường, xem docstring BH144.
-_BH144_NHAN = ".codex/agents"
-# Thông điệp nhánh vắng engine — dùng chung cho chốt thật và phép tự kiểm phân loại (một nơi định nghĩa).
-_BH144_TB_VANG = ("⚪ medical-ebm-automation vắng (lồng/anh em) — mirror .codex/agents của repo y khoa CHƯA được "
-                  "đối chiếu (bỏ qua có khai báo; chạy trên máy có repo y khoa để canh đủ)")
-
-
-def bh144_mirror_codex_repo_y_khoa_khop_ban_sinh():
-    """01/10 — mirror `.codex/agents/` mà repo y khoa TRACK phải khớp bản sinh của CHÍNH bộ sinh gốc
-    `tools/sync_agents_to_codex.py` (nhãn `.codex/agents`) từ `.claude/agents/*.md` CỦA REPO Y KHOA.
-
-    Codex nạp agent DỰ ÁN từ `.codex/agents/*.toml` (tài liệu OpenAI «Subagents»: TOML có `name`, `description`,
-    `developer_instructions`); repo y khoa track mirror này từ 20660c0 (08/09, theo yêu cầu bác sĩ). Đo 01/10 trên
-    nhánh mặc định (23648ac): kỳ vọng 84 tệp · khớp 3 · lệch NỘI DUNG 79 (cả 50/50 agent + 29 sổ hạ tầng) · thiếu 2
-    (`_KHUNG-DANH-GIA-KHA-THI.md`, `_PLUGIN-ROUTING-CONTRACT.md`) · 0 tệp lệch chỉ do nhãn. Mirror commit 08/09 là ảnh
-    chụp sinh trên Mac (nhãn `.Codex/agents`) từ nguồn GIỮA THÁNG 7 — README còn QUADAS-2 và «Ba cổng nghiên cứu» —
-    rồi 12 commit đổi 57 tệp nguồn mà chỉ `_CONNECTOR-CHUNG-CU.md` được chép tay theo. Không chốt nào canh: hook y
-    khoa chỉ băm `.claude/agents` (bỏ `_*`), BH107 chỉ so bản `.claude/agents` — đổi một chữ trong mirror `.codex`
-    thì mọi chốt vẫn xanh. Hệ quả: mọi phiên Codex trong repo y khoa chạy đội agent cũ ~2,5 tháng.
-
-    HAI LỚP (bác sĩ chọn 01/10): lớp 1 là `tests/test_mirror_codex_agents_20261001.py` của repo y khoa (CI ubuntu +
-    windows, bắt TRƯỚC merge, dùng bản dựng chép `tools/sinh_mirror_codex.py`). Mục này là lớp 2: chạy mỗi lần mở
-    phiên trên máy thật, bắt phần lọt SAU merge (CI y khoa không phải check bắt buộc) và đối chiếu với ĐÚNG bộ sinh
-    gốc ⇒ bản chép ở repo y khoa trôi khỏi bộ sinh gốc thì cũng đỏ.
-
-    Nhãn `.codex/agents`, không phải `.Codex/agents` mà bộ sinh gốc tự chọn trên Mac: bản track chỉ có thư mục chữ
-    thường, còn CI/Codex Cloud chạy Linux phân biệt hoa/thường. Vắng repo y khoa ⇒ ⚪ qua `_CAN_ENGINE_NEU_TEN` (khác
-    BH107 «✓ kèm ghi chú»: BH107 vẫn kiểm được nửa doctrine của repo gốc, còn ở đây vắng engine là KHÔNG kiểm được gì).
-    Engine có nhưng chưa có `tools/sinh_mirror_codex.py` (nhánh trước 01/10) ⇒ «⚪ CHƯA KÍCH HOẠT», không đỏ — tránh
-    báo động giả trong khoảng giữa hai PR gốc/y khoa.
-    """
-    ok_rang, ct_rang = _bh144_tu_kiem_rang()
-    if not ok_rang:
-        return False, ct_rang
-    engine = _goc_mea(REPO)
-    if not engine.is_dir():
-        return False, _BH144_TB_VANG
-    return _bh144_kiem_engine(engine)
-
-
-def _bh144_kiem_engine(engine: Path) -> tuple[bool, str]:
-    """Phần kiểm trên một thư mục engine cho sẵn (thật hoặc fixture): đủ tệp, đúng byte, không mồ côi."""
-    if not (engine / "tools" / "sinh_mirror_codex.py").is_file():
-        return True, ("⚪ CHƯA KÍCH HOẠT: repo y khoa chưa có tools/sinh_mirror_codex.py (nhánh trước 01/10/2026) — "
-                      "mirror .codex/agents chưa được canh")
-    sac = _nap(REPO / "tools" / "sync_agents_to_codex.py", "_bh144_sac")
-    sac.SOURCE_DIR = engine / ".claude" / "agents"
-    ky_vong = sac.expected_files(_BH144_NHAN)
-    mirror = engine / ".codex" / "agents"
-    hien_co = ({p.name for p in mirror.iterdir() if p.is_file() and p.suffix in (".toml", ".md")}
-               if mirror.is_dir() else set())
-    lech = sorted(t for t in set(ky_vong) & hien_co if (mirror / t).read_text(encoding="utf-8") != ky_vong[t])
-    thieu = sorted(set(ky_vong) - hien_co)
-    mo_coi = sorted(hien_co - set(ky_vong))
-    if lech or thieu or mo_coi:
-        phan = [f"{nhan} {len(ds)}: {', '.join(ds[:4])}{' …' if len(ds) > 4 else ''}"
-                for nhan, ds in (("LỆCH", lech), ("THIẾU", thieu), ("MỒ CÔI", mo_coi)) if ds]
-        return False, (f"mirror .codex/agents của repo y khoa trôi khỏi bản sinh gốc ({' · '.join(phan)} / "
-                       f"{len(ky_vong)} tệp) — Codex trong repo y khoa chạy đội agent cũ. Sửa ở repo y khoa: "
-                       "python3 tools/sinh_mirror_codex.py --ghi rồi git add .codex/agents (nếu chính bộ sinh gốc vừa "
-                       "đổi thì sửa tools/sinh_mirror_codex.py theo)")
-    return True, f"mirror .codex/agents của repo y khoa khớp bản sinh gốc ({len(ky_vong)} tệp)"
-
-
-def _bh144_tu_kiem_rang() -> tuple[bool, str]:
-    """Tự kiểm «răng còn» trên fixture tạm (khuôn BH107): engine giả có `.claude/agents` (1 agent + 1 sổ hạ tầng cùng
-    nhắc `.claude/agents`), dấu kích hoạt `tools/sinh_mirror_codex.py`, mirror sinh bằng CHÍNH bộ sinh gốc.
-      (a) mirror vừa sinh ⇒ ĐẠT thật (không mang ⚪);
-      (b) lệch một ký tự trong agent ⇒ ĐỎ «LỆCH»;
-      (c) chỉ đổi nhãn `.codex/agents` → `.Codex/agents` ⇒ ĐỎ «LỆCH» (nhãn là một phần hợp đồng);
-      (d) xoá một tệp ⇒ ĐỎ «THIẾU»; (e) thêm tệp mồ côi ⇒ ĐỎ «MỒ CÔI»;
-      (f) bỏ dấu kích hoạt ⇒ ĐẠT kèm «⚪ CHƯA KÍCH HOẠT»;
-      (g) thông điệp vắng engine ⇒ ⚪ CHỈ KHI engine thật sự vắng; engine có mặt ⇒ ✗.
-    Thông điệp lỗi của phần này cố ý không nêu tên thư mục engine — nếu nêu, `phan_loai` sẽ ⚪ hoá một lỗi trong-repo
-    trên máy vắng engine."""
-    import shutil
-    import tempfile
-    from types import SimpleNamespace as _NS
-
-    td = Path(tempfile.mkdtemp(prefix="bh144-rang-"))
-    try:
-        engine = td / "engine"
-        nguon = engine / ".claude" / "agents"
-        nguon.mkdir(parents=True)
-        (nguon / "agent-thu.md").write_text(
-            "---\nname: agent-thu\ndescription: agent thử BH144\n---\nĐọc .claude/agents/_SO-THU.md trước khi làm.\n",
-            encoding="utf-8", newline="\n")
-        (nguon / "_SO-THU.md").write_text("Sổ thử — trỏ `.claude/agents/agent-thu.md`.\n",
-                                          encoding="utf-8", newline="\n")
-        (engine / "tools").mkdir()
-        dau_kich_hoat = engine / "tools" / "sinh_mirror_codex.py"
-        dau_kich_hoat.write_text("# dấu kích hoạt (fixture BH144)\n", encoding="utf-8", newline="\n")
-        sac = _nap(REPO / "tools" / "sync_agents_to_codex.py", "_bh144_sac_fixture")
-        sac.SOURCE_DIR = nguon
-        mirror = engine / ".codex" / "agents"
-        mirror.mkdir(parents=True)
-        for ten, noi_dung in sac.expected_files(_BH144_NHAN).items():
-            (mirror / ten).write_text(noi_dung, encoding="utf-8", newline="\n")
-        agent, so = mirror / "agent-thu.toml", mirror / "_SO-THU.md"
-        ban_agent, ban_so = agent.read_text(encoding="utf-8"), so.read_text(encoding="utf-8")
-
-        ok, ct = _bh144_kiem_engine(engine)
-        if not ok or "⚪" in ct:
-            return False, f"răng BH144 mất: mirror vừa sinh bằng bộ sinh gốc mà chốt không ĐẠT thật ({ok!r}: {ct[:120]})"
-        agent.write_text(ban_agent.replace("khi làm.", "khi lam."), encoding="utf-8", newline="\n")
-        ok, ct = _bh144_kiem_engine(engine)
-        if ok or "LỆCH" not in ct:
-            return False, "răng BH144 mất: lệch một ký tự trong agent mà chốt không báo «LỆCH»"
-        agent.write_text(ban_agent, encoding="utf-8", newline="\n")
-        so.write_text(ban_so.replace(_BH144_NHAN, ".Codex/agents"), encoding="utf-8", newline="\n")
-        ok, ct = _bh144_kiem_engine(engine)
-        if ok or "LỆCH" not in ct:
-            return False, ("răng BH144 mất: sổ hạ tầng mang nhãn .Codex/agents (thư mục không tồn tại trên Linux/Codex "
-                           "Cloud) mà chốt không đỏ")
-        so.write_text(ban_so, encoding="utf-8", newline="\n")
-        agent.unlink()
-        ok, ct = _bh144_kiem_engine(engine)
-        if ok or "THIẾU" not in ct:
-            return False, "răng BH144 mất: mirror thiếu một agent mà chốt không báo «THIẾU»"
-        agent.write_text(ban_agent, encoding="utf-8", newline="\n")
-        (mirror / "agent-ma.toml").write_text(ban_agent, encoding="utf-8", newline="\n")
-        ok, ct = _bh144_kiem_engine(engine)
-        if ok or "MỒ CÔI" not in ct:
-            return False, "răng BH144 mất: tệp mồ côi trong mirror mà chốt không báo «MỒ CÔI»"
-        (mirror / "agent-ma.toml").unlink()
-        dau_kich_hoat.unlink()
-        ok, ct = _bh144_kiem_engine(engine)
-        if not ok or "⚪ CHƯA KÍCH HOẠT" not in ct:
-            return False, f"răng BH144 mất: repo y khoa chưa có bộ sinh mà chốt không khai «⚪ CHƯA KÍCH HOẠT» ({ok!r})"
-    finally:
-        shutil.rmtree(td, ignore_errors=True)
-    vang = _NS(duong_goc=lambda g, r: None, GOC_DU_LIEU_NGOAI_GIT=("medical-ebm-automation",))
-    co = _NS(duong_goc=lambda g, r: r / g, GOC_DU_LIEU_NGOAI_GIT=("medical-ebm-automation",))
-    if phan_loai("BH144", False, False, _BH144_TB_VANG, vang) != "ngoai_pham_vi":
-        return False, "răng BH144 mất: máy vắng engine mà chốt vẫn ✗ «tái phát» — tường đỏ giả lúc mở phiên"
-    if phan_loai("BH144", False, False, _BH144_TB_VANG, co) != "tai_phat":
-        return False, "răng BH144 mất: engine CÓ MẶT mà thông điệp vắng engine vẫn được ⚪ hoá"
-    return True, "răng còn"
+# BH144 (mirror .codex/agents của repo y khoa) đã RÚT 19/11/2026 — bác sĩ gỡ Codex; lịch sử ở audit/nhat-ky/.
 
 
 def bh178_design_nhan_consensus_statement():
@@ -12473,44 +12328,7 @@ BAI_HOC = [
     ("BH141", "01/10", "Catalog router: máy thiếu plugin mà sổ khai nói KHÔNG cần ⇒ giữ catalog đã commit, mã 0 (không báo động giả ở hook); thiếu plugin được khai là cần / vắng sổ khai / máy khác ⇒ vẫn fail-closed", bh141_router_thieu_plugin_ma_may_nay_khong_can_khong_bao_loi),
     ("BH146", "02/10", "Lớp bọc MCP pubmed-search trên Windows chạy máy chủ như tiến trình CON (stdio kế thừa, chờ, trả đúng mã thoát) — `os.exec*` Windows không thay tiến trình, MCP «Connection closed» chập chờn; POSIX giữ os.execvpe", bh146_mcp_pubmed_windows_chay_may_chu_khong_dung_exec),
     ("BH143", "01/10", "Bộ nhớ Claude của repo y khoa có mirror RIÊNG (memory-sync/medical-ebm-automation/): không trộn hai MEMORY.md, không bắt nhầm worktree tạm, dò cho gốc không chọn thư mục repo y khoa, hai dự án chung thư mục ⇒ từ chối", bh143_child_repo_memory_has_own_mirror),
-    ("BH144", "01/10", "Mirror .codex/agents mà repo y khoa track (Codex nạp agent dự án) khớp bản sinh của bộ sinh gốc, nhãn .codex/agents; vắng engine ⇒ ⚪, engine chưa có bộ sinh ⇒ ⚪ chưa kích hoạt", bh144_mirror_codex_repo_y_khoa_khop_ban_sinh),
 ]
-
-
-def _dung_lai_mirror_codex(tran: bool) -> None:
-    """Dựng lại mirror Codex nếu thiếu — CHỐNG BÁO ĐỘNG ĐỎ GIẢ trên bản sao trần.
-
-    VÁ 03/09/2026, đo được: chạy bộ chốt trên một `git clone` tươi cho ĐÚNG 2 mục đỏ —
-    BH83 và BH91 — và **cả hai đều giả**. Nguyên nhân chung: `.Codex/agents` / `.codex/agents`
-    là bản sinh tự động TỪ `.claude/agents/*.md` và bị gitignore, nên clone tươi không có;
-    `sync_agents_to_codex.py --check` báo «thiếu thư mục», kéo theo
-    `verify_claude_code_repo_alignment` FAIL `agent_sync_health`. Sinh lại mirror rồi chạy lại:
-    cả hai XANH ngay, không sửa một dòng nội dung nào.
-
-    Vì sao KHÔI PHỤC chứ không hạ xuống ⚪: mirror là HÀM THUẦN của `.claude/agents/*.md` và
-    dựng lại mất ~0,1 giây, nên thiếu nó là thiếu NGUYÊN LIỆU, không phải thiếu năng lực kiểm.
-    Hạ xuống ⚪ sẽ mất luôn phép canh drift mirror — thứ hai chốt đó sinh ra để làm. Khôi phục
-    giữ đủ răng mà bỏ được đỏ giả; đúng khuôn `.claude/hooks/session-start.sh` đã dùng cho cây
-    sống, và cùng lý do nó CỐ Ý không gọi `enforce_agent_guardrails` (cái đó sửa file TRACKED —
-    ở đây chỉ ghi bản sinh đã gitignore).
-
-    Hai đỏ giả mỗi lượt chạy là đúng cơ chế BH08: bức tường đỏ dạy người ta bỏ qua cảnh báo,
-    và khi ấy cảnh báo THẬT chìm theo.
-    """
-    if not tran:
-        return  # cây sống: hook SessionStart đã lo, đừng ghi đè bản người dùng đang có
-    if (REPO / ".Codex" / "agents").is_dir() and (REPO / ".codex" / "agents").is_dir():
-        return
-    bo = REPO / "tools" / "sync_agents_to_codex.py"
-    if not bo.exists():
-        return  # thiếu công cụ thì để chốt tự báo — KHÔNG che (BH08: chưa biết ≠ đạt)
-    import subprocess
-    try:
-        subprocess.run([sys.executable, str(bo)], cwd=str(REPO),
-                       capture_output=True, timeout=120, check=False)
-    except (OSError, subprocess.SubprocessError):
-        return  # dựng lại thất bại ⇒ để chốt báo đỏ như cũ, không nuốt lỗi
-
 
 
 def main() -> int:
@@ -12519,7 +12337,6 @@ def main() -> int:
     a = ap.parse_args()
 
     tran = ban_sao_git_tran()
-    _dung_lai_mirror_codex(tran)
     bst_main = _nap(REPO / "tools" / "ban_sao_tran.py", "bst_chot_main")
     ket: list[tuple[str, str, str, str, str]] = []
     for ma, ngay, ten, ham in BAI_HOC:

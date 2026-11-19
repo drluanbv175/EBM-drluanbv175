@@ -198,10 +198,8 @@ def test_loop_stops_when_a_safe_remediation_step_fails():
             return _result(command, cwd, payload=_controlled_payload())
         if "assess_knowledge_pack_release.py" in command_text:
             return _result(command, cwd, payload=_knowledge_payload(allowed=False))
-        if "sync_codex_agents" in command_text:
-            return _result(command, cwd, returncode=1, stdout="FAIL remediation")
         # Nhận diện chính xác một lệnh remediation thật để mô phỏng thất bại.
-        if "sync_agents_to_codex.py" in command_text and "--check" not in command_text:
+        if "kiem_suc_khoe_agent.py" in command_text:
             return _result(command, cwd, returncode=1, stdout="FAIL remediation")
         return _result(command, cwd, stdout="remediated")
 

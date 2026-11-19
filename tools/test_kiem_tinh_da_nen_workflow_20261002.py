@@ -60,7 +60,7 @@ def test_khong_them_su_kien_pull_request_gay_chay_trung():
 def test_cac_buoc_kiem_van_con_du():
     d = _doc()
     for chuoi in ("python -m compileall -q tools ops", "tools/kiem_tuong_thich_da_nen.py", "tools/tu_de_xuat_viec.py --gon",
-                  "python -m pytest tools/ -q -rs", "tools/sync_agents_to_codex.py"):
+                  "python -m pytest tools/ -q -rs", "tools/kiem_suc_khoe_agent.py"):
         assert chuoi in d, f"mất bước kiểm: {chuoi}"
 
 

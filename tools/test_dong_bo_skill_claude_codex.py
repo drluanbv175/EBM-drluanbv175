@@ -130,10 +130,7 @@ class TestCoTheDungCacheClaudeCode(unittest.TestCase):
                 f"from pathlib import Path\nPath({str(marker)!r}).write_text('x')\n",
                 encoding="utf-8",
             )
-            with (
-                mock.patch.object(DB, "co_codex_tren_may", return_value=False),
-                mock.patch.object(DB, "co_the_dung_cache_claude_code", return_value=True),
-            ):
+            with mock.patch.object(DB, "co_the_dung_cache_claude_code", return_value=True):
                 rc = DB.rebuild_router(source_root, quiet=True)
             self.assertEqual(rc, 0)
             self.assertTrue(marker.is_file(),
@@ -198,7 +195,7 @@ def test_ensure_link_self_heals_dangling_symlink(tmp_path):
     cho, OneDrive ghi de). Truoc ban va, nhanh nay tra XUNG_DOT vinh vien du
     da truyen apply=True, vi khong co else-if nao goi LK.go()+LK.tao()."""
     source = _make_source(tmp_path)
-    destination = tmp_path / ".codex" / "skills"
+    destination = tmp_path / ".claude" / "skills"
     destination.mkdir(parents=True)
     (destination / source.name).symlink_to(tmp_path / "da-bi-xoa" / source.name)
 
