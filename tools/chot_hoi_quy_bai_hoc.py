@@ -6809,6 +6809,16 @@ def _bh113_than():
             return False, "thẻ PubMed lạ được dịch âm thầm — phải fail-closed (ValueError), không đoán"
         except ValueError:
             pass
+        # VÁ 19/11/2026: thẻ MeSH ⇒ KW: (Europe PMC `MESH:` chỉ trả 0,4–3% số bài PubMed gắn MeSH đó; 106/1485 truy vấn
+        # watchlist dùng [MeSH Major Topic]/[mesh] từng RAISE ⇒ chủ đề mất giám sát khi NCBI chặn)
+        for m in ('"Dyslipidemias"[MeSH Major Topic]', "adult[mh]", '"Liver Neoplasms"[mesh]', "Obesity[majr]"):
+            try:
+                dm = S.dich_pubmed_sang_europepmc(m)
+            except ValueError as e:
+                return False, f"thẻ MeSH {m!r} không dịch được ({e}) — chủ đề mất giám sát khi NCBI chặn"
+            if "MESH:" in dm or "KW:" not in dm:
+                return False, (f"thẻ MeSH dịch thành {dm!r} — Europe PMC MESH: chỉ trả 0,4–3% số bài PubMed (đo 19/11); "
+                               "phải dịch sang KW:")
 
         def ncbi_hong(_u):
             raise RuntimeError("NCBI timeout")
