@@ -1,5 +1,5 @@
 interface:
-  display_name: "Nhạc trưởng Plugin Claude–Codex–ChatGPT"
+  display_name: "Nhạc trưởng Plugin Claude–ChatGPT"
   short_description: "Tự chọn đúng owner, plugin và skill"
   brand_color: "#2563EB"
   default_prompt: "Dùng $plugin-router-chatgpt để chọn nhạc trưởng và skill phù hợp nhất cho yêu cầu này."
