@@ -53,7 +53,6 @@ def _dung(tmp_path, monkeypatch, *, cai=(), khai=None, may="Windows", ma_router=
     monkeypatch.setattr(Path, "home", staticmethod(lambda: home))
     monkeypatch.setattr(DB, "SO_KHAI", so_khai)
     monkeypatch.setattr(DB, "_ten_may", lambda: may)
-    monkeypatch.setattr(DB, "co_codex_tren_may", lambda: False)
     return source_root, marker
 
 

@@ -8,7 +8,7 @@
 # Workflow này đập trên máy GitHub: đúng giờ, không cần máy bác thức, không cần CLI.
 #
 # PHẠM VI — nói rõ để «xanh ở đây» không bị đọc quá:
-#   LÀM ĐƯỢC : 14 verifier tất định trên tệp CÓ TRONG GIT + gương .codex (11 chạy trần; 3 cần repo anh em + 3 gói ghim).
+#   LÀM ĐƯỢC : 14 verifier tất định trên tệp CÓ TRONG GIT + sức khoẻ agent (11 chạy trần; 3 cần repo anh em + 3 gói ghim).
 #   KHÔNG LÀM: giám sát chứng cứ thật (weekly_safety.sh / monthly_update.sh
 #              KHÔNG nằm trong git; EBM_MASTER và EBM-Dashboards bị .gitignore
 #              CỐ Ý). Việc đó vẫn thuộc máy bác sĩ — xem Routine ở HUONG-DAN.
@@ -47,8 +47,6 @@ jobs:
       # verifier và bước gương bằng `python3 -S` (bỏ site-packages, mô phỏng máy
       # GitHub trần): 11/11 + gương đều xanh, 0 lỗi ModuleNotFound. Chúng chỉ dùng
       # thư viện chuẩn cộng module anh em cùng thư mục tools/.
-      # sync_agents_to_codex.py:24 thử `tomllib` (chuẩn từ 3.11) trước rồi mới lùi về
-      # `tomli`; vì ghim 3.11 ở đây nên nhánh cần `tomli` không bao giờ chạy.
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: "3.11"      # SÀN KHAI BÁO trong CLAUDE.md
@@ -109,19 +107,9 @@ jobs:
           done
           [ "$do_" -eq 0 ]
 
-      # `.codex/` bị .gitignore (dòng 13) — đây là SẢN PHẨM SINH, cố ý không track,
-      # được tái tạo ở session-start.sh:114 và trong kiem-tinh-da-nen.yml:76. Bản sao
-      # trần có 0 tệp là ĐÚNG TRẠNG THÁI, không phải lỗi. Nên KHÔNG kiểm bằng
-      # `git diff -- .codex`: trên đường dẫn bị ignore, lệnh đó luôn báo "không lệch"
-      # và cổng này sẽ xanh giả mãi mãi. Thứ đáng kiểm là bộ sinh có chạy nổi không
-      # và gương sinh ra có qua được cổng sức khoẻ không.
-      - name: Gương .codex sinh được và qua cổng sức khoẻ
-        run: |
-          python3 tools/sync_agents_to_codex.py
-          python3 tools/check_claude_codex_sync_health.py
-          n=$(ls .codex/agents 2>/dev/null | wc -l)
-          [ "$n" -gt 0 ] || { echo "🔴 Bộ sinh chạy xong nhưng .codex/agents rỗng"; exit 1; }
-          echo "✅ Gương .codex: $n tệp, qua cổng sức khoẻ"
+      # Bước «gương .codex sinh được» đã GỠ 19/11/2026 cùng bản sao Codex — thay bằng cổng sức khoẻ NGUỒN agent.
+      - name: Sức khoẻ đội agent (.claude/agents)
+        run: python3 tools/kiem_suc_khoe_agent.py
 
       # Issue «🔴 Giám sát định kỳ đỏ» do bước báo động bên dưới mở nhưng KHÔNG bao giờ được đóng: #20 mở từ 21/09 trong khi hai lượt
       # sau (28/09, 01/10) đã xanh ⇒ đèn đỏ cũ làm giảm giá trị đèn đỏ mới. Lượt xanh đóng mọi issue nhãn `giam-sat` còn mở.

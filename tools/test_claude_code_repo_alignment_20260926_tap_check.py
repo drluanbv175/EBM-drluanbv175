@@ -26,7 +26,7 @@ _TAP_CHECK = {
     "doctrine_tac_vu_lich",  # 14/11/2026: doctrine không nhắc tác vụ lịch đã bỏ
     "medical_repo_docs",
     "tracked_contract_files",
-    "agent_sync_health",
+    "agent_health",  # 19/11/2026: thay agent_sync_health khi gỡ bản sao Codex
     "agent_files_git_tracked",
     "upgrade_verify_wiring",
 }

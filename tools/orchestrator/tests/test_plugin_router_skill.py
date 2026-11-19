@@ -66,33 +66,9 @@ class TestPluginRouterSkill(unittest.TestCase):
         self.assertNotIn("aipoch-medical-research", {p.get("id", p.get("name", "")) if isinstance(p, dict) else p
                                                        for p in data["plugins"]})
 
-    def test_catalog_falls_back_to_enabled_config_and_real_cache(self):
-        module = load_catalog_module()
-        with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary)
-            config_path = root / "config.toml"
-            cache_root = root / "cache"
-            config_lines: list[str] = []
-            for plugin_id in module.PLUGIN_IDS:
-                name, marketplace = plugin_id.split("@", 1)
-                config_lines.extend([f'[plugins."{plugin_id}"]', "enabled = true", ""])
-                version = "local" if name in {
-                    "openmed-skills", "medsci-project",
-                    "meta-pipe", "pubmed-search",
-                } else "1.0.0"
-                (cache_root / marketplace / name / version).mkdir(parents=True)
-            config_path.write_text("\n".join(config_lines), encoding="utf-8")
-
-            records = module.read_configured_plugins_from_cache(config_path, cache_root)
-
-        self.assertEqual({record.plugin_id for record in records}, set(module.PLUGIN_IDS))
-        self.assertEqual(len(records), len(module.PLUGIN_IDS))
-
-    def test_catalog_falls_back_to_claude_code_cache_when_codex_absent(self):
-        """05/09/2026: máy chạy phiên Claude Code có thể KHÔNG có Codex ở bất kỳ dạng
-        nào (đã xác nhận trên Cloud: không ~/.codex/config.toml, không ~/.codex/plugins/
-        cache, không lệnh `codex`) — trước bản vá này, cả hai tầng dự phòng phía trên
-        đều RuntimeError nên build_catalog.py không bao giờ tự làm mới được ở đó, và
+    def test_catalog_reads_claude_code_cache(self):
+        """05/09/2026 (tầng ba) → 19/11/2026 (nguồn DUY NHẤT, hai tầng Codex đã gỡ): đọc thẳng cache Claude Code.
+        Trước 05/09 hai tầng Codex đều RuntimeError trên máy không có Codex nên build_catalog.py không tự làm mới được, và
         catalog bị lệch thật (đo được: academic-research-skills 17→4,
         pubmed-search 31→10 — hai lần cắt tỉa thật chưa từng tới catalog)."""
         module = load_catalog_module()

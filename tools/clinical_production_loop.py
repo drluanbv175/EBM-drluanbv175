@@ -257,8 +257,7 @@ def remediation_commands() -> list[tuple[str, list[str], Path]]:
     """Cac thao tac tu hoan thien an toan, idempotent, khong tu phe duyet clinical."""
     return [
         ("enforce_guardrails", [PY, "tools/enforce_agent_guardrails.py"], ROOT),
-        ("sync_codex_agents", [PY, "tools/sync_agents_to_codex.py"], ROOT),
-        ("check_codex_agent_sync", [PY, "tools/sync_agents_to_codex.py", "--check"], ROOT),
+        ("check_agent_health", [PY, "tools/kiem_suc_khoe_agent.py"], ROOT),
         ("sync_ebm_master", [PY, "EBM_MASTER/tools/sync_all.py"], ROOT),
         ("validate_knowledge_packs", [PY, "tools/validate_knowledge_packs.py"], REPO),
     ]

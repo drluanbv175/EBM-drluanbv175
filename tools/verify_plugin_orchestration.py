@@ -81,7 +81,7 @@ def kiem_router_runtime_va_zip(
     thu_muc_runtime: tuple[Path, ...] | None = None,
 ) -> tuple[list[str], list[str]]:
     """Kiểm HAI thứ máy-toàn-cục của router ChatGPT: symlink runtime
-    (`~/.claude/skills/plugin-router-chatgpt`, `~/.codex/skills/...`) và gói
+    (`~/.claude/skills/plugin-router-chatgpt`) và gói
     ZIP phân phối (`CHATGPT_SKILLS/dist/plugin-router-chatgpt.zip`, gitignored).
     Tách khỏi `verify()` để test được ĐỘC LẬP, không cần dựng toàn bộ registry
     agent/plugin của repo — chỉ cần một `root` + danh sách `goc_worktree` giả.
@@ -93,7 +93,7 @@ def kiem_router_runtime_va_zip(
     `cac_goc_worktree_git` để biết vì sao đây là bẫy KHÁC với «bản sao trần»
     (BH82) dù triệu chứng bề ngoài giống nhau."""
     if thu_muc_runtime is None:
-        thu_muc_runtime = (Path.home() / ".claude/skills", Path.home() / ".codex/skills")
+        thu_muc_runtime = (Path.home() / ".claude/skills",)
 
     errors: list[str] = []
     worktree_phu: list[str] = []
@@ -233,7 +233,6 @@ def verify() -> dict[str, Any]:
         ROOT / ".claude/agents/dieu-phoi-lam-sang.md": (CONTRACT_MARKER, REGISTRY_MARKER),
         ROOT / ".claude/agents/tham-dinh-dau-ra.md": (CONTRACT_MARKER, "G2/G4/G5/G8/G9/G10"),
         ROOT / ".githooks/pre-commit": ("verify_plugin_orchestration.py",),
-        ROOT / "tools/sync_agents_to_codex.py": (CONTRACT_MARKER,),
         duong_that("medical-ebm-automation/CLAUDE.md"): (CONTRACT_MARKER, REGISTRY_MARKER),
         duong_that("medical-ebm-automation/.claude/agents/dieu-phoi-nghien-cuu.md"): (CONTRACT_MARKER,),
         duong_that("medical-ebm-automation/.claude/agents/dieu-phoi-lam-sang.md"): (CONTRACT_MARKER,),
@@ -246,19 +245,9 @@ def verify() -> dict[str, Any]:
     for path, markers in source_contracts.items():
         errors.extend(_contains(path, markers))
     if len(errors) == before:
-        checks.append("doctrine Claude Code + Codex source + pre-commit")
+        checks.append("doctrine Claude Code source + pre-commit")
 
-    mirror_contracts = {
-        ROOT / ".Codex/agents/dieu-phoi-nghien-cuu.toml": (CONTRACT_MARKER, REGISTRY_MARKER),
-        ROOT / ".Codex/agents/dieu-phoi-lam-sang.toml": (CONTRACT_MARKER, REGISTRY_MARKER),
-        ROOT / ".Codex/agents/tham-dinh-dau-ra.toml": (CONTRACT_MARKER,),
-        ROOT / ".Codex/agents/_PLUGIN-ROUTING-CONTRACT.md": ("HỢP ĐỒNG ĐIỀU PHỐI PLUGIN",),
-    }
-    before = len(errors)
-    for path, markers in mirror_contracts.items():
-        errors.extend(_contains(path, markers))
-    if len(errors) == before:
-        checks.append("mirror Codex co plugin contract")
+    # (Kiểm «mirror Codex có plugin contract» đã GỠ 19/11/2026 cùng bản sao agent Codex.)
 
     unknown = plugins.resolve("capability-khong-ton-tai")
     unauthorized = plugins.resolve("research_lifecycle", ["plugin-khong-allowlist"])

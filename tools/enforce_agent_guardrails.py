@@ -2,8 +2,7 @@
 """Cấy cổng guardrail bắt buộc vào mọi agent nguồn Claude.
 
 Nguồn biên tập chính là `.claude/agents/*.md`; sau khi chạy script này cần chạy:
-  python3 tools/sync_agents_to_codex.py
-  python3 tools/sync_agents_to_codex.py --check
+  python3 tools/kiem_suc_khoe_agent.py
 
 Script chỉ chèn block chuẩn nếu file agent chưa có marker, không đụng tài liệu hạ tầng `_*.md`.
 Dùng `--refresh` để CẬP NHẬT block đã cấy trước đó về đúng nội dung BLOCK hiện tại (khớp

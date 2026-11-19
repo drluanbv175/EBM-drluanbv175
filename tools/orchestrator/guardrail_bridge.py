@@ -22,7 +22,7 @@ from datetime import datetime, timezone
 from typing import Any
 
 from . import ROOT
-from .agent_adapter import CodexCliClient, GenerationClient
+from .agent_adapter import GenerationClient
 
 APPRAISAL_LOG = ROOT / "observability" / "APPRAISALS.jsonl"
 APPRAISAL_REPEATS = ROOT / "observability" / "APPRAISAL_REPEATS.json"
@@ -289,7 +289,9 @@ class IndependentClinicalGrader:
 
     def __init__(self, client: GenerationClient | None = None, *, model: str | None = None,
                  timeout_seconds: int = 600) -> None:
-        self.client = client or CodexCliClient(model=model, timeout_seconds=timeout_seconds)
+        if client is None:
+            raise RuntimeError("IndependentClinicalGrader cần client được tiêm — Codex CLI đã gỡ 19/11/2026.")
+        self.client = client
         self.model = model or "runtime-default"
 
     def grade(self, output_text: str) -> dict[str, Any]:
@@ -327,7 +329,7 @@ Trả đúng JSON schema; lý do ngắn, có thể kiểm toán. Đây chỉ là
         raw["warning_codes"] = warning
         raw["review_id"] = f"QGR-{uuid.uuid4().hex[:12]}"
         raw["provenance"] = {
-            "grader": "independent-codex-session",
+            "grader": "independent-session",
             "model": self.model,
             "same_context_as_generator": False,
             "physician_panel": False,

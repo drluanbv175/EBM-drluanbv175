@@ -101,15 +101,15 @@ class EvidenceRow:
 
 CORE_CHECKS: List[EvidenceCheck] = [
     EvidenceCheck(
-        domain="Agent sync Claude↔Codex",
-        command=["tools/check_claude_codex_sync_health.py"],
-        proves="50 agent nguồn và bản Codex sinh tự động có guardrail/disclaimer, không drift sync.",
+        domain="Sức khoẻ đội agent",
+        command=["tools/kiem_suc_khoe_agent.py"],
+        proves="Agent nguồn .claude/agents có frontmatter hợp lệ, guardrail và disclaimer bắt buộc.",
         limitation="Chỉ kiểm cấu trúc file agent, không chứng minh chất lượng từng câu trả lời lâm sàng/nghiên cứu.",
     ),
     EvidenceCheck(
-        domain="Repo/Claude Code/Codex alignment",
+        domain="Repo/Claude Code alignment",
         command=["tools/verify_claude_code_repo_alignment.py"],
-        proves="AGENTS.md, CLAUDE.md, clinical_runtime governance và mirror agent Claude↔Codex cùng một hợp đồng repo, không trôi lệch doctrine.",
+        proves="AGENTS.md, CLAUDE.md, clinical_runtime governance và đội agent cùng một hợp đồng repo, không trôi lệch doctrine.",
         limitation="Chỉ kiểm hợp đồng repo và file governance; không thay việc review thiết kế, bảo mật hoặc đầu ra lâm sàng thật.",
     ),
     EvidenceCheck(

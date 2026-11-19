@@ -98,12 +98,6 @@
       "priority": 10,
       "may_own": false,
       "note": "Chinh van phong. KHONG duoc dung tren noi dung y khoa da qua cong."
-    },
-    "codex": {
-      "kind": "plugin",
-      "priority": 20,
-      "may_own": false,
-      "note": "Luot chan doan/cai dat thu hai cho viec ky thuat."
     }
   },
   "unbound_providers": {

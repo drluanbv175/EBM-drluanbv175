@@ -3,7 +3,7 @@
 > Sinh tự động bằng `tools/vietnamize/build_danh_muc.py`. KHÔNG sửa tay — chạy lại script sau mỗi lần cập nhật plugin.
 
 
-**Tổng cộng 594 mục.** Cách gọi: gõ `/` rồi tên lệnh, hoặc nói thẳng nhu cầu để hệ thống tự chọn.
+**Tổng cộng 585 mục.** Cách gọi: gõ `/` rồi tên lệnh, hoặc nói thẳng nhu cầu để hệ thống tự chọn.
 
 
 ## Tra nhanh theo nhu cầu
@@ -60,7 +60,7 @@
 
 ---
 
-## TẦNG 1 — Y khoa, nghiên cứu, tài liệu (dùng thường xuyên)  (499 mục)
+## TẦNG 1 — Y khoa, nghiên cứu, tài liệu (dùng thường xuyên)  (502 mục)
 
 
 ### anthropic-skills  (94)
@@ -154,7 +154,7 @@
 | `/anthropic-skills:tham-dinh-chung-cu-grade-nnt` | kỹ năng | Mac | Sử dụng skill này khi cần THẨM ĐỊNH NHANH một bài báo/guideline/nghiên cứu để quyết định có đáng đổi thực hành không. Kích hoạt với "bài này có đáng tin không", "đọc giúp tôi nghiên cứu này", "NNT/NNH bao nhiêu", "nguy cơ sai lệch (risk … |
 | `/anthropic-skills:theme-factory` | kỹ năng | Mac | Bộ chủ đề trình bày cho slide, tài liệu, báo cáo, trang HTML — có 10 chủ đề dựng sẵn. Dùng khi muốn thống nhất phong cách một bộ sản phẩm. Từ khoá: theme, styling. |
 | `/anthropic-skills:tiep-can-chan-doan-co-do-chuyen-tuyen` | kỹ năng | Mac | Sử dụng skill này khi bác sĩ tiếp cận MỘT triệu chứng/hội chứng ngoại trú và cần đi từ triệu chứng → chẩn đoán phân biệt → CỜ ĐỎ bắt buộc loại trừ → ngưỡng chuyển tuyến/cấp cứu một cách AN TOÀN. Kích hoạt với \"bệnh nhân đau ngực/đau đầu… |
-| `/anthropic-skills:tong-thuat-chung-cu` | kỹ năng | Mac | Bác sĩ hỏi MỘT chủ đề lâm sàng → trả MỘT bài tổng thuật học thuật liền mạch (kiểu Deep-Research) neo vào hạ tầng liêm chính — 4 làn nguồn song song, trích dẫn Vancouver đánh số qua cổng kiểm, trình bày chuẩn v11. Bác sĩ duyệt gói ① ngày … |
+| `/anthropic-skills:tong-thuat-chung-cu` | kỹ năng | Mac | KHÔNG phải cửa vào — chỉ viết bài đọc liền mạch TỪ dashboard đã qua cổng của cap-nhat-chung-cu-y-khoa (nguồn ⊆ dashboard, xuat_tong_thuat.py --dashboard); câu hỏi chủ đề chứng cứ mới ⇒ gọi cap-nhat-chung-cu-y-khoa trước. Trích dẫn Vancou… |
 | `/anthropic-skills:treatment-plans` | kỹ năng | Mac | Soạn kế hoạch điều trị y khoa ngắn gọn (3-4 trang) xuất LaTeX/PDF cho nhiều chuyên khoa: nội khoa chung, phục hồi chức năng, sức khỏe tâm thần, quản lý bệnh mạn, chu phẫu, giảm đau. Dùng khung mục tiêu SMART, can thiệp dựa bằng chứng. Kè… |
 | `/anthropic-skills:tuan-thu-dieu-tri` | kỹ năng | Mac | Sử dụng skill này khi cần đánh giá và cải thiện TUÂN THỦ ĐIỀU TRỊ (medication & treatment adherence) cho bệnh nhân ngoại trú. Kích hoạt khi bác sĩ nói \"bệnh nhân không tuân thủ\", \"hay quên uống thuốc\", \"bỏ thuốc/tự ngưng thuốc\", \"… |
 | `/anthropic-skills:using-model-endpoint` | kỹ năng | Mac | Gọi một mô hình đã đăng ký qua HTTP API của nó. Dùng sau khi đã đăng ký endpoint. Từ khoá: call model endpoint. |
@@ -495,22 +495,21 @@
 | `/viet-bai-bao` | lệnh | Mac | Viết bản thảo IMRAD bám chuẩn báo cáo (CONSORT/STROBE/PRISMA/STARD/TRIPOD+AI) |
 | `/xoa-dau-vet-ai` | lệnh | Mac | Phát hiện và xoá dấu hiệu văn phong máy trong bản thảo, giữ nguyên nội dung khoa học |
 
-### user-skills  (43)
+### user-skills  (42)
 
 | Gọi bằng | Loại | Máy | Làm gì |
 |---|---|---|---|
 | `/EBM-MASTER` | kỹ năng | Mac | [EBM tổng hợp] Nền tảng y học chứng cứ hợp nhất cho cả lâm sàng lẫn nghiên cứu: tra và thẩm định chứng cứ, thống kê, giám sát guideline, an toàn thuốc, quản lý kháng sinh, thang điểm lâm sàng và quản trị dashboard. Dùng khi cần vào cửa c… |
 | `/antifacts` | kỹ năng | Mac | Sử dụng skill này khi bác sĩ muốn MỞ hoặc CẬP NHẬT \"Antifacts\" — Trung tâm EBM theo chuyên khoa (mặt tiền gom mọi sản phẩm EBM trong thư mục \"Claude AI\" theo chuyên khoa: cập nhật chứng cứ + thang điểm lâm sàng + công cụ nghiên cứu).… |
-| `/cap-nhat-chung-cu-y-khoa` | kỹ năng | Mac | Sử dụng skill này khi bác sĩ yêu cầu cập nhật chứng cứ hoặc khuyến cáo hiện hành cho MỘT vấn đề lâm sàng cụ thể. Mỗi cập nhật phải kèm Web Dashboard độc lập theo mô hình MẶC ĐỊNH \"Evidence Workbench\" (bố cục 3 cột: bộ lọc · bảng điểm c… |
+| `/cap-nhat-chung-cu-y-khoa` | kỹ năng | Mac | CỬA VÀO DUY NHẤT cho mọi câu hỏi chủ đề chứng cứ: cập nhật, tiếp cận toàn diện, chẩn đoán–điều trị theo chứng cứ mới nhất của MỘT bệnh/vấn đề lâm sàng — quét theo tầng/orchestrator → Web Dashboard \"Evidence Workbench\" (3 cột, Clinical … |
 | `/citation-management` | kỹ năng | Mac | Quản lý & kiểm chứng trích dẫn học thuật — phân giải PMID/DOI bắt buộc qua API miễn phí (PubMed/Crossref), đối chiếu metadata, bắt trích dẫn ma & citation washing, cảnh báo retracted/trùng, xuất danh mục Vancouver/ICMJE/AMA/BibTeX. Dùng … |
 | `/clinical-decision-support` | kỹ năng | Mac | Tạo tài liệu hỗ trợ quyết định lâm sàng (CDS): phân tích nhóm bệnh nhân (cohort) theo dấu ấn sinh học, báo cáo khuyến cáo điều trị dựa trên bằng chứng kèm thuật toán quyết định và phân độ GRADE; phân tích thống kê (HR, đường sống còn); x… |
 | `/clinical-evidence-rag` | kỹ năng | Mac | [Tra cứu chứng cứ] Cầu nối kiến thức với thực hành: trả lời câu hỏi lâm sàng bằng cách truy xuất từ kho y văn do chính bác sĩ kiểm soát — guideline, phác đồ khoa hoặc viện, bài tổng quan, bài báo đã tuyển chọn — rồi tổng hợp câu trả lời … |
 | `/clinical-reports` | kỹ năng | Mac | Viết báo cáo lâm sàng: case report (chuẩn CARE), báo cáo chẩn đoán (X-quang/giải phẫu bệnh/xét nghiệm), báo cáo thử nghiệm lâm sàng (ICH-E3) và hồ sơ bệnh án (SOAP, H&P, tóm tắt xuất viện). Kèm template và công cụ kiểm tra. Mọi đầu ra kè… |
 | `/dao-tao-slide-tai-lieu-y-khoa` | kỹ năng | Mac | Tạo và chuẩn hóa sản phẩm đào tạo y khoa và tài liệu chuyên môn — bài giảng, slide PowerPoint (.pptx), tài liệu Word (.docx), PDF, infographic/poster, bảng tóm tắt, bảng quyết định, thuật toán lâm sàng (Mermaid), checklist cờ đỏ, bảng th… |
-| `/dark-analyst` | kỹ năng | Mac | Sử dụng skill này khi bác sĩ yêu cầu cập nhật chứng cứ hoặc khuyến cáo hiện hành cho MỘT vấn đề lâm sàng cụ thể. Mỗi cập nhật phải kèm Web Dashboard độc lập theo mô hình MẶC ĐỊNH \"Evidence Workbench\" (bố cục 3 cột: bộ lọc · bảng điểm c… |
+| `/dark-analyst` | kỹ năng | Mac | CHỈ khi bác sĩ yêu cầu RÕ giao diện Dark Analyst (nền tối) — cùng dây chuyền với cap-nhat-chung-cu-y-khoa; mặc định và mọi câu hỏi chủ đề chứng cứ khác dùng cap-nhat-chung-cu-y-khoa (Evidence Workbench). |
 | `/dashboard-master-ebm-ngoai-tru` | kỹ năng | Mac | Tạo, cập nhật hoặc kiểm định Dashboard Master EBM ngoại trú và các sổ Change Log, Evidence Register, Medication Safety, Action Register; xác minh nguồn, loại trùng, lập báo cáo điều hành tháng. |
 | `/database-lookup` | kỹ năng | Mac | Truy vấn 78+ CƠ SỞ DỮ LIỆU khoa học/y khoa công khai qua API đã tài liệu hóa rõ endpoint, bộ lọc, phân trang và nguồn gốc dữ liệu (PubChem, ChEMBL, UniProt, ClinicalTrials.gov, FDA, dbSNP, ClinVar, COSMIC, GWAS Catalog, OMIM... phần lớn … |
-| `/dieu-phoi-aipoch` | kỹ năng | Mac | Định tuyến yêu cầu nghiên cứu/lâm sàng tới đúng skill trong 605 skill của plugin aipoch-medical-research, theo 35 nhóm chuyên môn. Dùng khi bác sĩ mô tả một việc nhưng KHÔNG biết tên skill cụ thể trong bộ aipoch. |
 | `/ehospital-mini` | kỹ năng | Mac | Soạn LỜI DẶN & NHẮC TÁI KHÁM ngoại trú cho bệnh nhân — mẫu in (A5/A4), mốc tái khám, cách dùng thuốc gọn, tiêu chí QUAY LẠI NGAY/đi cấp cứu (safety-netting), kế hoạch tuân thủ. Dùng khi cần phát tay tờ dặn dò sau khám. KHÔNG bịa tích hợp… |
 | `/experimental-design` | kỹ năng | Mac | Thiết kế thí nghiệm/nghiên cứu TRƯỚC khi thu thập dữ liệu — chọn thiết kế, ngẫu nhiên hóa (randomization), phân khối (blocking/stratification), bố trí factorial/fractional-factorial, crossover, split-plot, Latin square, kiểm soát hiệu ứn… |
 | `/exploratory-data-analysis` | kỹ năng | Mac | Khảo sát nhanh cấu trúc, chất lượng và đặc điểm của MỘT file dữ liệu khoa học (200+ định dạng: bảng tính, gen học, hóa học, ảnh vi mô, phổ, proteomics...) — tự nhận diện định dạng, sinh báo cáo markdown về chất lượng dữ liệu và gợi ý bướ… |
@@ -538,7 +537,7 @@
 | `/tao-video-tiktok` | kỹ năng | Mac | >- Tạo video TikTok dọc (9:16, 1080x1920) từ nội dung do người dùng cung cấp, có GIỌNG ĐỌC tiếng Việt mềm mại, ngắt nghỉ tự nhiên (edge-tts HoaiMy nữ / NamMinh nam, tự lùi về giọng macOS "Linh" khi mất mạng) và PHỤ ĐỀ ĐỘNG karaoke đồng b… |
 | `/tham-dinh-chung-cu-grade-nnt` | kỹ năng | Mac | Sử dụng skill này khi cần THẨM ĐỊNH NHANH một bài báo/guideline/nghiên cứu để quyết định có đáng đổi thực hành không. Kích hoạt với "bài này có đáng tin không", "đọc giúp tôi nghiên cứu này", "NNT/NNH bao nhiêu", "nguy cơ sai lệch (risk … |
 | `/tiep-can-chan-doan-co-do-chuyen-tuyen` | kỹ năng | Mac | Sử dụng skill này khi bác sĩ tiếp cận MỘT triệu chứng/hội chứng ngoại trú và cần đi từ triệu chứng → chẩn đoán phân biệt → CỜ ĐỎ bắt buộc loại trừ → ngưỡng chuyển tuyến/cấp cứu một cách AN TOÀN. Kích hoạt với \"bệnh nhân đau ngực/đau đầu… |
-| `/tong-thuat-chung-cu` | kỹ năng | Mac | Bác sĩ hỏi MỘT chủ đề lâm sàng → trả MỘT bài tổng thuật học thuật liền mạch (kiểu Deep-Research) neo vào hạ tầng liêm chính — 4 làn nguồn song song, trích dẫn Vancouver đánh số qua cổng kiểm, trình bày chuẩn v11. Bác sĩ duyệt gói ① ngày … |
+| `/tong-thuat-chung-cu` | kỹ năng | Mac | KHÔNG phải cửa vào — chỉ viết bài đọc liền mạch TỪ dashboard đã qua cổng của cap-nhat-chung-cu-y-khoa (nguồn ⊆ dashboard, xuat_tong_thuat.py --dashboard); câu hỏi chủ đề chứng cứ mới ⇒ gọi cap-nhat-chung-cu-y-khoa trước. Trích dẫn Vancou… |
 | `/treatment-plans` | kỹ năng | Mac | Soạn kế hoạch điều trị y khoa ngắn gọn (3-4 trang) xuất LaTeX/PDF cho nhiều chuyên khoa: nội khoa chung, phục hồi chức năng, sức khỏe tâm thần, quản lý bệnh mạn, chu phẫu, giảm đau. Dùng khung mục tiêu SMART, can thiệp dựa bằng chứng. Kè… |
 | `/tuan-thu-dieu-tri` | kỹ năng | Mac | Sử dụng skill này khi cần đánh giá và cải thiện TUÂN THỦ ĐIỀU TRỊ (medication & treatment adherence) cho bệnh nhân ngoại trú. Kích hoạt khi bác sĩ nói \"bệnh nhân không tuân thủ\", \"hay quên uống thuốc\", \"bỏ thuốc/tự ngưng thuốc\", \"… |
 | `/venue-templates` | kỹ năng | Mac | Template LaTeX + yêu cầu định dạng cho các tạp chí/hội nghị khoa học lớn (Nature, Science, PLOS, Elsevier...), poster nghiên cứu, và đề cương xin tài trợ — kèm chuẩn báo cáo CONSORT/STROBE/PRISMA cho bài y khoa. Dùng khi chuẩn bị bản thả… |
@@ -611,6 +610,24 @@
 | `/bio-research:single-cell-rna-qc` | kỹ năng | Mac | [Tin sinh học] Kiểm chất lượng dữ liệu RNA tế bào đơn (file .h5ad). Dùng khi vừa nhận dữ liệu giải trình tự, trước khi phân tích. Từ khoá: single-cell QC. |
 | `/bio-research:start` | kỹ năng | Mac | [Nghiên cứu sinh học] Cài môi trường bio-research và xem có sẵn công cụ gì. Dùng khi lần đầu làm quen bộ plugin này, hoặc muốn biết máy chủ tra cứu y văn / dược / hình ảnh nào đang kết nối. Từ khoá: bio-research start, setup. |
 
+### scientific-problem-selection  (4)
+
+| Gọi bằng | Loại | Máy | Làm gì |
+|---|---|---|---|
+| `/scientific-problem-selection:binder-gauntlet` | kỹ năng | Mac | Validation and developability gauntlet for de novo designed protein binders and miniproteins against any protein target. Use this skill when designed binders are scored only by structure-predictor confidence (ipSAE, ipTM, pAE) and you mu… |
+| `/scientific-problem-selection:clinical-trial-forecast` | kỹ năng | Mac | Forecasts one registered clinical trial's probability of success from registry records and documents the user supplies: checked research, a critiqued Monte Carlo model, a cited report and a claim ledger. Runs in Claude Science with Deleg… |
+| `/scientific-problem-selection:clinical-trial-protocol-skill` | kỹ năng | Mac | [Nghiên cứu] Sinh đề cương thử nghiệm lâm sàng cho thuốc hoặc thiết bị y tế. Dùng khi cần bản nháp nhanh theo khuôn quốc tế; đề tài thật nên đi qua agent `dieu-phoi-nghien-cuu` để có cổng G0–G10. Từ khoá: trial protocol. |
+| `/scientific-problem-selection:scientific-problem-selection` | kỹ năng | Mac | [Nghiên cứu] Giúp chọn vấn đề nghiên cứu đáng làm. Dùng khi còn phân vân giữa nhiều hướng, trước khi đặt câu hỏi PICO. Từ khoá: problem selection. |
+
+### clinical-trial-protocol  (4)
+
+| Gọi bằng | Loại | Máy | Làm gì |
+|---|---|---|---|
+| `/clinical-trial-protocol:binder-gauntlet` | kỹ năng | Mac | Validation and developability gauntlet for de novo designed protein binders and miniproteins against any protein target. Use this skill when designed binders are scored only by structure-predictor confidence (ipSAE, ipTM, pAE) and you mu… |
+| `/clinical-trial-protocol:clinical-trial-forecast` | kỹ năng | Mac | Forecasts one registered clinical trial's probability of success from registry records and documents the user supplies: checked research, a critiqued Monte Carlo model, a cited report and a claim ledger. Runs in Claude Science with Deleg… |
+| `/clinical-trial-protocol:clinical-trial-protocol-skill` | kỹ năng | Mac | [Nghiên cứu] Sinh đề cương thử nghiệm lâm sàng cho thuốc hoặc thiết bị y tế. Dùng khi cần bản nháp nhanh theo khuôn quốc tế; đề tài thật nên đi qua agent `dieu-phoi-nghien-cuu` để có cổng G0–G10. Từ khoá: trial protocol. |
+| `/clinical-trial-protocol:scientific-problem-selection` | kỹ năng | Mac | [Nghiên cứu] Giúp chọn vấn đề nghiên cứu đáng làm. Dùng khi còn phân vân giữa nhiều hướng, trước khi đặt câu hỏi PICO. Từ khoá: problem selection. |
+
 ### cowork-plugin-management  (2)
 
 | Gọi bằng | Loại | Máy | Làm gì |
@@ -618,23 +635,9 @@
 | `/cowork-plugin-management:cowork-plugin-customizer` | kỹ năng | Mac | [Hỗ trợ] Tuỳ chỉnh một plugin Claude Code cho nhu cầu riêng của đơn vị. Dùng khi plugin có sẵn gần đúng nhưng cần sửa vài chỗ. Từ khoá: plugin customizer. |
 | `/cowork-plugin-management:create-cowork-plugin` | kỹ năng | Mac | [Hỗ trợ] Hướng dẫn tạo một plugin mới từ đầu. Dùng khi muốn đóng gói quy trình riêng thành plugin dùng lại được. Từ khoá: create plugin. |
 
-### scientific-problem-selection  (2)
-
-| Gọi bằng | Loại | Máy | Làm gì |
-|---|---|---|---|
-| `/scientific-problem-selection:clinical-trial-protocol-skill` | kỹ năng | Mac | [Nghiên cứu] Sinh đề cương thử nghiệm lâm sàng cho thuốc hoặc thiết bị y tế. Dùng khi cần bản nháp nhanh theo khuôn quốc tế; đề tài thật nên đi qua agent `dieu-phoi-nghien-cuu` để có cổng G0–G10. Từ khoá: trial protocol. |
-| `/scientific-problem-selection:scientific-problem-selection` | kỹ năng | Mac | [Nghiên cứu] Giúp chọn vấn đề nghiên cứu đáng làm. Dùng khi còn phân vân giữa nhiều hướng, trước khi đặt câu hỏi PICO. Từ khoá: problem selection. |
-
-### clinical-trial-protocol  (2)
-
-| Gọi bằng | Loại | Máy | Làm gì |
-|---|---|---|---|
-| `/clinical-trial-protocol:clinical-trial-protocol-skill` | kỹ năng | Mac | [Nghiên cứu] Sinh đề cương thử nghiệm lâm sàng cho thuốc hoặc thiết bị y tế. Dùng khi cần bản nháp nhanh theo khuôn quốc tế; đề tài thật nên đi qua agent `dieu-phoi-nghien-cuu` để có cổng G0–G10. Từ khoá: trial protocol. |
-| `/clinical-trial-protocol:scientific-problem-selection` | kỹ năng | Mac | [Nghiên cứu] Giúp chọn vấn đề nghiên cứu đáng làm. Dùng khi còn phân vân giữa nhiều hướng, trước khi đặt câu hỏi PICO. Từ khoá: problem selection. |
-
 ---
 
-## TẦNG 2 — Kỹ thuật, dùng khi sửa chính hệ EBM  (95 mục)
+## TẦNG 2 — Kỹ thuật, dùng khi sửa chính hệ EBM  (83 mục)
 
 
 ### claude-code-harness  (33)
@@ -693,23 +696,6 @@
 | `/meta-pipe:ma-topic-intake` | kỹ năng | Mac | [Phân tích gộp — bước 1] Nhận chủ đề từ TOPIC.txt, chuyển thành đề cương PICO/PECO, xác định tiêu chuẩn chọn, kết cục và phạm vi tìm kiếm. Dùng khi khởi động một đề tài phân tích gộp mới. Từ khoá: topic intake, PICO. |
 | `/meta-pipe:module-management` | kỹ năng | Mac | [Phân tích gộp — bảo trì] Kiểm và cập nhật sổ đăng ký module của dây chuyền. Dùng sau khi thêm script hoặc tính năng mới, để tài liệu và tích hợp không bị lệch. Từ khoá: module registry. |
 | `/meta-pipe:post-to-discussion` | kỹ năng | Mac | [Phân tích gộp — chia sẻ] Đăng đề tài đã hoàn thành lên bảng Discussions của kho meta-pipe trên GitHub. Dùng khi muốn chia sẻ kết quả. LƯU Ý: đây là đăng CÔNG KHAI ra ngoài — kiểm kỹ không còn dữ liệu bệnh nhân hay thông tin định danh tr… |
-
-### codex  (12)
-
-| Gọi bằng | Loại | Máy | Làm gì |
-|---|---|---|---|
-| `agent codex-rescue` | agent | Mac | [Codex] Agent cứu hộ: dùng khi cần lượt cài đặt hoặc chẩn đoán thứ hai, hoặc giao hẳn một việc lớn cho Codex. Từ khoá: codex rescue agent. |
-| `/adversarial-review` | lệnh | Mac | [Codex] Nhờ Codex rà soát theo lối PHẢN BIỆN — chất vấn chính cách tiếp cận và lựa chọn thiết kế. Từ khoá: adversarial review. |
-| `/cancel` | lệnh | Mac | [Codex] Huỷ một việc Codex đang chạy nền trong kho mã này. Từ khoá: codex cancel. |
-| `/rescue` | lệnh | Mac | [Codex] Giao việc điều tra, sửa lỗi hoặc cứu hộ tiếp nối cho Codex. Dùng khi bí hướng và muốn góc nhìn thứ hai. Từ khoá: codex rescue. |
-| `/result` | lệnh | Mac | [Codex] Xem kết quả cuối đã lưu của một việc Codex đã hoàn thành. Từ khoá: codex result. |
-| `/review` | lệnh | Mac | [Codex] Nhờ Codex rà soát mã dựa trên trạng thái git hiện tại. Từ khoá: codex review. |
-| `/setup` | lệnh | Mac | [Codex] Kiểm Codex CLI đã sẵn sàng chưa và bật/tắt cổng rà soát trước khi dừng phiên. Từ khoá: codex setup. |
-| `/status` | lệnh | Mac | [Codex] Xem các việc Codex đang chạy và vừa xong trong kho mã này. Từ khoá: codex status. |
-| `/transfer` | lệnh | Mac | [Codex] Chuyển phiên Claude Code hiện tại thành một luồng Codex tiếp tục được. Từ khoá: codex transfer. |
-| `/codex:codex-cli-runtime` | kỹ năng | Mac | [Codex] Hợp đồng nội bộ để gọi runtime Codex từ Claude Code. Skill nội bộ, không gọi trực tiếp. Từ khoá: codex runtime. |
-| `/codex:codex-result-handling` | kỹ năng | Mac | [Codex] Hướng dẫn nội bộ về cách trình bày kết quả Codex trả về cho người dùng. Từ khoá: codex result. |
-| `/codex:gpt-5-4-prompting` | kỹ năng | Mac | [Codex] Hướng dẫn nội bộ soạn câu lệnh cho Codex/GPT-5.4 khi viết mã, rà soát, chẩn đoán, tra cứu. Từ khoá: GPT-5.4 prompting. |
 
 ### pubmed-search  (10)
 

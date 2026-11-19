@@ -2,10 +2,6 @@
   "_ghi_chu": "Mốc chuẩn kho plugin theo TỪNG MÁY. Ghi lại bằng `python3 tools/kiem_plugin_day_du.py --ghi-moc` khi kho đang ĐỦ. Mac và Windows có bộ plugin khác nhau nên phải ghi riêng trên mỗi máy.",
   "Mac": {
     "plugin": {
-      "codex@openai-codex": {
-        "so_skill": 3,
-        "phien_ban": "1.0.6"
-      },
       "humanizer@humanizer": {
         "so_skill": 1,
         "phien_ban": "2.11.2"

@@ -3,10 +3,9 @@
 
 Chạy trọn dây chuyền liêm chính theo đúng thứ tự (29 bước tự động, thay cho gõ tay từng lệnh):
   1. enforce_agent_guardrails.py   — chèn/chuẩn hóa khối guardrail bắt buộc + disclaimer
-  2. sync_agents_to_codex.py       — sinh lại bản Codex (.toml) từ nguồn .claude/agents
-  3. sync_agents_to_codex.py --check — xác nhận nguồn Claude ↔ Codex khớp
-  4. check_claude_codex_sync_health.py — cổng read-only guardrail/disclaimer/sync
-  5. verify_claude_code_repo_alignment.py — hợp đồng repo/Claude Code/Codex không trôi lệch
+  2–3. (đã gỡ 19/11/2026 — sinh/kiểm bản sao agent Codex; bác sĩ không còn dùng Codex)
+  4. kiem_suc_khoe_agent.py        — cổng read-only frontmatter/guardrail/disclaimer của .claude/agents
+  5. verify_claude_code_repo_alignment.py — hợp đồng repo Claude Code không trôi lệch
   6. verify_lessons_rubric_alignment.py — rubric QA ↔ taxonomy LESSONS không lệch mã lỗi
   7. verify_agent_routing.py       — không agent mồ côi / không tham chiếu treo (báo cáo, không --strict)
  7b. test_verify_agent_routing.py — CỔNG CỨNG pytest cho chính bước 7 (phát hiện 26/08/2026:
@@ -36,7 +35,7 @@ Chạy trọn dây chuyền liêm chính theo đúng thứ tự (29 bước tự
 
 Dùng:
   python tools/upgrade_verify.py           # chạy đủ, IN bảng tóm tắt + PASS/FAIL
-  python tools/upgrade_verify.py --no-sync # không sinh lại Codex, vẫn kiểm/sync hub/audit
+  python tools/upgrade_verify.py --no-sync # bỏ bước enforce guardrail, vẫn kiểm/sync hub/audit
 
 Mã thoát: 0 nếu MỌI bước PASS; 1 nếu có bước FAIL. Idempotent — chạy lại nhiều lần vô hại.
 "Cần bác sĩ kiểm chứng." — công cụ chỉ kiểm cấu trúc/liêm chính, không thay thẩm định lâm sàng.
@@ -152,11 +151,10 @@ def main() -> int:
     if do_sync:
         steps += [
             ("1. Guardrail (enforce)", ["tools/enforce_agent_guardrails.py"], True),
-            ("2. Đồng bộ Codex (sync)", ["tools/sync_agents_to_codex.py"], True),
         ]
     steps += [
-        ("3. Kiểm đồng bộ (--check)", ["tools/sync_agents_to_codex.py", "--check"], True),
-        ("4. Sync health read-only", ["tools/check_claude_codex_sync_health.py"], True),
+        # Bước 2–3 cũ (sinh/kiểm bản sao Codex) đã GỠ 19/11/2026 — bác sĩ không còn dùng Codex.
+        ("4. Sức khoẻ agent read-only", ["tools/kiem_suc_khoe_agent.py"], True),
         ("5. Repo/Claude Code alignment", ["tools/verify_claude_code_repo_alignment.py"], True),
         ("6. Rubric ↔ lessons taxonomy", ["tools/verify_lessons_rubric_alignment.py"], True),
         ("7. Định tuyến (routing)", ["tools/verify_agent_routing.py"], True),
@@ -227,7 +225,7 @@ def main() -> int:
         print("  KẾT: ⚪ CHƯA KẾT LUẬN — mọi bước đo được đều đạt; bước KHÔNG đo được trên bản sao git trần: "
               + ", ".join(chua_do) + ". Chạy lại trên máy có cây OneDrive để kết luận toàn hệ.")
     else:
-        print("  KẾT: ✅ PASS — toàn hệ nhất quán, đã đồng bộ Claude ↔ Codex.")
+        print("  KẾT: ✅ PASS — toàn hệ nhất quán.")
     if fails and chua_do:
         print(f"  ⚪ Ngoài ra KHÔNG đo được trên bản sao git trần: {', '.join(chua_do)}")
     print("  → Cần bác sĩ kiểm chứng (đây là kiểm cấu trúc, không thay thẩm định lâm sàng).")

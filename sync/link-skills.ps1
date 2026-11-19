@@ -1,19 +1,15 @@
 ﻿# =============================================================
 # link-skills.ps1  (Windows, PowerShell)
 # Tro tung skill EBM trong hub -> %USERPROFILE%\.claude\skills\<ten>
-#                              VA %USERPROFILE%\.codex\skills\<ten>
 # bang JUNCTION (khong can quyen admin).
 #
 #   sync\skills\<ten>   --(junction)-->   ~\.claude\skills\<ten>
-#                         \-(junction)-->  ~\.codex\skills\<ten>
 #
 # Idempotent: chay lai nhieu lan deu an toan.
 # Cach chay: bam dup link-skills.cmd, hoac trong PowerShell:
 #   powershell -ExecutionPolicy Bypass -File link-skills.ps1
 #
-# SUA 21/08/2026: them ~\.codex\skills. Ban cu chi noi ~\.claude\skills nen tren
-# may Windows, Codex KHONG thay mot skill nao cua bac si - trong khi SYNC-README va
-# AGENTS.md deu noi ca hai runtime dung chung nguon sync/skills. Dung dung ca:
+# SUA 21/08/2026 them ~\.codex\skills; GO lai 19/11/2026 (bac si khong con dung Codex). Ghi chu junction:
 # `os.symlink` cua Python nem WinError 1314 khi may chua bat Developer Mode (da do
 # tren chinh may nay 17/08/2026), con junction thi tao duoc ma khong can quyen gi.
 # =============================================================
@@ -25,9 +21,9 @@ $Hub  = Join-Path $ScriptDir "skills"
 Write-Host "==> Hub : $Hub`n"
 
 $tong = 0
-foreach ($rel in @(".claude\skills", ".codex\skills")) {
+foreach ($rel in @(".claude\skills")) {
     $Dest   = Join-Path $env:USERPROFILE $rel
-    $Backup = "$Dest-backup"                # NGOAI vung Claude/Codex quet skill
+    $Backup = "$Dest-backup"                # NGOAI vung Claude quet skill
     New-Item -ItemType Directory -Force -Path $Dest | Out-Null
     Write-Host "==> Dich: $Dest"
 
@@ -65,5 +61,5 @@ foreach ($rel in @(".claude\skills", ".codex\skills")) {
     $tong += $count
 }
 
-Write-Host "HOAN TAT: da lien ket $tong luot (skill x 2 runtime)."
-Write-Host "Kiem tra: dir `"$env:USERPROFILE\.claude\skills`" ; dir `"$env:USERPROFILE\.codex\skills`""
+Write-Host "HOAN TAT: da lien ket $tong skill."
+Write-Host "Kiem tra: dir `"$env:USERPROFILE\.claude\skills`""

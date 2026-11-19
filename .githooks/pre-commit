@@ -1,14 +1,14 @@
 #!/bin/sh
-# pre-commit — chan MOI commit khi Claude Code ↔ Codex con lech.
-# Them 2026-07-11; fail-closed toan cuc tu 2026-07-29.
+# pre-commit — chan MOI commit khi doi agent / hop dong repo / liem chinh chua dat.
+# Them 2026-07-11; fail-closed toan cuc tu 2026-07-29. Ban sao agent Codex (.Codex/agents)
+# da GO 19/11/2026 (bac si khong con dung Codex) — chot nay kiem NGUON .claude/agents.
 #
 # Kich hoat 1 lan (chi can chay 1 lan tren moi may, khong phai moi phien):
 #   git config core.hooksPath .githooks
 #   chmod +x .githooks/pre-commit
 #
-# Khong bo qua commit "khong lien quan": drift co the do mot phien Claude/Codex khac
-# dang ghi dong thoi. Moi commit duoc coi la mot moc hoan thien, nen phai de lai he
-# thong o trang thai dong bo.
+# Khong bo qua commit "khong lien quan": mot phien khac co the dang ghi dong thoi.
+# Moi commit duoc coi la mot moc hoan thien, nen phai de lai he thong o trang thai dat.
 
 COMPLETION_SYNC_FAIL_CLOSED=1
 
@@ -23,44 +23,37 @@ export PYTHONUTF8=1
 export PYTHONIOENCODING=utf-8
 
 if ! command -v python3 >/dev/null 2>&1; then
-  echo "CHAN COMMIT: khong tim thay python3 de kiem dong bo Claude Code ↔ Codex." >&2
+  echo "CHAN COMMIT: khong tim thay python3 de kiem doi agent." >&2
   exit 1
 fi
 
-# Neu source/mirror con thay doi NGOAI index, mirror tren dia co the PASS nhung
-# snapshot sap commit van lech. Buoc nay dong loi staged-vs-working-tree do.
-UNSTAGED_SYNC=$(git diff --name-only -- .claude/agents .Codex/agents .codex/agents)
+# Neu nguon agent con thay doi NGOAI index, ban tren dia co the PASS nhung
+# snapshot sap commit van khac. Buoc nay dong loi staged-vs-working-tree do.
+UNSTAGED_SYNC=$(git diff --name-only -- .claude/agents)
 if [ -n "$UNSTAGED_SYNC" ]; then
-  echo "CHAN COMMIT: source/mirror agent con thay doi chua stage:" >&2
+  echo "CHAN COMMIT: nguon agent con thay doi chua stage:" >&2
   echo "$UNSTAGED_SYNC" | sed 's/^/  - /' >&2
-  echo "  Hoan tat enforce → sync → check, sau do stage CA source va mirror." >&2
+  echo "  Hoan tat enforce_agent_guardrails → kiem_suc_khoe_agent, sau do stage." >&2
   exit 1
 fi
 
-python3 tools/sync_agents_to_codex.py --check
+python3 tools/kiem_suc_khoe_agent.py
 CHECK_EXIT=$?
 
 if [ "$CHECK_EXIT" -ne 0 ]; then
   echo "" >&2
-  echo "CHAN COMMIT: ban vua sua .claude/agents/*.md nhung .Codex/agents *.toml chua dong bo." >&2
+  echo "CHAN COMMIT: doi agent .claude/agents chua dat (frontmatter / guardrail / disclaimer / agent cot loi)." >&2
   echo "  Chay truoc khi commit:" >&2
   echo "    python3 tools/enforce_agent_guardrails.py" >&2
-  echo "    python3 tools/sync_agents_to_codex.py" >&2
-  echo "    python3 tools/sync_agents_to_codex.py --check" >&2
+  echo "    python3 tools/kiem_suc_khoe_agent.py" >&2
   echo "  Roi commit lai." >&2
   echo "  Khan cap can bo qua: git commit --no-verify (KHONG khuyen nghi — se de lai lech am tham)." >&2
   exit 1
 fi
 
-python3 tools/check_claude_codex_sync_health.py
-if [ "$?" -ne 0 ]; then
-  echo "CHAN COMMIT: sync co file nhung guardrail/disclaimer/ha tang chua dat." >&2
-  exit 1
-fi
-
 python3 tools/verify_claude_code_repo_alignment.py
 if [ "$?" -ne 0 ]; then
-  echo "CHAN COMMIT: hop dong repo Claude Code/Codex chua dong bo." >&2
+  echo "CHAN COMMIT: hop dong repo Claude Code chua dat." >&2
   exit 1
 fi
 

@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Sinh catalog Markdown/JSON từ chín plugin đã cài trong Codex.
+"""Sinh catalog Markdown/JSON từ các plugin đã cài trong Claude Code (cache `installed_plugins.json`).
+
+Hai tầng đọc qua Codex (CLI `codex plugin list` và cấu hình/cache `~/.codex`) đã GỠ 19/11/2026 —
+bác sĩ không còn dùng Codex; plugin `codex@openai-codex` cũng rời danh mục.
 
 Catalog JSON phục vụ bộ xếp hạng cục bộ; Markdown là bản tra cứu khi runtime không chạy script.
 """
@@ -8,17 +11,12 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
-import shutil
-import subprocess
 import sys
-import tomllib
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
 
 PLUGIN_IDS = (
-    "codex@openai-codex",
     "humanizer@humanizer",
     "academic-research-skills@academic-research-skills",
     "openmed-skills@openmed-skills",
@@ -45,130 +43,6 @@ class SkillRecord:
     name: str
     description: str
     relative_path: str
-
-
-def _codex_binary() -> str:
-    candidates = (
-        os.environ.get("EBM_CODEX_BIN"),
-        shutil.which("codex"),
-        "/Applications/ChatGPT.app/Contents/Resources/codex",
-        str(Path.home() / ".local/bin/codex"),
-    )
-    found = next((item for item in candidates if item and Path(item).is_file()), None)
-    if not found:
-        raise RuntimeError("Không tìm thấy lệnh codex; đặt EBM_CODEX_BIN để chỉ rõ đường dẫn.")
-    return found
-
-
-def read_installed_plugins() -> dict[str, object]:
-    """Đọc trạng thái plugin thật từ Codex CLI."""
-
-    try:
-        result = subprocess.run(
-            [_codex_binary(), "plugin", "list", "--json"],
-            check=True,
-            capture_output=True,
-            text=True,
-            timeout=120,
-        )
-        payload = json.loads(result.stdout)
-    except (FileNotFoundError, subprocess.SubprocessError, json.JSONDecodeError) as exc:
-        raise RuntimeError(f"Không đọc được danh sách plugin Codex: {exc}") from exc
-    if not isinstance(payload, dict):
-        raise RuntimeError("Cấu trúc JSON plugin không hợp lệ.")
-    return payload
-
-
-def select_plugins(payload: dict[str, object]) -> list[PluginRecord]:
-    installed = payload.get("installed")
-    if not isinstance(installed, list):
-        raise RuntimeError("Thiếu danh sách installed trong dữ liệu plugin.")
-    by_id = {
-        item["pluginId"]: item
-        for item in installed
-        if isinstance(item, dict) and isinstance(item.get("pluginId"), str)
-    }
-    records: list[PluginRecord] = []
-    missing: list[str] = []
-    for plugin_id in PLUGIN_IDS:
-        item = by_id.get(plugin_id)
-        if not item or item.get("enabled") is not True:
-            missing.append(plugin_id)
-            continue
-        source = item.get("source")
-        source_path = source.get("path") if isinstance(source, dict) else ""
-        records.append(
-            PluginRecord(
-                plugin_id=plugin_id,
-                name=str(item.get("name", "")),
-                marketplace=str(item.get("marketplaceName", "")),
-                version=str(item.get("version", "local")),
-                source_path=Path(str(source_path)),
-            )
-        )
-    if missing:
-        raise RuntimeError("Plugin thiếu hoặc chưa bật: " + ", ".join(missing))
-    return records
-
-
-def read_configured_plugins_from_cache(
-    config_path: Path | None = None,
-    cache_root: Path | None = None,
-) -> list[PluginRecord]:
-    """Dự phòng fail-closed bằng cấu hình bật + cache thật khi Codex CLI lỗi.
-
-    Một marketplace kiểu Claude không có manifest Codex có thể khiến
-    ``codex plugin list`` hỏng TOÀN BỘ dù chín plugin đã cài vẫn còn nguyên trong
-    cache. Nhánh này không cài/gỡ/sửa cấu hình: nó chỉ nhận plugin được ghi rõ
-    ``enabled = true`` rồi đòi đúng thư mục cache tương ứng phải tồn tại.
-    """
-
-    config_path = config_path or Path.home() / ".codex/config.toml"
-    cache_root = cache_root or Path.home() / ".codex/plugins/cache"
-    try:
-        config = tomllib.loads(config_path.read_text(encoding="utf-8"))
-    except (OSError, tomllib.TOMLDecodeError) as exc:
-        raise RuntimeError(f"Không đọc được cấu hình Codex dự phòng: {exc}") from exc
-
-    configured = config.get("plugins")
-    if not isinstance(configured, dict):
-        raise RuntimeError("Cấu hình Codex không có bảng plugins.")
-
-    records: list[PluginRecord] = []
-    missing: list[str] = []
-    for plugin_id in PLUGIN_IDS:
-        name, marketplace = plugin_id.split("@", 1)
-        setting = configured.get(plugin_id)
-        base = cache_root / marketplace / name
-        if not isinstance(setting, dict) or setting.get("enabled") is not True or not base.is_dir():
-            missing.append(plugin_id)
-            continue
-
-        local = base / "local"
-        if local.is_dir():
-            source_path = local
-            version = "local"
-        else:
-            candidates = [path for path in base.iterdir() if path.is_dir()]
-            if not candidates:
-                missing.append(plugin_id)
-                continue
-            source_path = max(candidates, key=lambda path: (path.stat().st_mtime_ns, path.name))
-            version = source_path.name
-
-        records.append(
-            PluginRecord(
-                plugin_id=plugin_id,
-                name=name,
-                marketplace=marketplace,
-                version=version,
-                source_path=source_path,
-            )
-        )
-
-    if missing:
-        raise RuntimeError("Plugin dự phòng thiếu/chưa bật/cache không tồn tại: " + ", ".join(missing))
-    return records
 
 
 def read_claude_code_cache_plugins(
@@ -228,36 +102,13 @@ def read_claude_code_cache_plugins(
 
 
 def load_plugin_records() -> list[PluginRecord]:
-    """Ưu tiên CLI chính thức; hạ xuống cache Codex; cuối cùng hạ xuống cache Claude Code
-    trực tiếp khi máy không cài Codex ở bất kỳ dạng nào (vd phiên Cloud)."""
+    """Đọc thẳng cache Claude Code (nguồn duy nhất từ 19/11/2026)."""
 
-    try:
-        return select_plugins(read_installed_plugins())
-    except RuntimeError as cli_error:
-        try:
-            records = read_configured_plugins_from_cache()
-            print(
-                "CẢNH BÁO: Codex CLI không liệt kê được marketplace; "
-                f"đã đối chiếu config+cache cục bộ ({cli_error}).",
-                file=sys.stderr,
-            )
-            return records
-        except RuntimeError as codex_cache_error:
-            records = read_claude_code_cache_plugins()
-            print(
-                "CẢNH BÁO: Không có Codex CLI lẫn cấu hình/cache Codex; "
-                f"đã đọc thẳng cache Claude Code ({codex_cache_error}).",
-                file=sys.stderr,
-            )
-            return records
+    return read_claude_code_cache_plugins()
 
 
 def resolve_scan_root(record: PluginRecord) -> Path:
-    candidates = [
-        Path.home() / ".codex/plugins/cache" / record.marketplace / record.name / record.version,
-        Path.home() / ".codex/plugins/cache" / record.marketplace / record.name,
-        record.source_path,
-    ]
+    candidates = [record.source_path]
     root = next((path for path in candidates if path.is_dir()), None)
     if root is None:
         raise RuntimeError(f"Không tìm thấy thư mục của {record.plugin_id}")

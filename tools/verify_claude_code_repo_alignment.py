@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Kiểm hợp đồng repo giữa Claude Code và Codex.
+"""Kiểm hợp đồng repo Claude Code: tài liệu gốc, ngân sách CLAUDE.md, nhật ký sự cố, sức khoẻ đội agent.
 
-Mục tiêu là bắt sớm kiểu lệch doctrine đã từng xảy ra: Claude Code đọc
-`CLAUDE.md`/`.claude/agents`, còn Codex đọc `AGENTS.md`/TOML mirror cũ hơn. Tool
-này chỉ đọc file và git index; không tự sửa/sync.
+Mục tiêu là bắt sớm kiểu lệch doctrine đã từng xảy ra giữa `CLAUDE.md`, `AGENTS.md` và
+`.claude/agents`. Tool này chỉ đọc file và git index; không tự sửa.
+Bản sao agent Codex (`.Codex/agents`) đã GỠ 19/11/2026 — bác sĩ không còn dùng Codex.
 """
 
 from __future__ import annotations
@@ -18,9 +18,8 @@ import unicodedata
 from pathlib import Path
 from typing import Any
 
-import check_claude_codex_sync_health as sync_health
+import kiem_suc_khoe_agent as ska
 import muc_luc_nhat_ky as nk
-import sync_agents_to_codex as sync
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -57,11 +56,8 @@ MEDICAL_DOCS = {
 
 ROOT_CONTRACT_MARKERS = [
     ".claude/agents",
-    ".Codex/agents",
-    ".codex/agents",
     "tools/enforce_agent_guardrails.py",
-    "tools/sync_agents_to_codex.py",
-    "tools/check_claude_codex_sync_health.py",
+    "tools/kiem_suc_khoe_agent.py",
     "tools/upgrade_verify.py",
     "clinical_runtime/",
     "tools/verify_clinical_runtime_schema_hardening.py",
@@ -79,7 +75,6 @@ MEDICAL_CONTRACT_MARKERS = {
     "medical-ebm-automation/CLAUDE.md": [
         "Claude Code",
         "commit",
-        "python ../tools/sync_agents_to_codex.py --check",
         "python ../tools/audit_ebm_system.py",
         "pytest",
         "ruff check",
@@ -90,7 +85,7 @@ TRACKED_CONTRACT_FILES = [
     "AGENTS.md",
     "CLAUDE.md",
     "tools/upgrade_verify.py",
-    "tools/check_claude_codex_sync_health.py",
+    "tools/kiem_suc_khoe_agent.py",
     "tools/verify_clinical_runtime_schema_hardening.py",
     "clinical_runtime/README.md",
     "clinical_runtime/OUTPUT_SCHEMA.json",
@@ -405,29 +400,29 @@ def check_tracked_contract_files() -> dict[str, Any]:
     }
 
 
-def check_agent_sync_health() -> dict[str, Any]:
-    report = sync_health.evaluate_sync_health()
+def check_agent_health() -> dict[str, Any]:
+    """Sức khoẻ NGUỒN `.claude/agents` (frontmatter · guardrail · disclaimer · agent cốt lõi) — `kiem_suc_khoe_agent`."""
+    bc = ska.danh_gia()
     return {
-        "name": "agent_sync_health",
-        "status": report.status,
-        "source_agents": report.source.agents,
-        "target_count": len(report.targets),
-        "errors": report.errors,
+        "name": "agent_health",
+        "status": bc.trang_thai,
+        "source_agents": bc.so_agent,
+        "errors": bc.loi,
     }
 
 
 def check_agent_files_git_tracked() -> dict[str, Any]:
-    """Bắt lỗ hổng mà `check_agent_sync_health()`/`check_tracked_contract_files()`
+    """Bắt lỗ hổng mà `check_agent_health()`/`check_tracked_contract_files()`
     không canh: một file `.claude/agents/*.md` có mặt trên đĩa (nên
-    `sync.source_agent_paths()` đếm được, `evaluate_sync_health()` PASS vì so
-    sánh đĩa-với-đĩa — hoàn toàn không đụng tới git) nhưng đã bị `git rm
+    `ska.duong_agent()` đếm được, `ska.danh_gia()` PASS vì chỉ đọc đĩa —
+    hoàn toàn không đụng tới git) nhưng đã bị `git rm
     --cached` khỏi git index. Một checkout mới/clone mới sẽ KHÔNG có file đó —
     mất trắng một agent — mà không cổng nào từng bắt được, vì
     `check_tracked_contract_files()` chỉ canh một danh sách nhỏ file hạ tầng
     CỐ ĐỊNH (AGENTS.md, CLAUDE.md, clinical_runtime/*...), không canh từng
     file agent riêng lẻ (số lượng thay đổi mỗi khi thêm/bớt agent)."""
     tracked = _git_ls_files()
-    disk_paths = sync.source_agent_paths() + sync.source_infra_paths()
+    disk_paths = ska.duong_agent() + ska.duong_ha_tang()
     untracked = sorted(
         p.relative_to(ROOT).as_posix()
         for p in disk_paths
@@ -445,7 +440,7 @@ def check_upgrade_verify_wires_alignment() -> dict[str, Any]:
     required = [
         "tools/verify_claude_code_repo_alignment.py",
         "Repo/Claude Code alignment",
-        "tools/check_claude_codex_sync_health.py",
+        "tools/kiem_suc_khoe_agent.py",
         "tools/verify_clinical_runtime_schema_hardening.py",
         # VÁ 17/09/2026 (cascade duong_goc): mốc cũ neo vào chuỗi ghép cứng
         # '"-m", "ruff", "check", "medical-ebm-automation"' — chuỗi đó mất khi bước 27 đổi
@@ -470,7 +465,7 @@ def run_verification() -> dict[str, Any]:
         check_tac_vu_lich_trong_doctrine(),
         check_medical_docs(),
         check_tracked_contract_files(),
-        check_agent_sync_health(),
+        check_agent_health(),
         check_agent_files_git_tracked(),
         check_upgrade_verify_wires_alignment(),
     ]
@@ -481,7 +476,7 @@ def run_verification() -> dict[str, Any]:
     return {
         "overall_status": overall,
         "checks": checks,
-        "scope": "repo doctrine + Claude Code/Codex sync contract; no clinical validation",
+        "scope": "repo doctrine + Claude Code agent health contract; no clinical validation",
         "disclaimer": "Cần bác sĩ kiểm chứng.",
     }
 
@@ -503,7 +498,7 @@ def _configure_utf8_stdio() -> None:
 def main() -> int:
     _configure_utf8_stdio()
     report = run_verification()
-    print("Claude Code / Codex repo alignment:", report["overall_status"])
+    print("Claude Code repo alignment:", report["overall_status"])
     for check in report["checks"]:
         print(f"- {check['status']}: {check['name']}")
         if "so_ky_tu" in check:

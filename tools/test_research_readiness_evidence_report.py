@@ -47,7 +47,7 @@ def test_core_checks_include_repo_alignment_and_clinical_hardening():
     commands = [" ".join(check.command) for check in E.CORE_CHECKS]
     domains = {check.domain for check in E.CORE_CHECKS}
 
-    assert "Repo/Claude Code/Codex alignment" in domains
+    assert "Repo/Claude Code alignment" in domains
     assert "Clinical runtime schema hardening" in domains
     assert "Rubric QA ↔ LESSONS taxonomy" in domains
     assert any("verify_claude_code_repo_alignment.py" in cmd for cmd in commands)

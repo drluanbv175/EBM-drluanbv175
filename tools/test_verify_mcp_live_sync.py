@@ -61,10 +61,10 @@ def test_hook_contract_reports_missing_markers(tmp_path):
 
     missing = V._hook_contract_errors(
         hook,
-        ("COMPLETION_SYNC_FAIL_CLOSED=1", "sync_agents_to_codex.py --check"),
+        ("COMPLETION_SYNC_FAIL_CLOSED=1", "kiem_suc_khoe_agent.py"),
     )
 
-    assert missing == ["sync_agents_to_codex.py --check"]
+    assert missing == ["kiem_suc_khoe_agent.py"]
 
 
 def test_hook_contract_reports_missing_file(tmp_path):

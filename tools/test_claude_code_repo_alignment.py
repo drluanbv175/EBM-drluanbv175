@@ -5,7 +5,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-import sync_agents_to_codex as sync  # noqa: E402
+import kiem_suc_khoe_agent as ska  # noqa: E402
 import verify_claude_code_repo_alignment as V  # noqa: E402
 
 
@@ -19,7 +19,7 @@ def _git(args: list[str], cwd: Path) -> None:
 
 def _init_fake_repo(tmp_path: Path) -> Path:
     """Dựng một repo git tối giản, tự đứng độc lập, với một agent .md thật
-    (glob `sync.source_agent_paths()` chấp nhận: không phải README, không bắt
+    (glob `ska.duong_agent()` chấp nhận: không phải README, không bắt
     đầu bằng `_`), đã commit rồi mới có thể mô phỏng `git rm --cached`."""
     agents_dir = tmp_path / ".claude" / "agents"
     agents_dir.mkdir(parents=True)
@@ -49,13 +49,13 @@ def test_claude_code_repo_alignment_overall_passes():
         "doctrine_tac_vu_lich",  # 14/11/2026: doctrine không nhắc tác vụ lịch đã bỏ
         "medical_repo_docs",
         "tracked_contract_files",
-        "agent_sync_health",
+        "agent_health",  # 19/11/2026: thay agent_sync_health khi gỡ bản sao Codex
         "agent_files_git_tracked",
         "upgrade_verify_wiring",
     }
 
 
-def test_root_docs_share_required_claude_codex_markers():
+def test_root_docs_share_required_markers():
     check = V.check_root_docs()
 
     assert check["status"] == "PASS"
@@ -76,8 +76,8 @@ def test_clinical_runtime_contract_files_are_tracked():
     assert check["missing_files"] == []
 
 
-def test_agent_sync_health_is_green():
-    check = V.check_agent_sync_health()
+def test_agent_health_is_green():
+    check = V.check_agent_health()
 
     assert check["status"] == "PASS"
     assert check["source_agents"] >= 40
@@ -102,14 +102,14 @@ class TestGitRmCachedAgentFileIsCaught:
     """Phát hiện của Workflow đối kháng đa-agent (2026-09-03, #6): một file
     .claude/agents/*.md có mặt trên đĩa nhưng bị `git rm --cached` khỏi index
     — checkout mới/clone mới sẽ mất trắng file đó — không cổng nào trước đây
-    bắt được vì check_agent_sync_health() chỉ so sánh đĩa-với-đĩa, còn
+    bắt được vì check_agent_health() chỉ đọc đĩa, còn
     check_tracked_contract_files() chỉ canh một danh sách file hạ tầng cố
     định, không canh từng agent .md riêng lẻ."""
 
     def test_passes_when_agent_file_is_committed_and_present(self, tmp_path, monkeypatch):
         agents_dir = _init_fake_repo(tmp_path)
         monkeypatch.setattr(V, "ROOT", tmp_path)
-        monkeypatch.setattr(sync, "SOURCE_DIR", agents_dir)
+        monkeypatch.setattr(ska, "THU_MUC_NGUON", agents_dir)
 
         check = V.check_agent_files_git_tracked()
 
@@ -119,7 +119,7 @@ class TestGitRmCachedAgentFileIsCaught:
     def test_fails_when_agent_file_is_git_rm_cached_but_still_on_disk(self, tmp_path, monkeypatch):
         agents_dir = _init_fake_repo(tmp_path)
         monkeypatch.setattr(V, "ROOT", tmp_path)
-        monkeypatch.setattr(sync, "SOURCE_DIR", agents_dir)
+        monkeypatch.setattr(ska, "THU_MUC_NGUON", agents_dir)
 
         # git rm --cached: bỏ khỏi index, GIỮ NGUYÊN trên đĩa — đúng kịch bản
         # của phát hiện #6 (file "biến mất" khỏi git mà vẫn thấy được khi mở

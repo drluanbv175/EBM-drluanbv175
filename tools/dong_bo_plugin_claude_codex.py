@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""ĐỐI CHIẾU KHO PLUGIN — giữa hai MÁY, và giữa Claude với Codex.
+"""ĐỐI CHIẾU KHO PLUGIN — giữa hai MÁY (và phiên Cloud) với sổ khai ý định.
+
+(Tên tệp giữ nguyên vì hook SessionStart và nhiều công cụ gọi đúng tên này. Phần chiếu skill sang Codex
+`~/.codex/skills` đã GỠ 19/11/2026 — bác sĩ không còn dùng Codex.)
 
 VÌ SAO CÓ (21/08/2026). `tools/dong_bo_skill_claude_codex.py --dong-bo-plugin` gọi
 đúng tên file này từ ngày 20/08 và AGENTS.md đã tài liệu hoá nó, nhưng **file chưa
@@ -19,9 +22,6 @@ CÂU HỎI NÓ TRẢ LỜI, mà không công cụ nào trước đó trả lời
      trong mọi bản kiểm cũ, mà xử lý thì ngược nhau: cố ý thì để yên, trôi dạt thì
      phải cài lại. Trả lời được nhờ SỔ KHAI Ý ĐỊNH `sync/plugin-manifest.json` —
      đi qua git nên hai máy đọc CÙNG một bản.
-  3. **«Codex có với tới được không?»** Codex không có trình quản lý plugin; nó chỉ
-     đọc `~/.codex/skills`. Nên một plugin bật ở Claude KHÔNG tự nghĩa là Codex
-     dùng được.
 
 BA VIỆC NÓ TUYỆT ĐỐI KHÔNG LÀM:
   · **Không cài/gỡ plugin qua mạng.** CLAUDE.md ghi rõ bài học 11/08: gỡ mục khỏi
@@ -29,9 +29,6 @@ BA VIỆC NÓ TUYỆT ĐỐI KHÔNG LÀM:
     danh sách. Vắng mặt trong `enabledPlugins` = BẬT, không phải tắt.
   · **Không tự sửa `enabledPlugins`.** Đó là ý định của bác sĩ, không phải trạng
     thái máy móc để công cụ đồng bộ.
-  · **Không chiếu skill sang Codex nếu sổ khai không cho phép.** Đổ cả 839 skill
-    vào `~/.codex/skills` là làm hại: vừa nặng, vừa lặp lại đúng thế vượt ngân sách
-    danh sách skill đã hành bác sĩ nhiều tháng.
 
 Mã thoát: 0 = khớp sổ khai (🟢) · 1 = có chênh cần để ý (🟡) · 2 = trôi dạt/mâu
 thuẫn sổ khai (🔴). Thuần thư viện chuẩn, không mạng.
@@ -47,7 +44,6 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-import lien_ket_da_nen as LK           # noqa: E402  (cần sau khi chỉnh sys.path)
 from doc_settings import doc_settings as _doc_settings  # noqa: E402
 
 for _s in (sys.stdout, sys.stderr):
@@ -84,7 +80,6 @@ HOME = Path.home()
 REPO = _resolve_repo_root()
 REG = HOME / ".claude/plugins/installed_plugins.json"
 SETTINGS = HOME / ".claude/settings.json"
-CODEX_SKILLS = HOME / ".codex/skills"
 MOC = REPO / "tools/moc_chuan_plugin.json"
 SO_KHAI = REPO / "sync/plugin-manifest.json"
 
@@ -181,7 +176,6 @@ def tao_so_khai(hien: dict, may: str) -> dict:
         plugin[khoa] = {
             "can_o_may": giu.get("can_o_may", [] if tat_ro else co_o),
             "da_xac_nhan": giu.get("da_xac_nhan", False),
-            "chieu_sang_codex": giu.get("chieu_sang_codex", False),
             "ly_do": giu.get("ly_do", (
                 "[CẦN BÁC SĨ] plugin đang TẮT rõ trong enabledPlugins — khai vì sao"
                 if tat_ro else "[CẦN BÁC SĨ] vì sao cần plugin này, và cần ở máy nào")),
@@ -196,11 +190,9 @@ def tao_so_khai(hien: dict, may: str) -> dict:
             "nhau nhưng xử lý ngược nhau. Sửa TAY file này; công cụ chỉ đọc."),
         "_cach_dung": (
             "python3 tools/dong_bo_plugin_claude_codex.py            # đối chiếu, chỉ đọc\n"
-            "python3 tools/dong_bo_plugin_claude_codex.py --ap-dung  # nối skill sang Codex\n"
             "python3 tools/dong_bo_plugin_claude_codex.py --tao-so-khai  # dựng lại khung"),
         "_truong": {
             "can_o_may": "danh sách máy PHẢI có plugin này (Mac/Windows)",
-            "chieu_sang_codex": "true = nối skill của plugin vào ~/.codex/skills",
             "ly_do": "vì sao — để người đọc sau biết đây là chủ ý, không phải sót",
             "do_duoc_luc_ghi": "số skill ĐO ĐƯỢC lúc dựng sổ, chỉ để tham chiếu",
         },
@@ -266,57 +258,10 @@ def doi_chieu(hien: dict, so_khai: dict, may: str) -> tuple[list[str], list[str]
     return do, vang, tin
 
 
-def chieu_codex(hien: dict, so_khai: dict, ap_dung: bool) -> tuple[list[str], list[str]]:
-    """Nối skill của plugin ĐƯỢC KHAI sang ~/.codex/skills.
-
-    Codex không có trình quản lý plugin — `~/.codex/skills` là đường DUY NHẤT nó
-    thấy được năng lực của một plugin Claude. Chỉ chiếu plugin mà sổ khai bật
-    `chieu_sang_codex`; mặc định tắt để không đổ cả kho vào Codex.
-
-    Tên đích mang tiền tố plugin (`<plugin>__<skill>`) để hai plugin có skill trùng
-    tên không đè nhau — và để nhìn tên là biết skill đến từ đâu.
-    """
-    lam: list[str] = []
-    loi: list[str] = []
-    khai = so_khai.get("plugin", {})
-    for khoa, m in sorted(khai.items()):
-        if not m.get("chieu_sang_codex"):
-            continue
-        trang_thai = hien.get(khoa)
-        if not trang_thai or not trang_thai["ton_tai"]:
-            loi.append(f"{khoa}: sổ khai đòi chiếu sang Codex nhưng plugin không có trên máy này")
-            continue
-        goc = Path(trang_thai["duong_dan"])
-        ten_plugin = khoa.split("@")[0]
-        for thu_muc, _d, fs in os.walk(goc):
-            if "SKILL.md" not in fs:
-                continue
-            nguon = Path(thu_muc)
-            dich = CODEX_SKILLS / f"{ten_plugin}__{nguon.name}"
-            if LK.la_lien_ket(dich):
-                if LK.tro_dung(dich, nguon):
-                    continue
-                loi.append(f"{dich.name}: {LK.kieu()} đang trỏ nơi khác — không đè")
-                continue
-            if dich.exists():
-                loi.append(f"{dich.name}: đang là thư mục thật trong ~/.codex/skills — "
-                           f"không đè, bác sĩ tự xử lý")
-                continue
-            if not ap_dung:
-                lam.append(f"{dich.name} (sẽ nối)")
-                continue
-            try:
-                LK.tao(nguon, dich)
-                lam.append(dich.name)
-            except OSError as exc:
-                loi.append(f"{dich.name}: {exc}")
-    return lam, loi
-
-
 def main() -> int:
-    ap = argparse.ArgumentParser(description="Đối chiếu kho plugin giữa 2 máy và với Codex")
+    ap = argparse.ArgumentParser(description="Đối chiếu kho plugin giữa 2 máy với sổ khai")
     ap.add_argument("--ap-dung", action="store_true",
-                    help="nối skill sang ~/.codex/skills cho plugin đã khai chieu_sang_codex")
+                    help="giữ cho tương thích lệnh cũ — không còn việc ghi (chiếu sang Codex đã gỡ 19/11/2026)")
     ap.add_argument("--tao-so-khai", action="store_true",
                     help="dựng/làm mới khung sync/plugin-manifest.json từ dữ liệu ĐO ĐƯỢC")
     ap.add_argument("--im-khi-on", action="store_true", help="chỉ nói khi có vấn đề (dùng cho hook)")
@@ -342,13 +287,11 @@ def main() -> int:
         return 1
 
     do, vang, tin = doi_chieu(hien, so_khai, may)
-    lam, loi_codex = chieu_codex(hien, so_khai, args.ap_dung)
-    do.extend(loi_codex)
     verdict = "🔴" if do else ("🟡" if vang else "🟢")
 
     if args.json:
         print(json.dumps({"may": may, "verdict": verdict, "loi_do": do, "canh_bao": vang,
-                          "thong_tin": tin, "codex": lam, "plugin": hien},
+                          "thong_tin": tin, "plugin": hien},
                          ensure_ascii=False, indent=2))
         return 2 if do else (1 if vang else 0)
 
@@ -365,10 +308,7 @@ def main() -> int:
             print(f"\n{nhan}:")
             for x in muc:
                 print(f"   {dau} {x}")
-    if lam:
-        print(f"\n▸ Codex ({LK.kieu()}): {len(lam)} skill "
-              f"{'đã nối' if args.ap_dung else 'sẽ nối — thêm --ap-dung'}")
-    if verdict == "🟢" and not lam:
+    if verdict == "🟢":
         print("   Khớp sổ khai. (Chỉ nói về kho TRÊN ĐĨA — không khẳng định thay "
               "Claude Code là mọi skill đều được chào ra cho model.)")
     return 2 if do else (1 if vang else 0)

@@ -198,11 +198,7 @@ def _bo_qua_nhom_repo_y_khoa(tran: bool, co_repo_y_khoa: bool) -> bool:
 # Test viết riêng cho filesystem KHÔNG phân biệt hoa-thường (APFS/NTFS): trên
 # filesystem phân biệt (Linux/ext4), `.Codex` và `.codex` là HAI thư mục thật nên
 # kỳ vọng «dedup còn một» sai theo thiết kế của chính filesystem, không phải bug.
-_TEST_CAN_FS_KHONG_PHAN_BIET = {
-    "test_sync_agents_to_codex.py": {
-        "test_real_checkout_active_targets_dedups_to_single_canonical_entry",
-    },
-}
+_TEST_CAN_FS_KHONG_PHAN_BIET: dict[str, set[str]] = {}   # bộ test .Codex≡.codex đã gỡ 19/11/2026 cùng bản sao Codex
 
 
 def _fs_phan_biet_hoa_thuong() -> bool:
