@@ -156,12 +156,15 @@ DIEU_KHOAN_NXB: dict[str, dict] = {
         # DOI 10.1016/ phân giải qua linkinghub về chính miền đó): jpain.org (J Pain), jaci-inpractice.org (JACI In Practice),
         # jacionline.org (JACI), mayoclinicproceedings.org (Mayo Clin Proc), giejournal.org (GIE), amjmed.com (Am J Med),
         # heartlungcirc.org (Heart Lung Circ). Thiếu chúng ⇒ `--kiem` chặn bài của chính Elsevier vì «miền chưa khai».
+        # jclinepi.com (J Clin Epidemiol — đọc chân trang trên Chrome 20/11/2026: «Copyright © 2026 Elsevier Inc.», «its
+        # licensors, and contributors», liên kết điều khoản trỏ ĐÚNG trang ở `nguon`; DOI 10.1016/j.jclinepi.* phân giải về
+        # miền này, còn ScienceDirect dừng ở thách thức Cloudflare) — cần cho 4 tài liệu phương pháp của đề tài BTM.
         "ket_luan": "cam", "doi": ("10.1016/", "10.1053/", "10.1067/", "10.1054/", "10.1006/", "10.1078/", "10.1383/", "10.1157/",
                                      "10.1378/", "10.1124/", "10.4158/"),
         "mien": ("sciencedirect.com", "elsevier.com", "thelancet.com", "cell.com", "jacc.org", "journal-of-hepatology.eu",
                  "cghjournal.org", "elsevierhealth.com", "gastrojournal.org", "ajkd.org", "chestnet.org", "aspetjournals.org",
                  "endocrinepractice.org", "jpain.org", "jaci-inpractice.org", "jacionline.org", "mayoclinicproceedings.org",
-                 "giejournal.org", "amjmed.com", "heartlungcirc.org"),
+                 "giejournal.org", "amjmed.com", "heartlungcirc.org", "jclinepi.com"),
         "nguon": "https://www.elsevier.com/legal/elsevier-website-terms-and-conditions", "doc_luc": "2026-10-03",
         "trich": "may not use Content … with an artificial intelligence tool … except … relevant license",
         "ngoai_le": "giấy phép, thoả thuận thuê bao hay cho phép của Elsevier; điều khoản riêng của dịch vụ (Scopus: khoá riêng dưới) hoặc hợp đồng thuê bao của cơ sở thắng điều khoản chung",
