@@ -511,13 +511,29 @@ def test_giac_quan_bao_viec_bac_si_va_het_viec_thi_im(ba_tep, tmp_path):
     assert B.giac_quan(ba_tep["bv"], ba_tep["dx"], ba_tep["ra"], bc) == ([], [])
 
 
-def test_giac_quan_chua_do_api_thi_bao_viec_may_chay_duoc(ba_tep, tmp_path):
-    """20/11/2026: chưa có báo cáo đo độ bắt lỗi API cho ĐÚNG phiên bản prompt đang dùng ⇒ 🛎 kèm lệnh đo."""
+def test_giac_quan_chua_do_api_thi_bao_viec_can_bac_si_cho_chay(ba_tep, tmp_path):
+    """20/11/2026: chưa có báo cáo đo độ bắt lỗi API cho ĐÚNG phiên bản prompt đang dùng ⇒ 👤 kèm lệnh đo (TÍNH PHÍ ⇒ không
+    gắn 🛎, để agent không tự chạy — rà độc lập 20/11/2026)."""
     bc = _bao_cao_api(tmp_path / "bc", phien_ban="phien-ban-cu")
     viec, _ = B.giac_quan(ba_tep["bv"], ba_tep["dx"], ba_tep["ra"], bc)
-    may = [v for v in viec if v[1] == "🛎"]
-    assert len(may) == 1 and "do_nhay_api_ngu_nghia.py" in may[0][3]
+    do = [v for v in viec if "do_nhay_api_ngu_nghia.py" in v[3]]
+    assert len(do) == 1 and do[0][1] == "👤" and "tính phí" in do[0][2]
     assert all("đã đo trên" not in v[2] for v in viec)
+
+
+def test_giac_quan_bao_cao_chi_co_dev_khong_sap_va_uu_tien_test(ba_tep, tmp_path):
+    """Rà độc lập 20/11/2026: báo cáo chỉ có tập DEV (`--chi-tap dev --ghi`) làm KeyError 'tat_ca' ⇒ giác quan chết, việc 👤
+    gắn nhãn biến khỏi hòm việc. Nay không sập; có cả báo cáo TEST thì lấy TEST."""
+    thu = tmp_path / "bc"
+    thu.mkdir()
+    lop = {"K1_quan_the": {"do_nhay": 0.7, "luat_cung": {"do_nhay": 0.9}, "ket_hop": {"do_nhay": 0.95}}}
+    dev = {"phien_ban": B.phien_ban_prompt_api(), "ngay": "20261121", "ket_qua": {"theo_tap": {"dev": {"lop": lop}}}}
+    (thu / "do-nhay-api-20261121-dev.json").write_text(json.dumps(dev, ensure_ascii=False), encoding="utf-8")
+    viec, chet = B.giac_quan(ba_tep["bv"], ba_tep["dx"], ba_tep["ra"], thu)
+    assert chet == [] and "tập DEV" in viec[0][2] and "API K1 70%" in viec[0][2]
+    _bao_cao_api(thu, ngay="20261120")                                         # có TEST (cũ hơn) ⇒ vẫn ưu tiên TEST
+    viec, _ = B.giac_quan(ba_tep["bv"], ba_tep["dx"], ba_tep["ra"], thu)
+    assert "tập TEST" in viec[0][2] and "API K1 90%" in viec[0][2]
 
 
 def test_giac_quan_bo_vang_hong_la_chet_khong_phai_het_viec(tmp_path):

@@ -573,8 +573,11 @@ def bao_cao_do_nhay_api(thu_muc: Path | None = None, phien_ban: str | None = Non
     tot = None
     for f in sorted(thu_muc.glob("do-nhay-api-*.json")):
         d = doc_json(f)
-        if isinstance(d, dict) and d.get("phien_ban") == phien_ban and isinstance(d.get("ket_qua"), dict):
-            if tot is None or str(d.get("ngay")) >= str(tot.get("ngay")):
+        if isinstance(d, dict) and d.get("phien_ban") == phien_ban and isinstance(d.get("ket_qua"), dict) \
+                and isinstance(d["ket_qua"].get("theo_tap"), dict) and d["ket_qua"]["theo_tap"]:
+            # ưu tiên báo cáo CÓ tập TEST (số để quyết), rồi mới tới ngày mới hơn
+            hang = ("test" in d["ket_qua"]["theo_tap"], str(d.get("ngay")))
+            if tot is None or hang >= ("test" in tot["ket_qua"]["theo_tap"], str(tot.get("ngay"))):
                 tot = dict(d, _tep=f.name)
     return tot
 
@@ -582,7 +585,7 @@ def bao_cao_do_nhay_api(thu_muc: Path | None = None, phien_ban: str | None = Non
 def tom_tat_do_nhay_api(bc: dict) -> str:
     """«API K1 95% · … (luật cứng K1 99% · …) trên TEST» — số của tập giữ lại; thiếu TEST thì gộp."""
     th = bc["ket_qua"]["theo_tap"]
-    tap = "test" if th.get("test") else "tat_ca"
+    tap = "test" if th.get("test") else ("tat_ca" if th.get("tat_ca") else next(iter(th)))   # báo cáo chỉ DEV ⇒ không sập
     lop = th[tap]["lop"]
 
     def pt(x):
@@ -612,8 +615,8 @@ def giac_quan(tep_bv: Path | None = None, tep_de_xuat: Path | None = None, tep_r
     viec: list[tuple[int, str, str, str]] = []
     bc = bao_cao_do_nhay_api(thu_muc_bao_cao)
     if bc is None:
-        viec.append((3, "🛎", f"Độ bắt lỗi bộ kiểm Claude API (prompt {phien_ban_prompt_api() or '?'}) CHƯA đo trên đột biến "
-                              "tổng hợp tất định (cùng thước đo với luật cứng K1–K4) — máy đo được, ~2 USD",
+        viec.append((3, "👤", f"Độ bắt lỗi bộ kiểm Claude API (prompt {phien_ban_prompt_api() or '?'}) CHƯA đo trên đột biến "
+                              "tổng hợp tất định (cùng thước đo với luật cứng K1–K4) — tính phí ~2 USD, cần bác sĩ cho chạy",
                      "python3 tools/do_nhay_api_ngu_nghia.py --goi-api --ghi"))
     if not cho and not chua:
         return viec, chet

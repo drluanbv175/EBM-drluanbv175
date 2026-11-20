@@ -100,7 +100,7 @@ class _Nen(unittest.TestCase):
         thì mọi lời gọi verify_dashboard.py đi qua run() GỐC (chạy thật, ngoại tuyến)."""
         goi = []
 
-        def run_lai(cmd, cwd=None):
+        def run_lai(cmd, cwd=None, timeout=None):
             cmd_s = [str(c) for c in cmd]
             goi.append(cmd_s)
             if verify_that and cmd_s[1].endswith("verify_dashboard.py"):
@@ -283,6 +283,19 @@ class TestDonViNgoaiTuyen(_Nen):
         rc, out, goi, _ = self.chay(DASH_CHI_THIEU_STANDARDS, False, self._gia_co_docx(_gia_day_chuyen(rc_api=1)),
                                     verify_that=False)
         self.assertFalse([c for c in goi if Path(c[1]).name == "kiem_ngu_nghia_api.py"], goi)
+
+    def test_buoc_ngu_nghia_api_sap_khong_doc_thanh_nghi(self):
+        """Rà độc lập 20/11/2026: công cụ con sập (mã 1, không có dòng «Tổng:») không được in «API nghi lệch»."""
+        goc = _gia_day_chuyen()
+
+        def gia(cmd):
+            if Path(cmd[1]).name == "kiem_ngu_nghia_api.py":
+                return 1, "Traceback (most recent call last):\n  ...\nKeyError: 'x'"
+            return goc(cmd)
+        rc, out, goi, _ = self.chay(DASH_CHI_THIEU_STANDARDS, True, self._gia_co_docx(gia), verify_that=False)
+        self.assertEqual(rc, 0, out)
+        self.assertIn("không chạy xong", out)
+        self.assertNotIn("API nghi một số mục", out)
 
     def test_doi_chung_online_pass_van_verified_va_san_sang(self):
         """Đối chứng: đường --online PASS không bị bản vá đụng tới."""

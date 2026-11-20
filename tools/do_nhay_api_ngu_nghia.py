@@ -160,6 +160,30 @@ def chon_mau(dot_bien: list[dict], goc_theo_khoa: dict, so_mau: int, hat: int) -
     return mau, tk
 
 
+def khoa_phan_b(bv: dict | None, bvk) -> tuple[set, set]:
+    """Mục THẬT của bộ vàng còn chờ nhãn (phần B — tập kiểm độc lập): ({(dashboard, id)}, {(pmid, hành động chuẩn hoá)}).
+    Rà độc lập 20/11/2026: 31 đột biến trong mẫu sinh từ đúng các mục này ⇒ phải loại khỏi số đo."""
+    if not bv:
+        return set(), set()
+    cho = [m for m in bv.get("muc") or [] if (m.get("nguon_muc") or "that") == "that" and not bvk._co_nhan(m)]
+    return ({(str(m.get("dashboard") or ""), str(m.get("id") or "")) for m in cho},
+            {(str(m.get("pmid") or "").strip(), bvk.chuan(str(m.get("action") or ""))) for m in cho})
+
+
+def loai_phan_b(mau: list[dict], goc_theo_khoa: dict, khoa: tuple[set, set], bvk) -> tuple[list[dict], dict]:
+    """(mẫu đã loại đột biến sinh từ mục phần B, {lớp: số bị loại})."""
+    theo_id, theo_nd = khoa
+    giu, bo = [], {}
+    for d in mau:
+        g = goc_theo_khoa[tuple(d["_khoa"])]["muc"]
+        if (d["dashboard"], str(g.get("id") or "")) in theo_id or \
+                (str(g.get("pmid") or "").strip(), bvk.chuan(str(g.get("action") or ""))) in theo_nd:
+            bo[d["lop"]] = bo.get(d["lop"], 0) + 1
+            continue
+        giu.append(d)
+    return giu, bo
+
+
 # ───────────────────────── gọi API (có bộ đệm) ─────────────────────────
 
 def tep_bo_dem() -> Path:
@@ -194,7 +218,8 @@ def van_ban(it: dict, raw: str, A, kqtc, phien_ban: str) -> tuple[str, str]:
     tt = A.than_tom_tat(raw, kqtc)
     if phien_ban not in getattr(A, "PHIEN_BAN_TOAN_VAN", ()) or KHO_TOAN_VAN is None:
         return tt, ""
-    return tt, A.doan_toan_van(it, KHO_TOAN_VAN, bo_nho=_BO_NHO_DOAN, quyen_fn=QUYEN_FN)[0]
+    return tt, A.doan_toan_van(it, KHO_TOAN_VAN, bo_nho=_BO_NHO_DOAN, quyen_fn=QUYEN_FN,
+                               co_bang=phien_ban in getattr(A, "PHIEN_BAN_CO_BANG", ()))[0]
 
 
 def khoa(it: dict, raw: str, A, kqtc, mdl: str, phien_ban: str) -> str:
@@ -420,9 +445,10 @@ def ban_md(bj: dict) -> str:
               + " · ".join(f"{TEN_TRUC[t]} {dc['api_theo_truc'][t]}" for t in TRUC)
               + f" · luật cứng báo {dc['luat_cung_bao']} ({_pt(dc['luat_cung_ty_le'])}). Trả «không đủ thông tin» (null): "
               + " · ".join(f"{TEN_TRUC[t]} {dc['api_null_theo_truc'][t]}" for t in TRUC) + ".", ""]
-    d += ["## Phủ mẫu", "", "| Lớp | Đột biến có sẵn | API không nhìn thấy phần đổi | Đã chọn |", "|---|---|---|---|"]
+    d += ["## Phủ mẫu", "", "| Lớp | Đột biến có sẵn | API không nhìn thấy phần đổi | Đã chọn | Loại vì sinh từ mục phần B "
+          "(giữ mù) |", "|---|---|---|---|---|"]
     for lop, t in bj["phu_mau"].items():
-        d.append(f"| {LOP_API[lop][1]} | {t['co_san']} | {t['api_khong_thay']} | {t['chon']} |")
+        d.append(f"| {LOP_API[lop][1]} | {t['co_san']} | {t['api_khong_thay']} | {t['chon']} | {t.get('loai_phan_b', 0)} |")
     d += ["", "Ngoài tầm API (không đo): " + " · ".join(f"{k} — {v}" for k, v in NGOAI_TAM_API.items()) + ".", "",
           "Cách đọc: «bắt» = trục đích của bản đột biến là false trong khi bản gốc không false; «gốc đã nghi» = API đã phán "
           "false trục đó ở bản gốc nên không quy được cho đột biến (loại khỏi mẫu số); «lọt ⚪» = mô hình trả null (không "
@@ -470,6 +496,14 @@ def main(argv: list[str] | None = None, *, cau_noi=None, client=None) -> int:
     QUYEN_FN = A.ham_quyen_theo_thu_muc(thu_muc) if KHO_TOAN_VAN else None
     dl = nap_du_lieu(thu_muc, hat=hat, DN=DN)
     mau, phu = chon_mau(dl["dot_bien"], dl["goc_theo_khoa"], a.so_mau, hat)
+    bvk = A._bvk()
+    bv = bvk.doc_bo_vang() if bvk.TEP_BO_VANG.is_file() else None
+    if bv is None:
+        print("⚪ Không đọc được bộ vàng — không biết mục phần B để loại (giữ mù fail-closed) — không đo.")
+        return 2
+    mau, bo_b = loai_phan_b(mau, dl["goc_theo_khoa"], khoa_phan_b(bv, bvk), bvk)
+    for lop, n in bo_b.items():
+        phu.setdefault(lop, {"co_san": 0, "api_khong_thay": 0, "chon": 0})["loai_phan_b"] = n
     if not mau:
         print("⚪ Không có đột biến nào trong tầm API — không đo được.")
         return 2
@@ -521,7 +555,7 @@ def main(argv: list[str] | None = None, *, cau_noi=None, client=None) -> int:
           "ket_qua": th}
     if a.ghi:
         THU_MUC_BAO_CAO.mkdir(parents=True, exist_ok=True)
-        hau = "" if pb == A.PHIEN_BAN_PROMPT else f"-{pb}"
+        hau = ("" if pb == A.PHIEN_BAN_PROMPT else f"-{pb}") + (f"-{a.chi_tap}" if a.chi_tap else "")   # DEV không đè TEST
         tj, tm = THU_MUC_BAO_CAO / f"do-nhay-api-{ngay}{hau}.json", THU_MUC_BAO_CAO / f"do-nhay-api-{ngay}{hau}.md"
         tj.write_text(json.dumps(bj, ensure_ascii=False, indent=1) + "\n", encoding="utf-8", newline="\n")
         tm.write_text(ban_md(bj), encoding="utf-8", newline="\n")

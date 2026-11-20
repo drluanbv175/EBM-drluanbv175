@@ -204,3 +204,20 @@ def test_chi_tap_bao_cao_chi_tap_do():
     DN = SimpleNamespace(chu_ky_bao=lambda r, p: False, PHEP_NGUON=("K1",))
     th = D.tong_hop(mau, goc, {}, A, KQTC, MDL, PB, 20261114, {}, DN, chi_tap="test")
     assert set(th["theo_tap"]) == {"test"} and th["chi_tap"] == "test"
+
+
+def test_loai_dot_bien_sinh_tu_muc_phan_b():
+    """Rà độc lập 20/11/2026: đột biến sinh từ mục THẬT còn chờ nhãn (phần B) phải bị loại khỏi số đo."""
+    goc = {("WebDashboard_X.html", i): _goc(i) for i in range(4)}
+    mau = [_db(i, "K1_quan_the", muc={"population": "Trẻ em"}) for i in range(4)]
+    bv = {"muc": [
+        {"dashboard": "WebDashboard_X.html", "id": "ITEM-0", "pmid": "9", "action": "khác", "nguon_muc": "that"},      # trùng id
+        {"dashboard": "Y.html", "id": "ITEM-99", "pmid": "", "action": "Dùng 1", "nguon_muc": "that"},              # trùng nội dung
+        {"dashboard": "WebDashboard_X.html", "id": "ITEM-2", "pmid": "", "action": "x", "nguon_muc": "that",
+         "nhan_bac_si": {"dung_quan_the": True}},                                                                   # đã có nhãn
+    ]}
+    for g in goc.values():
+        g["muc"]["pmid"] = ""
+    giu, bo = D.loai_phan_b(mau, goc, D.khoa_phan_b(bv, A._bvk()), A._bvk())
+    assert [d["_khoa"][1] for d in giu] == [2, 3] and bo == {"K1_quan_the": 2}
+    assert D.khoa_phan_b(None, A._bvk()) == (set(), set())

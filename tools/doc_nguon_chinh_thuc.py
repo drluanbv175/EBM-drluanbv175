@@ -64,6 +64,19 @@ TAC_NHAN = "EBM-Copilot/1.0 (doc nguon chinh thuc de kiem chung y khoa; cong cu,
 # Miền cơ quan nhà nước — nội dung công bố theo giấy phép mở/miền công cộng (FDA/CDC/NIH: public domain; gov.uk: Open Government
 # Licence; WHO: CC BY-NC-SA 3.0 IGO; EMA: cho phép tái sử dụng kèm ghi nguồn) ⇒ được lưu bản sao chữ để đối chiếu về sau.
 MIEN_GIAY_PHEP_MO = ("gov.uk", "fda.gov", "cdc.gov", "nih.gov", "who.int", "ema.europa.eu", "hhs.gov")
+# Trừ khỏi MIEN_GIAY_PHEP_MO (rà độc lập 20/11/2026): PMC và Bookshelf của NCBI nằm dưới nih.gov nhưng chứa nội dung CÓ BẢN QUYỀN
+# của NXB/tác giả bên thứ ba — không phải tài liệu do cơ quan nhà nước soạn ⇒ không tự tải, không lưu bản sao.
+MIEN_LOAI_TRU_GIAY_PHEP = ("ncbi.nlm.nih.gov",)
+
+
+def mien_mo(host: str) -> bool:
+    """Miền cơ quan nhà nước có giấy phép mở, TRỪ các kho nội dung bên thứ ba (PMC/Bookshelf)."""
+    return thuoc_mien(host, MIEN_GIAY_PHEP_MO) and not thuoc_mien(host, MIEN_LOAI_TRU_GIAY_PHEP)
+
+
+def doi_tron(doi: str) -> str:
+    """DOI trần, chữ thường («https://doi.org/10.1016/…», «doi: 10.1016/…» ⇒ «10.1016/…») — để tra bảng NXB theo tiền tố."""
+    return re.sub(r"^(?:https?://(?:dx\.)?doi\.org/|doi:\s*)", "", (doi or "").strip(), flags=re.I).strip().lower()
 _TIEU_DE_CHAN = re.compile(r"just a moment|attention required|access denied|request blocked|forbidden|page not found|"
                            r"not found|error 40\d|error 50\d|captcha|are you a robot|verify you are human|sign in|log in",
                            re.I)
@@ -96,7 +109,7 @@ def lan_doc(url: str, doi: str = "", *, V=None, DT=None, uy_quyen_fn=None) -> di
     V = V or vd()
     DT = DT or dtcn()
     uy_quyen_fn = uy_quyen_fn or DT.uy_quyen_bac_si
-    ten, d = DT.nxb_cua(doi or "", url or "")
+    ten, d = DT.nxb_cua(doi_tron(doi), url or "")
     if ten:
         if (d or {}).get("ket_luan") == "cam" and uy_quyen_fn(ten):
             return {"lan": "trinh_duyet", "can_dieu_khoan": False,
@@ -108,7 +121,7 @@ def lan_doc(url: str, doi: str = "", *, V=None, DT=None, uy_quyen_fn=None) -> di
     host = mien_cua(url or "")
     if host in V.MIEN_CHAN_TRUY_CAP_TU_DONG:          # ĐÚNG tên máy như cổng (api.fda.gov — openFDA — không bị chặn)
         return {"lan": "trinh_duyet", "can_dieu_khoan": False, "ly_do": "miền chặn truy cập tự động (FDA/EMA)"}
-    if thuoc_mien(host, MIEN_GIAY_PHEP_MO):
+    if mien_mo(host):
         return {"lan": "may", "can_dieu_khoan": False, "ly_do": "miền cơ quan nhà nước (giấy phép mở/miền công cộng)"}
     t2, _ = DT.giay_phep_mo_cap_nxb(url or "")
     if t2:
@@ -185,18 +198,39 @@ def boc_chu(html: str) -> tuple[str, str]:
 
 
 def mien_cua(url: str) -> str:
-    return urllib.parse.urlsplit(url).netloc.lower().split(":")[0]
+    """Tên máy (hostname) — KHÔNG tách netloc theo «:»: «https://cdc.gov:x@evil.example/» là evil.example (rà độc lập 20/11)."""
+    try:
+        return (urllib.parse.urlsplit(url).hostname or "").lower()
+    except ValueError:
+        return ""
 
 
 def thuoc_mien(host: str, danh_sach) -> bool:
     return any(host == d or host.endswith("." + d) for d in danh_sach)
 
 
+class _ChuyenHuongCoRao(urllib.request.HTTPRedirectHandler):
+    """Chỉ đi theo chuyển hướng tới miền được phép TẢI TỰ ĐỘNG (miền nhà nước giấy phép mở, hoặc NXB khai giấy phép mở cấp
+    NXB) — không tải byte của miền khác rồi mới bỏ (rà độc lập 20/11/2026)."""
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        host = mien_cua(newurl)
+        cap_nxb = False
+        try:
+            cap_nxb = bool(dtcn().giay_phep_mo_cap_nxb(newurl)[0])
+        except Exception:  # noqa: BLE001 — bảng điều khoản lỗi ⇒ coi như không được phép (fail-closed)
+            cap_nxb = False
+        if not (mien_mo(host) or cap_nxb):
+            raise urllib.error.URLError(f"chuyển hướng sang miền không được phép tải tự động: {host}")
+        return super().redirect_request(req, fp, code, msg, headers, newurl)
+
+
 def tai_trang(url: str, timeout: int = 60) -> tuple[str, str, bytes]:
-    """(url cuối sau chuyển hướng, loại nội dung, byte). Lỗi mạng/HTTP ⇒ ném OSError/urllib.error (người gọi xử lý)."""
+    """(url cuối sau chuyển hướng, loại nội dung, byte). Lỗi mạng/HTTP/chuyển hướng bị chặn ⇒ ném (người gọi xử lý)."""
     req = urllib.request.Request(url, headers={"User-Agent": TAC_NHAN,
                                                "Accept": "text/html,application/xhtml+xml,application/pdf,application/json"})
-    with urllib.request.urlopen(req, timeout=timeout) as r:  # noqa: S310 — URL từ dashboard đã qua cổng, chỉ http(s)
+    opener = urllib.request.build_opener(_ChuyenHuongCoRao())
+    with opener.open(req, timeout=timeout) as r:  # noqa: S310 — URL từ dashboard đã qua cổng, chỉ http(s)
         return r.geturl(), (r.headers.get("Content-Type") or "").lower(), r.read(30_000_000)
 
 
@@ -292,7 +326,7 @@ def tai(nhom: dict[str, dict], kho: Path, *, ghi: bool, toi_da: int | None = Non
         try:
             url_cuoi, loai, du_lieu = tai_fn(url)
             tieu_de, chu = boc_noi_dung(loai, du_lieu, url_cuoi)
-        except (OSError, urllib.error.URLError, ValueError) as exc:
+        except Exception as exc:  # noqa: BLE001 — một nguồn lỗi (mạng, IncompleteRead, PDF hỏng…) không được giết cả lượt
             kq["tu_choi"].append((x["khoa"], f"tải lỗi: {type(exc).__name__}: {str(exc)[:80]} — chuyển làn trình duyệt"))
             kq["trinh_duyet"].append(x["khoa"])
             continue
@@ -306,7 +340,7 @@ def tai(nhom: dict[str, dict], kho: Path, *, ghi: bool, toi_da: int | None = Non
             kq["tu_choi"].append((x["khoa"], ly_do + " — chuyển làn trình duyệt"))
             kq["trinh_duyet"].append(x["khoa"])
             continue
-        ban_sao = thuoc_mien(mien_cua(url_cuoi), MIEN_GIAY_PHEP_MO)
+        ban_sao = mien_mo(mien_cua(url_cuoi))
         if ghi:
             ghi_ho_so(kho, ho_so(x["khoa"], url, url_cuoi, tieu_de, chu, "may_tai", ban_sao), chu if ban_sao else None)
         kq["doc_duoc"].append(x["khoa"])

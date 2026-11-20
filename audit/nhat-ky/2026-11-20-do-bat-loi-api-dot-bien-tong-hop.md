@@ -61,7 +61,7 @@
 **Giới hạn nói trước.**
 - K3b và K4 tổng hợp có nhiễu nhãn khi đem đo bộ kiểm đọc ngữ nghĩa: điều kiện bị cắt khỏi hành động thường vẫn còn ở tiêu đề; đột biến chỉ lật một câu trong tóm tắt thì trái với toàn văn.
 - Báo động trên mục gốc là cận trên của báo động giả.
-- Bỏ lọt trên LỖI THẬT vẫn cần 40 mục phần B do bác sĩ gắn nhãn. Phần B chưa từng được chấm hay xem, nên vẫn là tập kiểm độc lập.
+- Bỏ lọt trên LỖI THẬT vẫn cần 40 mục phần B do bác sĩ gắn nhãn. **ĐÍNH CHÍNH (rà độc lập cùng ngày):** câu cũ «phần B chưa từng được chấm hay xem» là SAI về vế «chấm» — lượt đo 19/11 chạy không lọc nên bộ đệm đã có kết quả API v1 cho cả 40 mục phần B (không in cho bác sĩ), và 31 đột biến trong mẫu tổng hợp sinh từ chính các mục đó. Phần B vẫn mù với bác sĩ; từ nay công cụ mặc định không chấm mục chờ nhãn và số đo loại các đột biến đó — xem `2026-11-20-ra-doc-lap-bo-kiem-api-ban-c.md`.
 
 **Kiểm hồi quy.**
 - Test: `test_do_nhay_api_ngu_nghia_20261120.py` (11), `test_kiem_ngu_nghia_api_toan_van_20261120.py` (17), cùng các test bộ vàng và bộ năm đã cập nhật.

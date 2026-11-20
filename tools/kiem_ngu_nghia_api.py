@@ -65,7 +65,8 @@ NGUON = "kiem_ngu_nghia_api"
 # (quality/eval/kiem-cheo-ngu-nghia/do-nhay-api-20261120*.md): K4b 7% → 53%, «không phán được» ở mục gốc giảm (chiều 24 → 6,
 # điều kiện 29 → 9 trên 48); 20 mục bộ vàng có nhãn: chiều báo giả 0/20, quần thể 1/20, điều kiện bắt 1/1 nhưng 7/17 bất đồng
 # với nhãn (chờ bác sĩ phân xử). v1 (2026-11-19a) giữ trong PROMPT_THEO_PHIEN_BAN để so cặp.
-PHIEN_BAN_PROMPT = "2026-11-20b"
+# 2026-11-20c (cùng lời dặn v2) thêm DÒNG BẢNG của toàn văn XML — ca JBDS: điều kiện liều chỉ nằm trong bảng.
+PHIEN_BAN_PROMPT = "2026-11-20c"
 MODEL_MAC_DINH = "claude-sonnet-5-5"   # cùng mặc định với cầu nối (chon_model: tham số > EBM_NC_API_MODEL > mặc định)
 TRAN_KY_TU_TOM_TAT = 9000              # tóm tắt dài (SR nhiều kết cục) giữ đầu + CUỐI — phần kết luận nằm cuối
 TOKEN_RA_UOC = 450
@@ -127,9 +128,12 @@ Trả lời ĐÚNG MỘT khối JSON, không thêm chữ nào khác:
  "ly_do": {"quan_the": "…", "chieu": "…", "dieu_kien": "…"}}
 Mỗi lý do bằng tiếng Việt, tối đa 25 từ, nêu căn cứ trong văn bản; không chép quá 15 từ liền nhau của nguồn."""
 
-PROMPT_THEO_PHIEN_BAN: dict[str, str] = {"2026-11-19a": HE_THONG, "2026-11-20b": HE_THONG_V2}
+PROMPT_THEO_PHIEN_BAN: dict[str, str] = {"2026-11-19a": HE_THONG, "2026-11-20b": HE_THONG_V2, "2026-11-20c": HE_THONG_V2}
 # Phiên bản nào ghép ĐOẠN TOÀN VĂN (chỉ tệp có quyền gửi — `quyen_gui_toan_van`) vào yêu cầu.
-PHIEN_BAN_TOAN_VAN = {"2026-11-20b"}
+PHIEN_BAN_TOAN_VAN = {"2026-11-20b", "2026-11-20c"}
+# Phiên bản nào lấy cả DÒNG BẢNG của toàn văn XML (20/11/2026: JBDS — liều insulin típ 1/típ 2 chỉ nằm trong Bảng 2/5; bộ chọn
+# đoạn chỉ đọc <p> nên API và người đối chiếu cùng phán sai «chỉ áp cho típ 2»). Bản b giữ nguyên để số đo cũ tái lập được.
+PHIEN_BAN_CO_BANG = {"2026-11-20c"}
 
 
 def he_thong(phien_ban: str | None = None) -> str:
@@ -235,11 +239,34 @@ def _dtcn():
     return _nap("_kna_dtcn", Path(__file__).resolve().parent / "doc_toan_van_co_nguoi.py")
 
 
+def _quyen_theo_nxb(doi: str, DT, uy_quyen_fn) -> tuple[bool, str]:
+    """NXB «cấm» (DIEU_KHOAN_NXB) ⇒ chỉ khi còn uỷ quyền đọc của bác sĩ LÚC GỌI; NXB khác/không xác định ⇒ KHÔNG gửi.
+    (Bảng `TDM_CHO_PHEP_LUU` KHÔNG được dùng ở đây: bảng tự khai chỉ cho phiên lưu bản sao — rà độc lập 20/11/2026.)"""
+    try:
+        DT = DT or _dtcn()
+        nxb, d = DT.nxb_cua(doi=doi or "")
+        if nxb and (d or {}).get("ket_luan") == "cam":
+            uq = (uy_quyen_fn or DT.uy_quyen_bac_si)(nxb)
+            return (True, f"uỷ quyền đọc của bác sĩ cho «{nxb}» còn hiệu lực") if uq else \
+                (False, f"NXB «{nxb}» cấm dùng với AI, không còn uỷ quyền")
+    except Exception as exc:  # noqa: BLE001 — bảng điều khoản lỗi ⇒ không gửi (fail-closed)
+        return False, f"không tra được điều khoản ({type(exc).__name__})"
+    return False, "NXB chưa xác định được quyền gửi cho công cụ AI"
+
+
+def _co_giay_phep_cc(tep: Path) -> bool:
+    try:
+        return bool(_PMC_CC.search(Path(tep).read_text(encoding="utf-8", errors="replace")[:400_000]))
+    except OSError:
+        return False
+
+
 def quyen_gui_toan_van(tep: Path, doi: str = "", *, DT=None, uy_quyen_fn=None) -> tuple[bool, str]:
     """Tệp toàn văn trong kho có được GỬI cho Claude API không. Fail-closed: không xác định được quyền ⇒ không gửi.
     PMC XML giấy phép CC ⇒ gửi · bản thảo tác giả PMC (NIH) ⇒ gửi (bác sĩ quyết 15/10/2026: máy đọc toàn văn bản thảo) ·
-    Unpaywall (chỉ lưu khi có giấy phép mở, BH160) ⇒ gửi · bản Chrome/bản in của nó ⇒ chỉ khi NXB «cấm» còn uỷ quyền của bác sĩ
-    LÚC GỌI, hoặc NXB có điều khoản cho phép TDM (`TDM_CHO_PHEP_LUU`) · loại khác (Wiley TDM…) ⇒ không gửi."""
+    Unpaywall ⇒ CHỈ khi chính tệp mang giấy phép Creative Commons, không thì xét như bản Chrome (rà độc lập 20/11/2026: kho còn
+    32 tệp `_UPW` cũ KHÔNG giấy phép mở — tên tệp không chứng minh giấy phép) · bản Chrome/bản in của nó ⇒ chỉ khi NXB «cấm» còn
+    uỷ quyền của bác sĩ LÚC GỌI · loại khác (Wiley TDM…) ⇒ không gửi."""
     ten = Path(tep).name
     if re.search(r"_PMC\d+\.xml$", ten):
         try:
@@ -252,21 +279,11 @@ def quyen_gui_toan_van(tep: Path, doi: str = "", *, DT=None, uy_quyen_fn=None) -
             return True, "bản thảo tác giả PMC (bác sĩ quyết 15/10/2026)"
         return False, "PMC không rõ giấy phép"
     if "_UPW." in ten:
-        return True, "Unpaywall — chỉ lưu bản giấy phép mở"
+        if _co_giay_phep_cc(tep):
+            return True, "Unpaywall — tệp mang giấy phép Creative Commons"
+        return _quyen_theo_nxb(doi, DT, uy_quyen_fn)
     if "_CHR." in ten or "_BANIN." in ten:
-        try:
-            DT = DT or _dtcn()
-            nxb, d = DT.nxb_cua(doi=doi or "")
-            if nxb and (d or {}).get("ket_luan") == "cam":
-                uq = (uy_quyen_fn or DT.uy_quyen_bac_si)(nxb)
-                return (True, f"uỷ quyền đọc của bác sĩ cho «{nxb}» còn hiệu lực") if uq else \
-                    (False, f"NXB «{nxb}» cấm dùng với AI, không còn uỷ quyền")
-            t2, _ = DT.nxb_tdm_cho_phep(doi=doi or "")
-            if t2:
-                return True, f"«{t2}» cho phép khai thác văn bản"
-        except Exception as exc:  # noqa: BLE001 — bảng điều khoản lỗi ⇒ không gửi (fail-closed)
-            return False, f"không tra được điều khoản ({type(exc).__name__})"
-        return False, "bản Chrome — NXB chưa xác định được quyền"
+        return _quyen_theo_nxb(doi, DT, uy_quyen_fn)
     return False, "loại tệp không gửi"
 
 
@@ -281,19 +298,45 @@ def ham_quyen_theo_thu_muc(thu_muc_dashboard: Path):
     return lambda f, doi: quyen_gui_toan_van(f, doi, DT=DT)
 
 
-def _doan_xml(t: str) -> list[str]:
+def _ten(el) -> str:
+    return el.tag.split("}")[-1] if isinstance(el.tag, str) else ""
+
+
+def _doan_xml(t: str, co_bang: bool = False) -> list[str]:
+    """Đoạn văn JATS (<p> của tóm tắt + thân bài). `co_bang` ⇒ thêm MỖI DÒNG BẢNG (<tr>) thành một đoạn, mở đầu bằng nhãn +
+    chú thích của bảng làm ngữ cảnh («[TABLE 5 — … type 1 …] ô | ô | ô»); <p> nằm trong bảng không lấy hai lần."""
     import xml.etree.ElementTree as ET
     try:
         root = ET.fromstring(t.encode("utf-8"))
     except ET.ParseError:
         return [x for x in re.split(r"\n\s*\n", re.sub(r"<[^>]+>", " ", t)) if x.strip()]
+
+    def gon(el) -> str:
+        return re.sub(r"\s+", " ", "".join(el.itertext())).strip()
+    trong_bang: set = set()
+    bang: list[str] = []
+    if co_bang:
+        for tw in root.iter():
+            if _ten(tw) != "table-wrap":
+                continue
+            for x in tw.iter():
+                trong_bang.add(id(x))
+            nhan = next((gon(x) for x in tw.iter() if _ten(x) == "label"), "")
+            chu = next((gon(x) for x in tw.iter() if _ten(x) == "caption"), "")
+            dau = f"[{(nhan + ' — ' + chu).strip(' —')[:160]}]"
+            for tr in tw.iter():
+                if _ten(tr) == "tr":
+                    o = [gon(c) for c in tr if _ten(c) in ("td", "th")]
+                    dong = " | ".join(x for x in o if x)
+                    if len(dong) > 20:
+                        bang.append(f"{dau} {dong}")
     ra = []
     for el in root.iter():
-        if el.tag.split("}")[-1] == "p":                 # đoạn văn JATS (tóm tắt + thân bài); tiêu đề mục ngắn bị bỏ
-            x = re.sub(r"\s+", " ", "".join(el.itertext())).strip()
+        if _ten(el) == "p" and id(el) not in trong_bang:   # đoạn văn JATS (tóm tắt + thân bài); tiêu đề mục ngắn bị bỏ
+            x = gon(el)
             if len(x) > 40:
                 ra.append(x)
-    return ra
+    return ra + bang
 
 
 def _doan_html(t: str) -> list[str]:
@@ -319,7 +362,7 @@ def _doan_pdf(tep: Path) -> list[str]:
     return ra
 
 
-def boc_doan_toan_van(tep: Path) -> list[str]:
+def boc_doan_toan_van(tep: Path, co_bang: bool = False) -> list[str]:
     tep = Path(tep)
     if tep.suffix.lower() == ".pdf":
         return _doan_pdf(tep)
@@ -327,7 +370,7 @@ def boc_doan_toan_van(tep: Path) -> list[str]:
         t = tep.read_text(encoding="utf-8", errors="replace")
     except OSError:
         return []
-    return _doan_xml(t) if tep.suffix.lower() == ".xml" else _doan_html(t)
+    return _doan_xml(t, co_bang) if tep.suffix.lower() == ".xml" else _doan_html(t)
 
 
 # Cụm y khoa tiếng Việt thường gặp ⇒ gốc từ tiếng Anh (khớp chuỗi con trên toàn văn đã hạ chữ thường) — để mục tiếng Việt tìm
@@ -403,7 +446,8 @@ def chon_doan(doan: list[str], it: dict, tran: int = TRAN_KY_TU_DOAN) -> str:
     return "\n\n".join(sach[i] for i in sorted(chon))
 
 
-def doan_toan_van(it: dict, kho: Path | None, *, bo_nho: dict | None = None, quyen_fn=None) -> tuple[str, str]:
+def doan_toan_van(it: dict, kho: Path | None, *, bo_nho: dict | None = None, quyen_fn=None,
+                  co_bang: bool = False) -> tuple[str, str]:
     """(đoạn gửi đi, ghi chú quyền) cho mục có PMID; không có tệp được phép ⇒ ("", lý do). `bo_nho` giữ đoạn đã bóc theo tệp."""
     pm = str(it.get("pmid") or "").strip()
     if not kho or not pm.isdigit() or not Path(kho).is_dir():
@@ -417,11 +461,11 @@ def doan_toan_van(it: dict, kho: Path | None, *, bo_nho: dict | None = None, quy
         ok, ly = (quyen_fn or quyen_gui_toan_van)(f, str(it.get("doi") or ""))
         if not ok:
             continue
-        key = str(f)
+        key = f"{f}|{int(co_bang)}"
         if bo_nho is not None and key in bo_nho:
             ds = bo_nho[key]
         else:
-            ds = boc_doan_toan_van(f)
+            ds = boc_doan_toan_van(f, co_bang)
             if bo_nho is not None:
                 bo_nho[key] = ds
         d = chon_doan(ds, it)
@@ -470,7 +514,7 @@ def kho_toan_van_mac_dinh() -> Path:
 def _doan_cho(it: dict, phien_ban: str, kho: Path | None, quyen_fn, bo_nho: dict) -> str:
     if phien_ban not in PHIEN_BAN_TOAN_VAN or kho is None:
         return ""
-    return doan_toan_van(it, kho, bo_nho=bo_nho, quyen_fn=quyen_fn)[0]
+    return doan_toan_van(it, kho, bo_nho=bo_nho, quyen_fn=quyen_fn, co_bang=phien_ban in PHIEN_BAN_CO_BANG)[0]
 
 
 def tra_bo_dem(tep: Path | None = None, model: str | None = None, kqtc=None, phien_ban: str | None = None,
@@ -575,7 +619,7 @@ def chay(muc_ds: list[dict], nguon: dict, *, goi_api: bool, cau_noi=None, client
 TEP_CHINH_SACH = REPO / "sync" / "api-khi-can.json"
 KHOA_CHINH_SACH = "ngu_nghia_xuat_goi"
 NGUON_XUAT = "kiem_ngu_nghia_xuat_goi"
-TRAN_GOI_MOI_GOI = 40                   # trần lượt gọi MỚI cho một dashboard (~0,005 USD/lượt đo 19/11 ⇒ ≤ ~0,2 USD)
+TRAN_GOI_MOI_GOI = 40                   # trần lượt gọi MỚI cho một dashboard (~0,012 USD/lượt kèm toàn văn ⇒ ≤ ~0,5 USD)
 NHAN_CHUA_HIEU_CHUAN = ("CHƯA HIỆU CHUẨN TRÊN LỖI THẬT — độ bắt lỗi mới đo trên đột biến tổng hợp "
                         "(quality/eval/kiem-cheo-ngu-nghia/do-nhay-api-*.md) và 20 mục bộ vàng; 40 mục thật còn chờ nhãn "
                         "bác sĩ. Đây là GỢI Ý đọc lại nguồn, không phải kết luận. Trục điều kiện báo nhiều nhất (7/17 bất "
@@ -645,7 +689,11 @@ def kiem_dashboard_api(dash: Path, *, cau_noi, goi_api: bool, online: bool, clie
     if data is None:
         print(f"⚪ Không đọc được khối DATA của {dash} — không đo được.")
         return 2
-    if bv is None and bvk.TEP_BO_VANG.is_file():
+    if bv is None:
+        if not bvk.TEP_BO_VANG.is_file():
+            print("⚪ Không thấy bộ vàng — không biết mục nào phải giữ mù ⇒ không gọi API (fail-closed).")
+            print("Tổng: không chạy (thiếu bộ vàng) — không chi tiền")
+            return 2
         bv = bvk.doc_bo_vang()
     muc, an = muc_xuat(data, Path(dash).name, khoa_giu_mu(bv, bvk), bvk)
     print(f"Bộ kiểm ngữ nghĩa API ({mdl}, prompt {PHIEN_BAN_PROMPT}) — {NHAN_CHUA_HIEU_CHUAN}")
@@ -674,7 +722,7 @@ def kiem_dashboard_api(dash: Path, *, cau_noi, goi_api: bool, online: bool, clie
             khong_tt += 1
             continue
         tt = than_tom_tat(raw, kqtc)
-        doan = doan_toan_van(m, kho, bo_nho=bo_nho, quyen_fn=quyen_fn)[0] if kho else ""
+        doan = doan_toan_van(m, kho, bo_nho=bo_nho, quyen_fn=quyen_fn, co_bang=pb in PHIEN_BAN_CO_BANG)[0] if kho else ""
         co_tv += bool(doan)
         k = khoa_muc(m, tt, mdl, pb, doan)
         x = dem.get(k) or dem_bv.get(k)
@@ -754,6 +802,14 @@ def chay_buoc_xuat(dash: Path, *, online: bool, goi_api: bool, tep_cs: Path | No
     return kiem_dashboard_api(dash, online=online, goi_api=goi_api, **kw)
 
 
+def loc_giu_mu(muc_ds: list[dict], bvk, *, ca_muc_cho_nhan: bool = False) -> list[dict]:
+    """Mặc định GIỮ MÙ: bỏ mục THẬT còn chờ nhãn bác sĩ (phần B — tập kiểm độc lập). Rà độc lập 20/11/2026: lượt đo 19/11 chạy
+    không lọc nên bộ đệm đã có kết quả v1 cho cả 40 mục phần B (không in cho bác sĩ). `ca_muc_cho_nhan` chỉ dùng SAU khi gắn nhãn."""
+    if ca_muc_cho_nhan:
+        return list(muc_ds)
+    return [m for m in muc_ds if (m.get("nguon_muc") or "that") != "that" or bvk._co_nhan(m)]
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description="Bộ kiểm ngữ nghĩa bằng Claude API trên bộ vàng (chỉ đo, không chặn)")
     ap.add_argument("--goi-api", action="store_true", help="gọi thật (tính phí); mặc định chạy khô")
@@ -763,7 +819,9 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--phien-ban", help="phiên bản prompt (mặc định phiên bản đang dùng)")
     ap.add_argument("--cau-noi", help="đường dẫn api_claude_nc.py (worktree chưa nối engine)")
     ap.add_argument("--chi-co-nhan", action="store_true",
-                    help="chỉ mục thật ĐÃ có nhãn bác sĩ (đo báo động giả; không chạm mục chờ nhãn — giữ mù)")
+                    help="(giữ cho tương thích — nay là mặc định) chỉ mục thật ĐÃ có nhãn bác sĩ")
+    ap.add_argument("--ca-muc-cho-nhan", action="store_true",
+                    help="chấm CẢ mục thật còn chờ nhãn (phần B — tập kiểm độc lập); chỉ dùng SAU khi bác sĩ gắn nhãn xong")
     ap.add_argument("--dashboard", help="bước xuất gói: chấm mục apply có PMID của MỘT dashboard (cảnh báo)")
     ap.add_argument("--online", action="store_true", help="với --dashboard: tải tóm tắt PubMed còn thiếu")
     a = ap.parse_args(argv)
@@ -774,8 +832,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"⚪ chưa có {bvk.TEP_BO_VANG}")
         return 2
     muc_ds = tap_muc(a.chi, bvk)
-    if a.chi_co_nhan:
-        muc_ds = [m for m in muc_ds if (m.get("nguon_muc") or "that") == "that" and bvk._co_nhan(m)]
+    muc_ds = loc_giu_mu(muc_ds, bvk, ca_muc_cho_nhan=a.ca_muc_cho_nhan)
     pb = a.phien_ban or PHIEN_BAN_PROMPT
     if pb not in PROMPT_THEO_PHIEN_BAN:
         print(f"✗ phiên bản prompt lạ: {pb}")

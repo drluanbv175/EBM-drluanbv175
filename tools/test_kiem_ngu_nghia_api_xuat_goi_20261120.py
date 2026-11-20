@@ -173,11 +173,13 @@ def test_chinh_sach_tat_vang_hong_thi_khong_chay(tmp_path, capsys):
     assert A.bat_trong_chinh_sach(cs) is True
 
 
-def test_chinh_sach_that_cua_repo_da_bat_va_api_khi_can_van_doc_duoc():
-    assert A.bat_trong_chinh_sach() is True
+def test_chinh_sach_that_cua_repo_doc_duoc_va_api_khi_can_van_doc_duoc():
+    """Không ghim GIÁ TRỊ (bác sĩ được đặt false để tắt — rà độc lập 20/11/2026): chỉ chốt khoá mới đọc được và không làm hỏng
+    chính sách của `api_khi_can.py`."""
+    assert A.bat_trong_chinh_sach() in (True, False)
     K = _nap("_knx_akc", "api_khi_can.py")
     cs = K.doc_chinh_sach()
-    assert cs is not None and all(cs["tu_chay"][v] for v in K.VIEC)          # khoá mới không làm hỏng chính sách cũ
+    assert cs is not None and all(isinstance(cs["tu_chay"][v], bool) for v in K.VIEC)
 
 
 def test_bo_nam_goi_buoc_canh_bao_va_co_co_khong_api():
@@ -188,3 +190,20 @@ def test_bo_nam_goi_buoc_canh_bao_va_co_co_khong_api():
     assert '"--dashboard", str(dash), "--online", "--goi-api"' in doan and "elif a.khong_api:" in doan
     assert "rc_final" not in doan.replace("không đổi\n    # rc_final", "")             # cảnh báo: không đụng mã thoát
     assert '"--khong-api"' in ma
+
+
+def test_main_mac_dinh_giu_mu_muc_cho_nhan():
+    ds = [{"id": "a", "nguon_muc": "that", "nhan_bac_si": {"dung_quan_the": True}}, {"id": "b", "nguon_muc": "that"},
+          {"id": "c", "nguon_muc": "dot_bien"}]
+    assert [m["id"] for m in A.loc_giu_mu(ds, B)] == ["a", "c"]
+    assert [m["id"] for m in A.loc_giu_mu(ds, B, ca_muc_cho_nhan=True)] == ["a", "b", "c"]
+
+
+def test_buoc_xuat_thieu_bo_vang_thi_khong_goi(tmp_path, capsys):
+    cn = _cau_noi(ON)
+    bvk_thieu = SimpleNamespace(TEP_BO_VANG=tmp_path / "vang.json", _co_nhan=B._co_nhan, chuan=B.chuan)
+    dash = tmp_path / "WebDashboard_X.html"
+    dash.write_text("x", encoding="utf-8")
+    ma = A.kiem_dashboard_api(dash, cau_noi=cn, goi_api=True, online=True, bv=None, tep_dem=tmp_path / "d.json",
+                              tep_tt=tmp_path / "t.json", tep_dem_bv=tmp_path / "bv.json", kqtc=_kqtc(), bvk=bvk_thieu)
+    assert ma == 2 and cn._goi == [] and "fail-closed" in capsys.readouterr().out

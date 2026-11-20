@@ -45,11 +45,16 @@ def _tep(tmp_path, ten, noi_dung=""):
     ("PMID-1_PMC9.xml", '<article><license xlink:href="https://creativecommons.org/licenses/by/4.0/"/></article>', "", None, True),
     ("PMID-1_PMC9.xml", '<article><article-id pub-id-type="manuscript">nihms123</article-id></article>', "", None, True),
     ("PMID-1_PMC9.xml", "<article><p>không giấy phép</p></article>", "", None, False),
-    ("PMID-1_UPW.html", "<p>x</p>", "", None, True),
+    # Unpaywall: tên tệp KHÔNG chứng minh giấy phép (rà độc lập 20/11/2026 — 32 tệp _UPW cũ không giấy phép mở)
+    ("PMID-1_UPW.html", '<a href="https://creativecommons.org/licenses/by/4.0/">CC BY</a>', "", None, True),
+    ("PMID-1_UPW.html", "<p>Copyright and License information</p>", "10.1128/AAC.00251-06", None, False),  # ASM chưa kiểm
+    ("PMID-1_UPW.html", "<p>x</p>", "", None, False),
+    ("PMID-1_UPW.html", "<p>x</p>", "10.1016/j.x", None, False),                  # NXB cấm, đã rút uỷ quyền
+    ("PMID-1_UPW.html", "<p>x</p>", "10.1016/j.x", {"ngay": "2026-10-04"}, True),  # NXB cấm, còn uỷ quyền
     ("PMID-1_CHR.html", "<p>x</p>", "10.1016/j.x", None, False),                  # NXB cấm, không uỷ quyền
     ("PMID-1_CHR.html", "<p>x</p>", "10.1016/j.x", {"ngay": "2026-10-04"}, True),  # còn uỷ quyền
     ("PMID-1_BANIN.pdf", "", "10.1016/j.x", None, False),
-    ("PMID-1_CHR.pdf", "", "10.1017/abc", None, True),                             # NXB cho phép TDM
+    ("PMID-1_CHR.pdf", "", "10.1017/abc", None, False),     # bảng TDM chỉ cho phiên lưu bản sao — không cho gửi API
     ("PMID-1_CHR.html", "<p>x</p>", "10.9999/khong-ro", None, False),              # chưa xác định ⇒ không gửi
     ("PMID-1_CHR.html", "<p>x</p>", "", None, False),                              # không có DOI ⇒ không gửi
     ("PMID-1_WTDM.pdf", "", "", None, False),
@@ -151,3 +156,27 @@ def test_buoc_xuat_ghep_doan_khi_phien_ban_dung_toan_van(tmp_path, capsys, monke
     assert "ĐOẠN TOÀN VĂN" in nd["metformin eGFR"] and "Metformin should not" in nd["metformin eGFR"]
     assert "ĐOẠN TOÀN VĂN" not in nd["tăng liều suy tim"]                       # bản Chrome NXB cấm, không uỷ quyền
     assert "kèm đoạn toàn văn 1" in out
+
+
+BANG_XML = ('<article xmlns:xlink="http://www.w3.org/1999/xlink">'                  # PMC thật luôn khai namespace xlink
+            '<license xlink:href="https://creativecommons.org/licenses/by/4.0/"/><body>'
+            '<p>For those with type 2 diabetes on insulin, doses should be reduced by 35%–50% during the diet period.</p>'
+            '<table-wrap><label>TABLE 5</label><caption><p>Insulin adjustment for individuals with type 1 diabetes.</p></caption>'
+            '<table><tr><th>Regimen</th><th>Advice</th></tr><tr><td>Basal insulin alone</td>'
+            '<td>It may be necessary to reduce dose by 30%–50% of pre-diet dose. Do not stop insulin; risk of DKA</td></tr>'
+            '</table></table-wrap></body></article>')
+
+
+def test_bang_chi_lay_o_phien_ban_co_bang_va_khong_lap_doan(tmp_path):
+    f = _tep(tmp_path, "PMID-5_PMC1.xml", BANG_XML)
+    khong = A.boc_doan_toan_van(f)
+    co = A.boc_doan_toan_van(f, co_bang=True)
+    assert not any("30%–50%" in d for d in khong)                                  # bản b: chỉ <p>
+    dong = [d for d in co if "30%–50%" in d]
+    assert len(dong) == 1 and dong[0].startswith("[TABLE 5 — Insulin adjustment for individuals with type 1")
+    assert sum("Insulin adjustment for individuals" in d for d in co) == 1         # <p> của chú thích không lấy riêng
+    assert "2026-11-20c" in A.PHIEN_BAN_CO_BANG and "2026-11-20b" not in A.PHIEN_BAN_CO_BANG
+    it = {"pmid": "5", "title": "insulin típ 1", "population": "típ 1", "action": "giảm insulin, không ngừng insulin"}
+    q = lambda f, doi: (True, "x")  # noqa: E731
+    assert "TABLE 5" in A.doan_toan_van(it, tmp_path, quyen_fn=q, co_bang=True)[0]
+    assert "TABLE 5" not in A.doan_toan_van(it, tmp_path, quyen_fn=q)[0]

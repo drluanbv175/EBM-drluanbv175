@@ -269,3 +269,41 @@ def test_so_toan_van_bao_cao_nguon_chinh_thuc():
     assert "1/3 nguồn có bằng chứng" in van and "doc_nguon_chinh_thuc.py tai" in van
     assert "chưa đo được" in "\n".join(S.bao_cao([], {"ngoai_so": [], "qua_han": [], "trong_han": [], "han": None}, None,
                                                  __import__("datetime").date(2026, 11, 20), None))
+
+
+# ───── vá sau rà độc lập 20/11/2026 ─────
+
+def test_mien_cua_dung_hostname_khong_bi_lua_boi_userinfo():
+    assert D.mien_cua("https://cdc.gov:x@evil.example/p") == "evil.example"
+    assert D.mien_cua("https://WWW.GOV.UK:443/a") == "www.gov.uk" and D.mien_cua("khong-phai-url") == ""
+
+
+@pytest.mark.parametrize("url, doi, lan", [
+    ("https://pmc.ncbi.nlm.nih.gov/articles/PMC1/", "", "trinh_duyet"),        # PMC: nội dung bên thứ ba, không tự tải
+    ("https://www.ncbi.nlm.nih.gov/books/NBK1/", "", "trinh_duyet"),           # Bookshelf
+    ("https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=1", "", "may"),  # nhãn thuốc nhà nước vẫn tự tải
+    ("https://doi.org/10.1016/j.x", "https://doi.org/10.1016/j.x", "bac_si"),   # DOI dạng URL vẫn nhận ra Elsevier
+])
+def test_lan_doc_sau_ra_doc_lap(url, doi, lan):
+    assert D.lan_doc(url, doi, V=V, uy_quyen_fn=lambda t: None)["lan"] == lan
+
+
+def test_tai_loi_bat_ky_khong_giet_ca_luot(tmp_path):
+    class LoiLa(Exception):
+        pass
+
+    def hong(url):
+        raise LoiLa("PdfStreamError giả")
+    nhom = _nhom(("url:https://www.gov.uk/a", "https://www.gov.uk/a"), ("url:https://www.gov.uk/b", "https://www.gov.uk/b"))
+    kq = D.tai(nhom, tmp_path, ghi=True, tai_fn=hong, ngu=lambda s: None, lan_fn=lambda u, d: {"lan": "may"})
+    assert len(kq["tu_choi"]) == 2 and set(kq["trinh_duyet"]) == set(nhom)
+
+
+def test_chuyen_huong_sang_mien_khong_duoc_phep_bi_chan():
+    h = D._ChuyenHuongCoRao()
+    req = D.urllib.request.Request("https://www.gov.uk/a")
+    with pytest.raises(D.urllib.error.URLError):
+        h.redirect_request(req, None, 302, "Found", {}, "https://evil.example/x")
+    with pytest.raises(D.urllib.error.URLError):
+        h.redirect_request(req, None, 302, "Found", {}, "https://pmc.ncbi.nlm.nih.gov/articles/PMC1/")
+    assert h.redirect_request(req, None, 302, "Found", {}, "https://www.gov.uk/b") is not None
