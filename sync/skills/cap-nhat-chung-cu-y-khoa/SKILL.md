@@ -461,7 +461,8 @@ trên bộ vàng do BÁC SĨ gắn nhãn (`tools/bo_vang_kiem_ngu_nghia.py phieu
 2,3,6» + «giải quyết triệt để»): với `--online`, bộ năm chạy `tools/kiem_ngu_nghia_api.py --dashboard <dashboard> --online
 --goi-api` — mô hình đọc tóm tắt PubMed + ĐOẠN TOÀN VĂN của chính nguồn, kể cả DÒNG BẢNG (prompt 2026-11-20c; cổng quyền từng
 tệp, fail-closed: PMC giấy phép CC · bản thảo tác giả NIH · Unpaywall CHỈ khi chính tệp mang giấy phép CC · còn lại (bản
-Chrome, Unpaywall không giấy phép) CHỈ khi NXB «cấm» còn uỷ quyền của bác sĩ lúc gọi; không xác định được ⇒ không gửi) và
+Chrome, Unpaywall không giấy phép) CHỈ khi NXB «cấm» còn uỷ quyền ghi sổ có hiệu lực lúc gọi; không xác định được ⇒
+không gửi) và
 phán quần thể · chiều · điều kiện của từng mục `apply` có PMID. Chỉ gọi API khi `sync/api-khi-can.json` →
 `tu_chay.ngu_nghia_xuat_goi` là true; tối đa 40 lượt mới mỗi dashboard (~0,012 USD/lượt); `--khong-api` bỏ bước. Mục thật của
 bộ vàng còn chờ nhãn bị ẩn (GIỮ MÙ; thiếu bộ vàng ⇒ không gọi). Dòng `🟠 [ITEM-xx] … API nghi lệch …` (quần thể/chiều) = GỢI Ý
