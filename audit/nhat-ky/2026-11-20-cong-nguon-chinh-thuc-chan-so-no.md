@@ -51,10 +51,38 @@
   - 41358886 ADA.
 - Năm bài có PMCID nhưng không thuộc tập giấy phép mở. Sổ `khong-oa.txt` ghi «không lấy được» 26–30/10.
 
+**3 — Ba góp ý của lượt rà độc lập (bộ kiểm API, 20/11) — đã vá cùng PR.**
+- Chia DEV/TEST theo MỤC làm rò rỉ: đo trên mẫu 171 đột biến, 7/30 PMID nằm ở CẢ DEV lẫn TEST.
+  - Nay `do_nhay_api_ngu_nghia.tap_cua` chia theo PMID; mục không PMID vẫn chia theo mục; `--chia-theo muc` tái lập cách cũ.
+  - Báo cáo JSON ghi `chia_theo`.
+  - TEST mới: 107 đột biến, cần 80 lượt chấm chưa có trong bộ đệm (~325 nghìn token vào, ước ~1 USD), trong khi tháng 11 còn
+    khoảng 2,3/20 USD ⇒ CHƯA đo lại; chờ bác sĩ quyết (hoặc để sang tháng 12).
+  - Số TEST cũ trong `do-nhay-api-20261120-test.*` là của cách chia cũ.
+- Trần chi phí theo lô cho bước xuất gói ④-quinquies: thêm `TRAN_GOI_MOI_NGAY` = 150 lượt/ngày (≈ 1,8 USD).
+  - Đếm từ chính bộ đệm kết quả xuất gói (dấu `luc`), không thêm sổ mới.
+  - Chạm trần ⇒ không gọi tiếp, in «chạm TRẦN NGÀY».
+  - Trần tháng 20 USD của cầu nối giữ nguyên.
+- `nap-trinh-duyet` đối chiếu `--doi` với `--url` (`doi_khop_url`):
+  - DOI phải hợp lệ;
+  - URL doi.org phải trỏ đúng DOI;
+  - DOI phải thuộc một mục apply không PMID trong dashboard, và URL phải cùng miền với URL của mục mang DOI đó.
+  - Trước đó một DOI gõ nhầm ghi «đã đọc» cho nguồn khác.
+
+**4 — Phiếu đối chiếu 5 cặp «hai bản nói ngược»** (`EBM-Dashboards/derivatives/PHIEU-DOI-CHIEU-HAI-BAN-NGUOC_20261120.md`/`.docx`).
+- 5 cặp thực chất là 2 PMID: ATTAIN-2 41275875 và WHO 2024 cai thuốc lá 38954657.
+- Bản 14/11 nâng consider → apply theo lời bác sĩ 14/11 — không phải chứng cứ mâu thuẫn.
+- Đối chiếu toàn văn (Lancet CHR, PDF WHO IRIS) và openFDA (NDA220934 AP 2026-04-01; nhãn 2026-07-29): bản 14/11 khớp nguồn.
+  Bản cũ lạc hậu ở tình trạng cấp phép, MACE và mức đọc toàn văn.
+- Sắc thái ghi cho bác sĩ:
+  - hai định nghĩa tỉ lệ ngừng thuốc trong bài Lancet;
+  - WHO coi thuốc lá điện tử là «ngoài phạm vi», không phải «không khuyến cáo».
+- Máy KHÔNG ghi `mau-thuan-da-duyet.json` — chờ bác sĩ chọn (A)/(B)/(C).
+
 **Kiểm:**
 - `tools/test_cong_nguon_chinh_thuc_chan_20261120.py` (9 test) và `tools/test_cach_ly_upw_khong_giay_phep_20261120.py` (5 test).
 - Sửa `test_doc_nguon_chinh_thuc_20261120` cho đúng mức CHẶN.
 - Đột biến cổng/sổ/hòm việc: 13/13 làm test đỏ đúng chỗ. Đột biến công cụ cách ly: 7/7.
+- Đột biến ba góp ý (chia PMID 2, trần ngày 2, đối chiếu DOI–URL 3): 7/7.
 - Phục hồi xanh, chạy `python -B`, xoá `__pycache__` trước mỗi phép.
 
 **Chưa làm (việc của người / phiên khác):**
