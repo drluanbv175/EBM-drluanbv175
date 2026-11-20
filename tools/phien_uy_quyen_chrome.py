@@ -317,6 +317,10 @@ def kiem(pmid: str, url: str, doi: str = "", *, bay_gio: datetime | None = None,
     # Phạm vi tính LÚC KIỂM, không chỉ theo ảnh chụp lúc mở: NXB có uỷ quyền đọc CÒN HIỆU LỰC ngay bây giờ. Bác sĩ uỷ quyền thêm
     # NXB khi phiên đang mở (04/10: «J Rheumatol uỷ quyền») thì áp ngay; rút uỷ quyền (xoá mục/het_han) thì dừng ngay.
     # `d["nxb"]` chỉ còn là ảnh chụp lúc mở để đối chiếu. KHONG_BAO_GIO đã bị loại sẵn trong nxb_duoc_luu.
+    if not ten and not _mien(url):
+        # 20/11/2026: thiếu URL mà tiền tố DOI không có trong bảng (vd 10.1207 — tiền tố cũ của T&F, 10.1191 — SAGE) thì KHÔNG
+        # xác định được NXB; báo «không thuộc phạm vi» ở đây từng làm agent suýt kết luận T&F/SAGE chưa có uỷ quyền. Vẫn fail-closed.
+        return 3, "thiếu URL trang bài — chỉ PMID/DOI chưa xác định được NXB; thêm --url rồi kiểm lại"
     if not ten or ten not in nxb_duoc_luu(dtv, bay_gio.date()):
         return 3, f"NXB của bài ({ten or 'chưa kiểm điều khoản'}) KHÔNG thuộc phạm vi phiên — đọc theo làn thường, không lưu"
     mien = _mien(url)
