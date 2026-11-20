@@ -128,3 +128,65 @@ def test_dau_giay_phep_trong_pdf_va_loi_doc(tmp_path):
 def test_moc_mac_dinh_la_ban_va_bh160():
     assert C.MOC_BH160.isoformat() == "2026-10-04T13:47:32+07:00"
     assert C.THU_MUC_CACH_LY == "_cach_ly_toan_van" and os.sep not in C.THU_MUC_CACH_LY
+
+
+# ── Bản in BANIN đi theo tệp nguồn (20/11/2026, tối) ─────────────────────────────────────────────────────────────────────
+def _ban_in(kho, monkeypatch, nguon_theo_tep: dict[str, str]):
+    """Tạo tệp BANIN giả; dải đầu trang (chữ trang 1) trả theo bảng — không cần PDF thật."""
+    for ten in nguon_theo_tep:
+        (kho / ten).write_bytes(b"%PDF-1.4 ban in gia")
+    monkeypatch.setattr(C, "chu_trang_dau", lambda p: nguon_theo_tep.get(p.name, ""))
+
+
+def test_ban_in_tu_upw_cach_ly_chuyen_theo_ban_in_tu_chr_giu_nguyen(tmp_path, monkeypatch):
+    dash, kho = _kho(tmp_path, monkeypatch, {"PMID-1000005_UPW.html": MOI})
+    _ban_in(kho, monkeypatch, {
+        "PMID-1000004_BANIN.pdf": "BẢN IN TỪ KHO TOÀN VĂN EBM · PMID 1000004 · nguồn: PMID-1000004_UPW.html (Unpaywall)",
+        "PMID-1000002_BANIN.pdf": "BẢN IN TỪ KHO TOÀN VĂN EBM · PMID 1000002 · nguồn: PMID-1000002_CHR.html (phiên Chrome)",
+        "PMID-1000001_BANIN.pdf": "BẢN IN TỪ KHO TOÀN VĂN EBM · PMID 1000001 · nguồn: PMID-1000001_UPW.html (Unpaywall)",
+        "PMID-1000003_BANIN.pdf": "",   # không đọc được dải đầu trang ⇒ không dời vì đoán
+    })
+    ds = C.quet(kho, dash, truoc=C.MOC_BH160, V=V)
+    sap = {x["tep"] for x in ds if not x["giay_phep_mo"] and not x["mat_bao_phu_apply"]}
+    bi = {x["pmid"]: x for x in C.quet_ban_in(kho, dash, sap)}
+    assert set(bi) == {"1000004"}, "chỉ bản in ghi đúng nguồn UPW sắp cách ly; 1000001 bị chốt bảo phủ giữ ⇒ bản in cũng ở lại"
+    dich = dash / C.THU_MUC_CACH_LY / "upw-khong-giay-phep-mo-20261120"
+    ma, dong = C.ap_dung_ban_in(kho, dich, list(bi.values()), ghi=False)
+    assert ma == 0 and not dich.exists() and (kho / "PMID-1000004_BANIN.pdf").exists(), "chạy khô không đụng gì"
+    C.ap_dung(kho, dich, ds, ca_muc_apply=False, ghi=True)
+    bi2 = C.quet_ban_in(kho, dash)          # sau khi dời: đọc từ MANIFEST
+    assert [x["pmid"] for x in bi2] == ["1000004"]
+    ma, dong = C.ap_dung_ban_in(kho, dich, bi2, ghi=True)
+    assert ma == 0 and (dich / "PMID-1000004_BANIN.pdf").exists() and not (kho / "PMID-1000004_BANIN.pdf").exists()
+    for t in ("PMID-1000002_BANIN.pdf", "PMID-1000001_BANIN.pdf", "PMID-1000003_BANIN.pdf"):
+        assert (kho / t).exists(), t
+    mf = json.loads((dich / "MANIFEST.json").read_text(encoding="utf-8"))
+    ban_in = [x for x in mf["tep"] if x.get("loai") == "ban_in"]
+    assert len(ban_in) == 1 and ban_in[0]["nguon_ban_in"] == "PMID-1000004_UPW.html" and len(ban_in[0]["sha256"]) == 64
+    assert any("không còn toàn văn" in x and "1000004" in x for x in dong), "1000004 không còn tệp nào ⇒ báo lấy lại"
+    assert C.quet_ban_in(kho, dash) == [], "chạy lại không còn gì"
+
+
+def test_ban_in_goi_y_in_lai_khi_con_chr_va_khong_ghi_de(tmp_path, monkeypatch):
+    dash, kho = _kho(tmp_path, monkeypatch, {})
+    _ban_in(kho, monkeypatch, {"PMID-1000002_BANIN.pdf": "nguồn: PMID-1000002_UPW.html (Unpaywall)"})
+    ds = C.quet(kho, dash, truoc=C.MOC_BH160, V=V)
+    dich = dash / C.THU_MUC_CACH_LY / "z"
+    C.ap_dung(kho, dich, ds, ca_muc_apply=False, ghi=True)
+    bi = C.quet_ban_in(kho, dash)
+    assert [x["con_nguon_khac"] for x in bi] == [["PMID-1000002_CHR.html"]]
+    ma, dong = C.ap_dung_ban_in(kho, dich, bi, ghi=False)
+    assert any("in_pdf_toan_van_kho.py --pmid 1000002 --ap-dung" in x for x in dong)
+    (dich / "PMID-1000002_BANIN.pdf").write_bytes(b"ban cu")
+    ma, _ = C.ap_dung_ban_in(kho, dich, bi, ghi=True)
+    assert ma == 3 and (kho / "PMID-1000002_BANIN.pdf").exists(), "đích đã có ⇒ không ghi đè, không dời"
+
+
+def test_ban_in_khong_doi_khi_tep_nguon_da_duoc_dua_lai_kho(tmp_path, monkeypatch):
+    dash, kho = _kho(tmp_path, monkeypatch, {})
+    _ban_in(kho, monkeypatch, {"PMID-1000004_BANIN.pdf": "nguồn: PMID-1000004_UPW.html (Unpaywall)"})
+    ds = C.quet(kho, dash, truoc=C.MOC_BH160, V=V)
+    dich = dash / C.THU_MUC_CACH_LY / "w"
+    C.ap_dung(kho, dich, ds, ca_muc_apply=False, ghi=True)
+    (kho / "PMID-1000004_UPW.html").write_bytes((dich / "PMID-1000004_UPW.html").read_bytes())  # bác sĩ đưa tệp lại kho
+    assert C.quet_ban_in(kho, dash) == [], "tệp nguồn đã về kho ⇒ manifest cũ không còn là căn cứ dời bản in"

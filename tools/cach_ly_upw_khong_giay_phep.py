@@ -19,6 +19,11 @@ LUẬT
     PMID 42343056 Springer CC BY, bộ dò chữ PDF bỏ sót); lý do ghi vào báo cáo.
   • Chốt bảo phủ: tệp mà việc dời làm một mục «Áp dụng ngay» mất bằng chứng đọc toàn văn DUY NHẤT (theo đúng định nghĩa cổng
     `verify_dashboard.co_toan_van_trong_kho`) ⇒ KHÔNG dời, trừ khi `--ca-muc-apply` (bác sĩ chấp nhận cổng chặn tới khi lấy lại).
+  • BẢN IN đi theo tệp nguồn (thêm 20/11/2026, tối): `PMID-<n>_BANIN.pdf` mà dải đầu trang ghi «nguồn: PMID-<n>_UPW.*» (do
+    `in_pdf_toan_van_kho.py` in ngày 18/10 từ chính tệp UPW) mang CÙNG bản quyền với tệp nguồn ⇒ tệp nguồn đã/đang cách ly thì bản
+    in cũng chuyển theo (không xoá). Bản in KHÔNG được cổng toàn văn đếm (BANIN không khớp `TEN_TEP_TOAN_VAN`) nên dời nó không
+    đổi bảo phủ; PMID còn bản hợp lệ (CHR/PMC) thì in lại bằng `in_pdf_toan_van_kho.py --pmid … --ap-dung`. Bản EndNote đã gắn
+    nằm trong thư viện EndNote, công cụ này không đụng. `--khong-ban-in` bỏ bước này.
   • `--ap-dung` chuyển tệp vào `EBM-Dashboards/_cach_ly_toan_van/upw-khong-giay-phep-mo-<YYYYMMDD>/` kèm `MANIFEST.json`
     (tên, PMID, sha256, kích thước, ngày tạo, lý do, mức quyết định, có làm mất bảo phủ không). Không ghi đè tệp đã có ở đích,
     KHÔNG BAO GIỜ xoá. Mặc định chạy khô.
@@ -145,6 +150,93 @@ def quet(kho: Path, dash: Path, *, truoc: dt.datetime | None, V=None, giu: set[s
     return ra
 
 
+NGUON_BAN_IN = re.compile(r"nguồn:\s*(PMID-\d{1,9}_[A-Z]+\.[a-z]+)")
+
+
+def chu_trang_dau(p: Path) -> str:
+    """Chữ trang 1 của PDF (dải đầu trang của bản in). Lỗi đọc ⇒ chuỗi rỗng."""
+    try:
+        from pypdf import PdfReader
+        return PdfReader(str(p)).pages[0].extract_text() or ""
+    except Exception:  # noqa: BLE001 — PDF hỏng ⇒ không biết nguồn ⇒ không dời vì đoán
+        return ""
+
+
+def ten_da_cach_ly(dash: Path) -> set[str]:
+    """Tên mọi tệp nguồn đã nằm trong một MANIFEST cách ly (mọi đợt). Manifest hỏng ⇒ bỏ qua đợt đó."""
+    ra: set[str] = set()
+    for mf in sorted((dash / THU_MUC_CACH_LY).glob("*/MANIFEST.json")):
+        try:
+            ra |= {str(t.get("tep")) for t in json.loads(mf.read_text(encoding="utf-8")).get("tep", [])}
+        except (OSError, ValueError, AttributeError):
+            continue
+    return ra
+
+
+def quet_ban_in(kho: Path, dash: Path, sap_cach_ly: set[str] | frozenset = frozenset()) -> list[dict]:
+    """Bản in `PMID-<n>_BANIN.pdf` sinh từ tệp UPW đã cách ly (theo manifest) hoặc SẮP cách ly lượt này.
+
+    Chỉ nhận khi dải đầu trang ghi ĐÚNG tên tệp nguồn đó VÀ tệp nguồn không còn ở kho (hoặc đang được dời) — bản in từ CHR/PMC
+    của cùng PMID không bị đụng."""
+    ra = []
+    for ten in sorted(ten_da_cach_ly(dash) | set(sap_cach_ly)):
+        m = re.fullmatch(r"PMID-(\d{1,9})_UPW\.(?:html|pdf)", ten)
+        if not m:
+            continue
+        pm = m.group(1)
+        b = kho / f"PMID-{pm}_BANIN.pdf"
+        if not b.is_file() or ((kho / ten).exists() and ten not in sap_cach_ly):
+            continue
+        n = NGUON_BAN_IN.search(chu_trang_dau(b))
+        if not n or n.group(1) != ten:
+            continue
+        khac = sorted(q.name for q in kho.glob(f"PMID-{pm}_*")
+                      if q.name not in (b.name, ten) and q.suffix.lower() in (".html", ".xml", ".pdf"))
+        ra.append({"tep": b.name, "pmid": pm, "nguon_ban_in": ten, "con_nguon_khac": khac})
+    return ra
+
+
+def ap_dung_ban_in(kho: Path, dich: Path, ds: list[dict], *, ghi: bool) -> tuple[int, list[str]]:
+    """Chuyển bản in theo tệp nguồn đã cách ly. Không ghi đè; không xoá. Trả (mã, dòng báo cáo)."""
+    if not ds:
+        return 0, []
+    trung = [x["tep"] for x in ds if (dich / x["tep"]).exists()]
+    if trung:
+        return 3, [f"✗ đích {dich} đã có bản in cùng tên (vd {trung[0]}) — không ghi đè; bác sĩ xem trước"]
+    in_lai = [x["pmid"] for x in ds if any(t.endswith((".html", ".xml")) for t in x["con_nguon_khac"])
+              and not any(t.endswith(".pdf") for t in x["con_nguon_khac"])]
+    khong_con = [x["pmid"] for x in ds if not x["con_nguon_khac"]]
+    if not ghi:
+        dong = [f"(chạy khô) sẽ CHUYỂN {len(ds)} bản in BANIN sinh từ tệp UPW cách ly sang {dich}"]
+    else:
+        dich.mkdir(parents=True, exist_ok=True)
+        tep_mf = dich / "MANIFEST.json"
+        try:
+            mf = json.loads(tep_mf.read_text(encoding="utf-8")) if tep_mf.exists() else {"tep": []}
+        except (OSError, ValueError):
+            return 3, [f"✗ {tep_mf} hỏng — không ghi chồng; bác sĩ xem trước"]
+        for x in ds:
+            nguon = kho / x["tep"]
+            du_lieu = nguon.read_bytes()
+            shutil.move(str(nguon), str(dich / x["tep"]))
+            if not (dich / x["tep"]).exists() or nguon.exists():
+                return 3, [f"✗ chuyển {x['tep']} không trọn — dừng; kiểm cả hai nơi"]
+            mf.setdefault("tep", []).append(dict(
+                x, loai="ban_in", sha256=hashlib.sha256(du_lieu).hexdigest(), kich_thuoc=len(du_lieu),
+                chuyen_luc=dt.datetime.now().isoformat(timespec="seconds"),
+                ly_do=f"bản in sinh từ {x['nguon_ban_in']} (đã cách ly) — cùng bản quyền với tệp nguồn"))
+            tep_mf.write_text(json.dumps(mf, ensure_ascii=False, indent=1) + "\n", encoding="utf-8", newline="\n")
+        dong = [f"✓ đã CHUYỂN {len(ds)} bản in BANIN theo tệp nguồn sang {dich}"]
+    if in_lai:
+        dong.append(f"  ↻ {len(in_lai)} PMID còn toàn văn hợp lệ dạng HTML/XML — in lại: python3 tools/in_pdf_toan_van_kho.py "
+                    f"--pmid {' '.join(in_lai)} --ap-dung")
+    if khong_con:
+        dong.append(f"  ⚠ {len(khong_con)} PMID không còn toàn văn nào trong kho sau khi dời ({', '.join(khong_con)}) — lấy lại qua"
+                    " làn Chrome có uỷ quyền nếu còn cần")
+    dong.append("  ⓘ bản đã gắn trong EndNote nằm trong thư viện EndNote — công cụ này không đụng")
+    return 0, dong
+
+
 def ap_dung(kho: Path, dich: Path, ds: list[dict], *, ca_muc_apply: bool, ghi: bool,
             hom_nay: dt.date | None = None) -> tuple[int, list[str]]:
     """Chuyển tệp KHÔNG giấy phép mở sang `dich`. Không ghi đè; không xoá. Trả (mã, dòng báo cáo)."""
@@ -191,6 +283,7 @@ def main(argv: list[str] | None = None, *, dash: Path | None = None) -> int:
     ap.add_argument("--tat-ca", action="store_true", help="bỏ mốc thời gian — xét mọi tệp _UPW")
     ap.add_argument("--giu", nargs="*", default=[], metavar="PMID", help="giữ tệp đã đối chiếu giấy phép mở bằng nguồn khác")
     ap.add_argument("--ca-muc-apply", action="store_true", help="dời cả tệp làm mục apply mất bảo phủ (bác sĩ chấp nhận chặn)")
+    ap.add_argument("--khong-ban-in", action="store_true", help="không dời bản in BANIN sinh từ tệp UPW cách ly")
     ap.add_argument("--json", action="store_true")
     ap.add_argument("--ap-dung", action="store_true")
     a = ap.parse_args(argv)
@@ -209,6 +302,14 @@ def main(argv: list[str] | None = None, *, dash: Path | None = None) -> int:
     dich = dash / THU_MUC_CACH_LY / ("upw-khong-giay-phep-mo-" + dt.date.today().strftime("%Y%m%d"))
     ma, dong = ap_dung(kho, dich, ds, ca_muc_apply=a.ca_muc_apply, ghi=a.ap_dung)
     print("\n".join(dong))
+    if not a.khong_ban_in and ma != 3:
+        sap = {x["tep"] for x in ds if not x["giay_phep_mo"] and (a.ca_muc_apply or not x["mat_bao_phu_apply"])}
+        bi = quet_ban_in(kho, dash, sap if not a.ap_dung else frozenset())
+        print(f"Bản in BANIN sinh từ tệp UPW đã/sắp cách ly: {len(bi)}")
+        ma_bi, dong_bi = ap_dung_ban_in(kho, dich, bi, ghi=a.ap_dung)
+        if dong_bi:
+            print("\n".join(dong_bi))
+        ma = 3 if ma_bi == 3 else ma
     print("Cần bác sĩ kiểm chứng.")
     return ma
 
