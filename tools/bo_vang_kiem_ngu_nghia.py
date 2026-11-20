@@ -551,8 +551,52 @@ def them_muc_that(so_muc: int, *, ap_dung: bool, tep: Path | None = None, ung_vi
     return 0
 
 
-def giac_quan(tep_bv: Path | None = None, tep_de_xuat: Path | None = None, tep_ra: Path | None = None
-              ) -> tuple[list[tuple[int, str, str, str]], list[str]]:
+_TAT_LOP_API = {"K1_quan_the": "K1", "K2_nguong": "K2", "K2_nguong_hanh_dong": "K2-hđ", "K3_rung_trong_muc": "K3b",
+                "K4_nguon_nguoc": "K4", "K4_muc_dao": "K4b"}
+
+
+def phien_ban_prompt_api(tep: Path | None = None) -> str | None:
+    """Phiên bản prompt ĐANG DÙNG của bộ kiểm API — đọc thẳng mã nguồn (không import, tránh vòng nạp)."""
+    try:
+        t = (tep or REPO / "tools" / "kiem_ngu_nghia_api.py").read_text(encoding="utf-8")
+    except OSError:
+        return None
+    m = re.search(r'^PHIEN_BAN_PROMPT = "([^"]+)"', t, re.M)
+    return m.group(1) if m else None
+
+
+def bao_cao_do_nhay_api(thu_muc: Path | None = None, phien_ban: str | None = None) -> dict | None:
+    """Báo cáo `do-nhay-api-*.json` MỚI NHẤT của đúng phiên bản prompt đang dùng (đột biến tổng hợp, 20/11/2026); None nếu
+    chưa có/không đọc được."""
+    thu_muc = thu_muc or TEP_BO_VANG.parent
+    phien_ban = phien_ban or phien_ban_prompt_api()
+    tot = None
+    for f in sorted(thu_muc.glob("do-nhay-api-*.json")):
+        d = doc_json(f)
+        if isinstance(d, dict) and d.get("phien_ban") == phien_ban and isinstance(d.get("ket_qua"), dict):
+            if tot is None or str(d.get("ngay")) >= str(tot.get("ngay")):
+                tot = dict(d, _tep=f.name)
+    return tot
+
+
+def tom_tat_do_nhay_api(bc: dict) -> str:
+    """«API K1 95% · … (luật cứng K1 99% · …) trên TEST» — số của tập giữ lại; thiếu TEST thì gộp."""
+    th = bc["ket_qua"]["theo_tap"]
+    tap = "test" if th.get("test") else "tat_ca"
+    lop = th[tap]["lop"]
+
+    def pt(x):
+        return "—" if x is None else f"{x * 100:.0f}%"
+    api = " · ".join(f"{_TAT_LOP_API.get(k, k)} {pt(o.get('do_nhay'))}" for k, o in lop.items())
+    luat = " · ".join(f"{_TAT_LOP_API.get(k, k)} {pt((o.get('luat_cung') or {}).get('do_nhay'))}" for k, o in lop.items())
+    kh = " · ".join(f"{_TAT_LOP_API.get(k, k)} {pt((o.get('ket_hop') or {}).get('do_nhay'))}" for k, o in lop.items())
+    dc = th[tap].get("doi_chung") or {}
+    return (f"đột biến tổng hợp ({bc['_tep']}, tập {tap.upper()}): API {api} — luật cứng {luat} — kết hợp {kh}; API nghi "
+            f"trên mục gốc {pt(dc.get('api_ty_le'))}")
+
+
+def giac_quan(tep_bv: Path | None = None, tep_de_xuat: Path | None = None, tep_ra: Path | None = None,
+              thu_muc_bao_cao: Path | None = None) -> tuple[list[tuple[int, str, str, str]], list[str]]:
     """([(ưu tiên, 👤, việc, lệnh)], lý do ⚪) cho hòm việc. Việc của bác sĩ: duyệt đột biến (phần A) và gắn nhãn mục thật
     chưa nhãn (phần B) — chưa xong thì không phép kiểm nào (luật cứng hay API) đo được bỏ lọt. Bộ vàng không đọc được hoặc
     đề xuất hỏng ⇒ ⚪ (không phải «không còn việc»)."""
@@ -565,12 +609,21 @@ def giac_quan(tep_bv: Path | None = None, tep_de_xuat: Path | None = None, tep_r
         chet.append("tệp đề xuất đột biến hỏng — không đưa cho bác sĩ duyệt")
     cho = de_xuat_cho_duyet(bv, tep_de_xuat, tep_ra)
     chua = sum(1 for m in bv["muc"] if not _co_nhan(m))
+    viec: list[tuple[int, str, str, str]] = []
+    bc = bao_cao_do_nhay_api(thu_muc_bao_cao)
+    if bc is None:
+        viec.append((3, "🛎", f"Độ bắt lỗi bộ kiểm Claude API (prompt {phien_ban_prompt_api() or '?'}) CHƯA đo trên đột biến "
+                              "tổng hợp tất định (cùng thước đo với luật cứng K1–K4) — máy đo được, ~2 USD",
+                     "python3 tools/do_nhay_api_ngu_nghia.py --goi-api --ghi"))
     if not cho and not chua:
-        return [], chet
+        return viec, chet
     phan = ([f"{len(cho)} đột biến chờ duyệt (phần A, một lượt)"] if cho else []) + \
            ([f"{chua} mục thật chưa có nhãn (phần B, gắn độc lập)"] if chua else [])
-    return [(3, "👤", f"Bộ vàng kiểm chéo ngữ nghĩa: {' · '.join(phan)} — chưa xong thì luật cứng K1–K4 lẫn bộ kiểm API "
-                      "chưa đo được bỏ lọt", "python3 tools/bo_vang_kiem_ngu_nghia.py phieu")], chet
+    da_do = f"; đã đo trên {tom_tat_do_nhay_api(bc)}" if bc else ""
+    viec.insert(0, (3, "👤", f"Bộ vàng kiểm chéo ngữ nghĩa: {' · '.join(phan)} — chưa xong thì bỏ lọt trên LỖI THẬT và báo "
+                             f"động giả thật (luật cứng K1–K4 lẫn bộ kiểm API) chưa đo được{da_do}",
+                    "python3 tools/bo_vang_kiem_ngu_nghia.py phieu"))
+    return viec, chet
 
 
 # ───────────────────────── đo ─────────────────────────
@@ -725,6 +778,7 @@ def main(argv: list[str] | None = None) -> int:
     p = sub.add_parser("do")
     p.add_argument("--online", action="store_true")
     p.add_argument("--api", action="store_true", help="đặt kết quả bộ kiểm API (bộ đệm của kiem_ngu_nghia_api.py) cạnh luật cứng")
+    p.add_argument("--phien-ban", help="phiên bản prompt của bộ kiểm API khi --api (mặc định phiên bản đang dùng)")
     p = sub.add_parser("duyet-dot-bien")
     p.add_argument("--loi", required=True, help="NGUYÊN VĂN lời duyệt của bác sĩ")
     p.add_argument("--ap-dung", action="store_true")
@@ -756,7 +810,7 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     api = None
     if a.api:
-        api = _nap("_bvk_api", "kiem_ngu_nghia_api.py").tra_bo_dem()
+        api = _nap("_bvk_api", "kiem_ngu_nghia_api.py").tra_bo_dem(phien_ban=getattr(a, "phien_ban", None))
     in_do(do(bv, nguon, dot_bien=doc_dot_bien_da_duyet(), api=api))
     return 0
 
