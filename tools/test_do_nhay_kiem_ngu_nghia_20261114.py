@@ -140,9 +140,9 @@ def test_sinh_k2_nguong_va_co_mau(tmp_path):
     db2 = M.sinh_k2_co_mau(rec, NGUON["101"], 3)
     assert db2["truong"] == "k2_co_mau" and db2["bien_the"] == "thay_n"
     assert db2["dich"]["so"] != "4304" and not M._co_co_mau(db2["dich"]["so"], M.chuan_hoa(NGUON["101"]))
-    # ngưỡng trong HÀNH ĐỘNG: ngoài phạm vi thiết kế của K1/K2
+    # ngưỡng trong HÀNH ĐỘNG: từ 20/11/2026 kiem_muc đối chiếu nó ở trường k2_nguong_hd ⇒ TRONG phạm vi
     db3 = M.sinh_k2_nguong(rec, NGUON["101"], 3, truong_hanh_dong=True)
-    assert db3["lop"] == "K2_nguong_hanh_dong" and db3["trong_pham_vi"] is False
+    assert db3["lop"] == "K2_nguong_hanh_dong" and db3["trong_pham_vi"] is True and db3["truong"] == "k2_nguong_hd"
     assert db3["muc_dot_bien"]["population"] == rec["muc"]["population"]
 
 

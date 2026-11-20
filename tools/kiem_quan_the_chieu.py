@@ -27,6 +27,9 @@ nhắc chỉ số đó mà không thấy CON SỐ ấy gần đó ⇒ 🟠 kèm 
 nhau (HFrEF↔HFpEF, típ 1↔típ 2, trẻ em↔người lớn, thai kỳ↔ngoài thai kỳ, lọc máu↔không lọc
 máu): mục mang một vế mà nguồn chỉ nêu vế kia ⇒ 🟠.
 K4: tìm tín hiệu ngược chiều rõ ràng trong nguồn ⇒ 🟠 kèm câu nguyên văn.
+Từ 20/11/2026: K2 còn đối chiếu ngưỡng số nằm trong `action` (`k2_nguong_hd`, cùng phép với K1a); K4b còn soi mâu thuẫn
+NỘI MỤC — hành động «KHÔNG làm» trong khi tiêu đề + gradeSource + effectText của chính mục không có dấu chống/hại nào
+(`audit/nhat-ky/2026-11-20-luat-cung-k2hd-k4b-noi-muc.md`).
 
 BA MỨC — cố ý KHÔNG có mức «SAI» (BH08: vắng mặt trong tóm tắt không chứng minh trích sai)
   ✓ khớp · 🟠 cần đọc lại (kèm đoạn nguồn) · ⚪ chưa kiểm được (nguồn không nêu / không tải được)
@@ -390,21 +393,62 @@ def muc_phu_dinh_that(it: dict) -> bool:
                for v in (str(it.get(k) or "") for k in ("title", "action")))
 
 
+# ── K4b NỘI MỤC: HÀNH ĐỘNG nói «KHÔNG làm» mà phần còn lại của CHÍNH mục không có dấu chống/hại nào (20/11/2026) ────
+# Đo do_nhay_api 20/11 (TEST): K4b đối chiếu NGUỒN chỉ bắt 7% — tóm tắt thường im lặng (⚪) hoặc có câu chống rộng (✓). Nhưng mục
+# dashboard tự mang chiều của nó ở các trường KHÁC hành động: tiêu đề («Statin cường độ cao — nền tảng…»), phân hạng ở gradeSource
+# («COR 1», «khuyến cáo mạnh»), hiệu số lợi ích ở effectText. Hành động mở đầu phủ định trong khi tiêu đề KHÔNG có dấu phủ định/
+# thận trọng nào VÀ gradeSource + effectText KHÔNG có dấu chống/hại nào ⇒ 🟠 (mâu thuẫn TRONG mục — báo cả khi nguồn có câu chống
+# rộng, vì đó là hai trường của cùng một mục nói hai chiều). Từ khoá chặn RỘNG có chủ ý (thà im còn hơn báo giả); «không» mô tả
+# quần thể («không triệu chứng», «không dung nạp»…) không tính. Không phán nội mục khi: mục thiếu cả gradeSource lẫn effectText
+# (không đủ trường đối chiếu — vd mục rút gọn của bộ vàng), tiêu đề trống, hoặc normativeBasis là chống chỉ định.
+# Đo DEV (chia theo PMID): bắt 43/85 đột biến «mục đảo», 0 báo động trên 411 mục gốc DEV (10 mục có hành động phủ định thật).
+# GIỚI HẠN nói trước: chỉ bắt lỗi SỬA MỘT PHẦN (hành động lệch với phần còn lại của mục) — đột biến tổng hợp đúng là kiểu đó nên
+# số đo tổng hợp LẠC QUAN hơn lỗi thật; mục sai đồng bộ ở mọi trường thì chỉ phép đối chiếu nguồn phía dưới bắt được.
+_K4B_TIEU_DE_CHAN = re.compile(
+    r"(?<!\w)(?:không(?!\s+(?:có\s+)?(?:triệu chứng|mang thai|có thai|dung nạp|đáp ứng|đái tháo đường|lọc máu|biến chứng"
+    r"|điển hình)(?!\w))|tránh|ngừng|ngưng|chống chỉ định|hạn chế|thận trọng|cấm|đừng|hoãn|bỏ|giảm liều|có hại|cảnh báo"
+    r"|thu hồi|bị rút|rút giấy phép|(?:khuyến cáo|kc)\s+(?:\S+\s+){0,2}?chống"
+    r"|not|avoid\w*|against|harm\w*|contraindicat\w*|class iii|cor 3|cor iii|no benefit)(?!\w)")
+_K4B_CHONG_MUC = re.compile(
+    r"(?<!\w)(?:cor 3|cor iii|class iii|harm\w*|có hại|no benefit|không (?:có )?lợi ích|chống chỉ định|contraindicat\w*|against"
+    r"|not recommended|không khuyến cáo|không nên|tăng nguy cơ|increased risk|grade d|mức d|khuyến cáo chống|avoid\w*|tránh"
+    r"|ngừng|ngưng|thu hồi|bị rút|withdraw\w*|discontinu\w*)(?!\w)")
+
+
+def k4b_noi_muc(it: dict) -> dict | None:
+    """{"tieu_de": …} khi hành động mở đầu phủ định mà tiêu đề + gradeSource + effectText của CHÍNH mục không có dấu phủ định/
+    chống nào; None khi không mâu thuẫn hoặc không phán được (thiếu trường đối chiếu)."""
+    action = str(it.get("action") or "")
+    if not (_MUC_PHU_DINH.match(action) and not _PHU_DINH_KEP.match(action)):
+        return None
+    khac = " . ".join(str(it.get(k) or "") for k in ("gradeSource", "effectText")).strip(" .")
+    tieu_de = chuan_hoa(str(it.get("title") or ""))
+    if not khac or not tieu_de or str(it.get("normativeBasis") or "") == "contraindication":
+        return None
+    if _K4B_TIEU_DE_CHAN.search(tieu_de) or _K4B_CHONG_MUC.search(chuan_hoa(khac)):
+        return None
+    return {"tieu_de": tieu_de[:200]}
+
+
 def kiem_k4b(it: dict, nguon: str) -> dict | None:
-    """None khi mục không phải khuyến cáo «KHÔNG làm». Nguồn đã chuẩn hoá (thân tóm tắt)."""
+    """None khi mục không phải khuyến cáo «KHÔNG làm». Nguồn đã chuẩn hoá (thân tóm tắt). Có mâu thuẫn NỘI MỤC ⇒ 🟠 và kèm
+    `noi_muc` + `muc_nguon` (phán quyết riêng của phép đối chiếu nguồn, để người đọc thấy cả hai)."""
     if not muc_phu_dinh_that(it):
         return None
     tat_ca = tach_cau(nguon)
     cau = tat_ca[:1] + tach_cau(phan_ket_luan(nguon))
     chong = [c for c in cau if _NGUOC.search(c) or _CHONG.search(c)]
     if chong:
-        return {"muc": "khop", "cau_nguon": chong[:3]}
-    # câu ủng hộ: ưu tiên tiêu đề + Kết luận; Kết luận im lặng thì xét cả thân (kết quả chính thường nằm ở RESULTS)
-    ung_ho = [c for c in cau if _UNG_HO.search(c)] or [c for c in tat_ca if _UNG_HO.search(c)
-                                                       and not (_NGUOC.search(c) or _CHONG.search(c))]
-    if ung_ho:
-        return {"muc": "can_doc", "cau_nguon": ung_ho[:3]}
-    return {"muc": "chua_kiem", "cau_nguon": []}
+        kq = {"muc": "khop", "cau_nguon": chong[:3]}
+    else:
+        # câu ủng hộ: ưu tiên tiêu đề + Kết luận; Kết luận im lặng thì xét cả thân (kết quả chính thường nằm ở RESULTS)
+        ung_ho = [c for c in cau if _UNG_HO.search(c)] or [c for c in tat_ca if _UNG_HO.search(c)
+                                                           and not (_NGUOC.search(c) or _CHONG.search(c))]
+        kq = {"muc": "can_doc", "cau_nguon": ung_ho[:3]} if ung_ho else {"muc": "chua_kiem", "cau_nguon": []}
+    noi = k4b_noi_muc(it)
+    if noi:
+        kq = {**kq, "muc": "can_doc", "muc_nguon": kq["muc"], "noi_muc": noi}
+    return kq
 
 
 # ── K3b: NGUỒN khuyến cáo CÓ ĐIỀU KIỆN mà MỤC không giữ (14/11/2026) ─────────────────────────────
@@ -608,14 +652,24 @@ def _van_ban_muc(it: dict) -> str:
 def kiem_muc(it: dict, nguon_tho: str | None) -> dict:
     muc_tx = chuan_hoa(_van_ban_muc(it))
     dong = {"id": it.get("id") or "?", "pmid": it.get("pmid"), "doi": it.get("doi"),
-            "co_nguon": nguon_tho is not None, "k1_nguong": [], "k1_cap": [], "k2_co_mau": [], "k4": None,
-            "k3b": [], "k4b": None}
+            "co_nguon": nguon_tho is not None, "k1_nguong": [], "k1_cap": [], "k2_co_mau": [], "k2_nguong_hd": [],
+            "k4": None, "k3b": [], "k4b": None}
     if nguon_tho is None:
         return dong
     ng = chuan_hoa_nguon(than_nguon(nguon_tho))
-    for khoa, so in trich_nguong(muc_tx):
+    nguong_qt = trich_nguong(muc_tx)
+    for khoa, so in nguong_qt:
         muc, doan = kiem_nguong(khoa, so, ng)
         dong["k1_nguong"].append({"chi_so": khoa, "so": so, "muc": muc, "doan_nguon": doan})
+    # K2 ngưỡng trong HÀNH ĐỘNG (20/11/2026): cùng phép đối chiếu với K1a (chỉ số có trong nguồn mà không thấy CON SỐ ấy trong
+    # ±_CUA_SO ký tự ⇒ 🟠). Trước đây K1/K2 không đọc action ⇒ đột biến «đổi ngưỡng trong hành động» lọt 100% (do_nhay_api 20/11).
+    # Ngưỡng đã có ở quần thể thì K1 đã phán — không báo trùng. Đo DEV: 0 báo động trên mục gốc (16 mục có ngưỡng trong hành
+    # động); DEV KHÔNG có đột biến lớp này (cả 20 rơi vào TEST khi chia theo PMID) ⇒ độ nhạy chỉ đo được trên TEST.
+    for khoa, so in trich_nguong(str(it.get("action") or "")):
+        if (khoa, so) in nguong_qt:
+            continue
+        muc, doan = kiem_nguong(khoa, so, ng)
+        dong["k2_nguong_hd"].append({"chi_so": khoa, "so": so, "muc": muc, "doan_nguon": doan})
     dong["k1_cap"] = kiem_cap(muc_tx, ng)
     for so in trich_co_mau(chuan_hoa(f"{_van_ban_muc(it)}. {it.get('title') or ''}")):
         muc, doan = kiem_co_mau(so, ng)
@@ -659,7 +713,8 @@ PHEP_KQTC = ("K1", "K2", "K3b", "K4", "K4b")
 def phan_quyet_theo_phep(d: dict) -> dict[str, list[dict]]:
     """Các dòng phán quyết của MỘT mục, theo phép (audit/16: phần ngưỡng của K2 nằm trong K1 — ở đây ngưỡng tính cho K1).
     K3b/K4b (14/11/2026) đếm riêng để người đọc và bộ đo độ nhạy tách được."""
-    return {"K1": d["k1_nguong"] + d["k1_cap"], "K2": d["k2_co_mau"], "K3b": d.get("k3b") or [],
+    return {"K1": d["k1_nguong"] + d["k1_cap"], "K2": d["k2_co_mau"] + (d.get("k2_nguong_hd") or []),
+            "K3b": d.get("k3b") or [],
             "K4": [d["k4"]] if d.get("k4") else [], "K4b": [d["k4b"]] if d.get("k4b") else []}
 
 
@@ -667,7 +722,7 @@ _KH = {"khop": "✓", "can_doc": "🟠", "chua_kiem": "⚪"}
 
 
 def in_bao_cao(ten: str, kq: dict) -> None:
-    print(f"K1 quần thể + K2 cỡ mẫu + K4 chiều khuyến cáo · {ten}")
+    print(f"K1 quần thể + K2 cỡ mẫu/ngưỡng hành động + K3b điều kiện + K4/K4b chiều khuyến cáo · {ten}")
     print(f"  mục apply có PMID/DOI: {len(kq['muc'])} · có văn bản nguồn: {kq['so_muc_co_nguon']}")
     for d in kq["muc"]:
         dinh_danh = d["pmid"] or d["doi"]
@@ -684,6 +739,10 @@ def in_bao_cao(ten: str, kq: dict) -> None:
         for x in d["k2_co_mau"]:
             print(f"  {_KH[x['muc']]} [{d['id']}] K2 cỡ mẫu n={x['so']}"
                   + (f" — nguồn: «{x['doan_nguon']}»" if x["muc"] == "can_doc" else ""))
+        for x in d.get("k2_nguong_hd") or []:
+            print(f"  {_KH[x['muc']]} [{d['id']}] K2 ngưỡng trong HÀNH ĐỘNG {x['chi_so']} {x['so']}"
+                  + (f" — nguồn nhắc chỉ số nhưng không thấy con số này gần đó: «{x['doan_nguon']}»"
+                     if x["muc"] == "can_doc" else ""))
         k4 = d["k4"]
         if k4["muc"] == "can_doc":
             for c in k4["cau_nguon"]:
@@ -705,7 +764,12 @@ def in_bao_cao(ten: str, kq: dict) -> None:
                 print(f"  🟠 [{d['id']}] K3b nguồn khuyến cáo CÓ ĐIỀU KIỆN, hành động của mục không còn dấu điều kiện nào — "
                       f"nguồn: «{x['doan_nguon'][:200]}»")
         k4b = d.get("k4b")
-        if k4b and k4b["muc"] == "can_doc":
+        if k4b and k4b.get("noi_muc"):
+            ghi = {"khop": " (nguồn có câu chống/hại — đọc lại cả mục lẫn nguồn)",
+                   "chua_kiem": " (nguồn không có câu ủng hộ lẫn chống rõ ràng)"}.get(k4b.get("muc_nguon"), "")
+            print(f"  🟠 [{d['id']}] K4b hành động nói KHÔNG làm nhưng tiêu đề, phân hạng (gradeSource) và hiệu số (effectText) "
+                  f"của CHÍNH mục không có dấu phủ định/chống/hại nào{ghi} — tiêu đề: «{k4b['noi_muc']['tieu_de']}»")
+        if k4b and k4b["muc"] == "can_doc" and k4b.get("muc_nguon", "can_doc") == "can_doc":
             for c in k4b["cau_nguon"]:
                 print(f"  🟠 [{d['id']}] K4b mục nói KHÔNG làm, nguồn có câu ủng hộ (không câu chống/hại nào): «{c[:200]}»")
         elif k4b and k4b["muc"] == "chua_kiem":
