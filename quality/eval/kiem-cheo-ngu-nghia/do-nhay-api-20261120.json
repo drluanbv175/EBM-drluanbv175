@@ -1,0 +1,371 @@
+{
+ "cong_cu": "do_nhay_api_ngu_nghia",
+ "ngay": "20261120",
+ "phien_ban": "2026-11-20b",
+ "model": "claude-sonnet-5-5",
+ "hat_giong": 20261114,
+ "so_mau": 40,
+ "so_dashboard": 114,
+ "so_muc": 822,
+ "phu_mau": {
+  "K1_quan_the": {
+   "co_san": 49,
+   "api_khong_thay": 0,
+   "chon": 40
+  },
+  "K2_nguong": {
+   "co_san": 35,
+   "api_khong_thay": 0,
+   "chon": 35
+  },
+  "K2_nguong_hanh_dong": {
+   "co_san": 20,
+   "api_khong_thay": 0,
+   "chon": 20
+  },
+  "K3_rung_trong_muc": {
+   "co_san": 601,
+   "api_khong_thay": 0,
+   "chon": 40
+  },
+  "K4_nguon_nguoc": {
+   "co_san": 27,
+   "api_khong_thay": 0,
+   "chon": 27
+  },
+  "K4_muc_dao": {
+   "co_san": 181,
+   "api_khong_thay": 0,
+   "chon": 40
+  }
+ },
+ "bam_ma": {
+  "do_nhay_api_ngu_nghia.py": "e247c0349cc7597f",
+  "kiem_ngu_nghia_api.py": "f5f4b4f906863cb2",
+  "do_nhay_kiem_ngu_nghia.py": "7815459a11fbe7a9"
+ },
+ "ket_qua": {
+  "theo_tap": {
+   "test": {
+    "lop": {
+     "K1_quan_the": {
+      "n": 17,
+      "n_tinh": 17,
+      "bat": 14,
+      "bat_lech": 0,
+      "lot_xanh": 3,
+      "lot_trang": 0,
+      "goc_da_nghi": 0,
+      "chua_cham": 0,
+      "do_nhay": 0.8235294117647058,
+      "ktc95": [
+       0.5897054143116588,
+       0.9380887336237901
+      ],
+      "phan_duoc": {
+       "n": 16,
+       "bat": 13,
+       "do_nhay": 0.8125,
+       "ktc95": [
+        0.5699111903802586,
+        0.9340840092857187
+       ]
+      },
+      "luat_cung": {
+       "n": 17,
+       "bat": 17,
+       "do_nhay": 1.0,
+       "ktc95": [
+        0.8156818649911483,
+        1.0
+       ]
+      },
+      "cap": {
+       "ca_hai": 14,
+       "chi_api": 0,
+       "chi_luat_cung": 3,
+       "ca_hai_lot": 0,
+       "p_mcnemar": 0.25
+      },
+      "ket_hop": {
+       "n": 17,
+       "bat": 17,
+       "do_nhay": 1.0,
+       "ktc95": [
+        0.8156818649911483,
+        1.0
+       ]
+      }
+     },
+     "K2_nguong": {
+      "n": 15,
+      "n_tinh": 15,
+      "bat": 12,
+      "bat_lech": 0,
+      "lot_xanh": 3,
+      "lot_trang": 0,
+      "goc_da_nghi": 0,
+      "chua_cham": 0,
+      "do_nhay": 0.8,
+      "ktc95": [
+       0.5481455128483065,
+       0.9295245065301844
+      ],
+      "phan_duoc": {
+       "n": 15,
+       "bat": 12,
+       "do_nhay": 0.8,
+       "ktc95": [
+        0.5481455128483065,
+        0.9295245065301844
+       ]
+      },
+      "luat_cung": {
+       "n": 15,
+       "bat": 15,
+       "do_nhay": 1.0,
+       "ktc95": [
+        0.7961166989641515,
+        1.0
+       ]
+      },
+      "cap": {
+       "ca_hai": 12,
+       "chi_api": 0,
+       "chi_luat_cung": 3,
+       "ca_hai_lot": 0,
+       "p_mcnemar": 0.25
+      },
+      "ket_hop": {
+       "n": 15,
+       "bat": 15,
+       "do_nhay": 1.0,
+       "ktc95": [
+        0.7961166989641515,
+        1.0
+       ]
+      }
+     },
+     "K2_nguong_hanh_dong": {
+      "n": 11,
+      "n_tinh": 6,
+      "bat": 2,
+      "bat_lech": 0,
+      "lot_xanh": 2,
+      "lot_trang": 2,
+      "goc_da_nghi": 5,
+      "chua_cham": 0,
+      "do_nhay": 0.3333333333333333,
+      "ktc95": [
+       0.09677141110578041,
+       0.700006684861608
+      ],
+      "phan_duoc": {
+       "n": 3,
+       "bat": 2,
+       "do_nhay": 0.6666666666666666,
+       "ktc95": [
+        0.2076596008020477,
+        0.9385080552796037
+       ]
+      },
+      "luat_cung": {
+       "n": 6,
+       "bat": 0,
+       "do_nhay": 0.0,
+       "ktc95": [
+        2.7755575615628914e-17,
+        0.3903342879021653
+       ]
+      },
+      "cap": {
+       "ca_hai": 0,
+       "chi_api": 2,
+       "chi_luat_cung": 0,
+       "ca_hai_lot": 4,
+       "p_mcnemar": 0.5
+      },
+      "ket_hop": {
+       "n": 6,
+       "bat": 2,
+       "do_nhay": 0.3333333333333333,
+       "ktc95": [
+        0.09677141110578041,
+        0.700006684861608
+       ]
+      }
+     },
+     "K3_rung_trong_muc": {
+      "n": 18,
+      "n_tinh": 11,
+      "bat": 1,
+      "bat_lech": 0,
+      "lot_xanh": 5,
+      "lot_trang": 5,
+      "goc_da_nghi": 7,
+      "chua_cham": 0,
+      "do_nhay": 0.09090909090909091,
+      "ktc95": [
+       0.016232172885884855,
+       0.37735843645159567
+      ],
+      "phan_duoc": {
+       "n": 6,
+       "bat": 1,
+       "do_nhay": 0.16666666666666666,
+       "ktc95": [
+        0.030053369748306635,
+        0.5635028221864702
+       ]
+      },
+      "luat_cung": {
+       "n": 11,
+       "bat": 0,
+       "do_nhay": 0.0,
+       "ktc95": [
+        0.0,
+        0.2588329669680317
+       ]
+      },
+      "cap": {
+       "ca_hai": 0,
+       "chi_api": 1,
+       "chi_luat_cung": 0,
+       "ca_hai_lot": 10,
+       "p_mcnemar": 1.0
+      },
+      "ket_hop": {
+       "n": 11,
+       "bat": 1,
+       "do_nhay": 0.09090909090909091,
+       "ktc95": [
+        0.016232172885884855,
+        0.37735843645159567
+       ]
+      }
+     },
+     "K4_nguon_nguoc": {
+      "n": 11,
+      "n_tinh": 11,
+      "bat": 2,
+      "bat_lech": 1,
+      "lot_xanh": 8,
+      "lot_trang": 0,
+      "goc_da_nghi": 0,
+      "chua_cham": 0,
+      "do_nhay": 0.18181818181818182,
+      "ktc95": [
+       0.05136768974608513,
+       0.4769805619608442
+      ],
+      "phan_duoc": {
+       "n": 11,
+       "bat": 2,
+       "do_nhay": 0.18181818181818182,
+       "ktc95": [
+        0.05136768974608513,
+        0.4769805619608442
+       ]
+      },
+      "luat_cung": {
+       "n": 11,
+       "bat": 11,
+       "do_nhay": 1.0,
+       "ktc95": [
+        0.7411670330319684,
+        1.0
+       ]
+      },
+      "cap": {
+       "ca_hai": 2,
+       "chi_api": 0,
+       "chi_luat_cung": 9,
+       "ca_hai_lot": 0,
+       "p_mcnemar": 0.00390625
+      },
+      "ket_hop": {
+       "n": 11,
+       "bat": 11,
+       "do_nhay": 1.0,
+       "ktc95": [
+        0.7411670330319684,
+        1.0
+       ]
+      }
+     },
+     "K4_muc_dao": {
+      "n": 15,
+      "n_tinh": 15,
+      "bat": 8,
+      "bat_lech": 1,
+      "lot_xanh": 5,
+      "lot_trang": 1,
+      "goc_da_nghi": 0,
+      "chua_cham": 0,
+      "do_nhay": 0.5333333333333333,
+      "ktc95": [
+       0.30116980025498397,
+       0.7519046463426261
+      ],
+      "phan_duoc": {
+       "n": 13,
+       "bat": 7,
+       "do_nhay": 0.5384615384615384,
+       "ktc95": [
+        0.29143795714506004,
+        0.7679393219046169
+       ]
+      },
+      "luat_cung": {
+       "n": 15,
+       "bat": 2,
+       "do_nhay": 0.13333333333333333,
+       "ktc95": [
+        0.03736125910306537,
+        0.37881982832322364
+       ]
+      },
+      "cap": {
+       "ca_hai": 0,
+       "chi_api": 8,
+       "chi_luat_cung": 2,
+       "ca_hai_lot": 5,
+       "p_mcnemar": 0.109375
+      },
+      "ket_hop": {
+       "n": 15,
+       "bat": 10,
+       "do_nhay": 0.6666666666666666,
+       "ktc95": [
+        0.41713547738519774,
+        0.8482367556028526
+       ]
+      }
+     }
+    },
+    "doi_chung": {
+     "n": 48,
+     "api_bat_ky": 22,
+     "api_ty_le": 0.4583333333333333,
+     "api_ktc95": [
+      0.32575242292867446,
+      0.5970892545435019
+     ],
+     "api_theo_truc": {
+      "dung_quan_the": 0,
+      "dung_chieu": 1,
+      "du_dieu_kien": 22
+     },
+     "api_null_theo_truc": {
+      "dung_quan_the": 3,
+      "dung_chieu": 6,
+      "du_dieu_kien": 9
+     },
+     "luat_cung_bao": 0,
+     "luat_cung_ty_le": 0.0
+    }
+   }
+  },
+  "chi_tap": "test"
+ }
+}
