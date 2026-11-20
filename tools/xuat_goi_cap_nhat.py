@@ -707,11 +707,13 @@ def main() -> int:
         print("④-quinquies ⚠ Bỏ qua: thiếu tools/kiem_ngu_nghia_api.py")
     else:
         print("④-quinquies Kiểm ngữ nghĩa bằng Claude API (quần thể/chiều/điều kiện — CHƯA HIỆU CHUẨN, chỉ cảnh báo)…")
-        rc, out = run([py, str(KNA), "--dashboard", str(dash), "--online", "--goi-api"])
+        rc, out = run([py, str(KNA), "--dashboard", str(dash), "--online", "--goi-api"], timeout=1800)
         result["ngu_nghia_api_ma"] = rc
         tong = [dong for dong in out.splitlines() if dong.startswith("Tổng:")]
         print("   " + (tong[-1] if tong else (out.strip().splitlines() or ["không rõ"])[-1][:160]))
-        if rc == 1:
+        if not tong:   # công cụ con sập/quá giờ (traceback cũng thoát mã 1) — KHÔNG được đọc thành «API nghi lệch»
+            print("   ⚠ Bộ kiểm API không chạy xong (không có dòng «Tổng:») — chạy lại lệnh trên để xem lỗi; không chặn xuất.")
+        elif rc == 1:
             print("   🟠 API nghi một số mục lệch nguồn — chạy lại lệnh trên để xem lý do từng mục; đây là GỢI Ý chưa hiệu"
                   " chuẩn, bác sĩ đọc lại nguồn rồi quyết (không chặn xuất).")
 

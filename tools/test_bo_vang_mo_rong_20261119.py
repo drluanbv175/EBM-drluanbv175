@@ -398,7 +398,7 @@ def test_goi_ghi_bo_dem_moi_muc_va_lan_sau_khong_goi_lai(tmp_path):
     assert A.chay(ds, {"111": TOM}, goi_api=True, cau_noi=cn, tep=tep) == 0
     assert len(cn._goi) == 2
     kw = cn._goi[0][1]
-    assert kw["he_thong"] == A.HE_THONG and kw["cache_he_thong"] is True and kw["nguon"] == A.NGUON
+    assert kw["he_thong"] == A.he_thong() and kw["cache_he_thong"] is True and kw["nguon"] == A.NGUON
     assert "max_tokens" not in kw                              # để cầu nối dùng mặc định 16000 (BH180)
     assert A.chay(ds, {"111": TOM}, goi_api=True, cau_noi=cn, tep=tep) == 0 and len(cn._goi) == 2
     tra = A.tra_bo_dem(tep)(_muc(1), TOM)
@@ -489,24 +489,64 @@ def test_khong_sua_do_cu_khi_khong_truyen_tham_so_moi():
 
 # ───── hòm việc ─────
 
-def test_giac_quan_bao_viec_bac_si_va_het_viec_thi_im(ba_tep):
-    viec, chet = B.giac_quan(ba_tep["bv"], ba_tep["dx"], ba_tep["ra"])
+def _bao_cao_api(thu_muc: Path, phien_ban: str | None = None, ngay: str = "20261120") -> Path:
+    """Báo cáo đo độ bắt lỗi API (đột biến tổng hợp) tối thiểu cho cảm biến — 20/11/2026."""
+    thu_muc.mkdir(parents=True, exist_ok=True)
+    lop = {"K1_quan_the": {"do_nhay": 0.9, "luat_cung": {"do_nhay": 0.99}, "ket_hop": {"do_nhay": 1.0}},
+           "K3_rung_trong_muc": {"do_nhay": 0.5, "luat_cung": {"do_nhay": 0.01}, "ket_hop": {"do_nhay": 0.5}}}
+    bc = {"phien_ban": phien_ban or B.phien_ban_prompt_api(), "ngay": ngay,
+          "ket_qua": {"theo_tap": {"test": {"lop": lop, "doi_chung": {"api_ty_le": 0.1}}}}}
+    f = thu_muc / f"do-nhay-api-{ngay}.json"
+    f.write_text(json.dumps(bc, ensure_ascii=False), encoding="utf-8")
+    return thu_muc
+
+
+def test_giac_quan_bao_viec_bac_si_va_het_viec_thi_im(ba_tep, tmp_path):
+    bc = _bao_cao_api(tmp_path / "bc")
+    viec, chet = B.giac_quan(ba_tep["bv"], ba_tep["dx"], ba_tep["ra"], bc)
     assert chet == [] and len(viec) == 1 and viec[0][1] == "👤" and "3 đột biến chờ duyệt" in viec[0][2]
+    assert "LỖI THẬT" in viec[0][2] and "API K1 90% · K3b 50%" in viec[0][2] and "luật cứng K1 99%" in viec[0][2]
+    assert "kết hợp K1 100% · K3b 50%" in viec[0][2]                          # bộ năm chạy cả hai phép
     _duyet(ba_tep, "duyệt đột biến: tất cả", ap_dung=True)
-    assert B.giac_quan(ba_tep["bv"], ba_tep["dx"], ba_tep["ra"]) == ([], [])
+    assert B.giac_quan(ba_tep["bv"], ba_tep["dx"], ba_tep["ra"], bc) == ([], [])
+
+
+def test_giac_quan_chua_do_api_thi_bao_viec_can_bac_si_cho_chay(ba_tep, tmp_path):
+    """20/11/2026: chưa có báo cáo đo độ bắt lỗi API cho ĐÚNG phiên bản prompt đang dùng ⇒ 👤 kèm lệnh đo (TÍNH PHÍ ⇒ không
+    gắn 🛎, để agent không tự chạy — rà độc lập 20/11/2026)."""
+    bc = _bao_cao_api(tmp_path / "bc", phien_ban="phien-ban-cu")
+    viec, _ = B.giac_quan(ba_tep["bv"], ba_tep["dx"], ba_tep["ra"], bc)
+    do = [v for v in viec if "do_nhay_api_ngu_nghia.py" in v[3]]
+    assert len(do) == 1 and do[0][1] == "👤" and "tính phí" in do[0][2]
+    assert all("đã đo trên" not in v[2] for v in viec)
+
+
+def test_giac_quan_bao_cao_chi_co_dev_khong_sap_va_uu_tien_test(ba_tep, tmp_path):
+    """Rà độc lập 20/11/2026: báo cáo chỉ có tập DEV (`--chi-tap dev --ghi`) làm KeyError 'tat_ca' ⇒ giác quan chết, việc 👤
+    gắn nhãn biến khỏi hòm việc. Nay không sập; có cả báo cáo TEST thì lấy TEST."""
+    thu = tmp_path / "bc"
+    thu.mkdir()
+    lop = {"K1_quan_the": {"do_nhay": 0.7, "luat_cung": {"do_nhay": 0.9}, "ket_hop": {"do_nhay": 0.95}}}
+    dev = {"phien_ban": B.phien_ban_prompt_api(), "ngay": "20261121", "ket_qua": {"theo_tap": {"dev": {"lop": lop}}}}
+    (thu / "do-nhay-api-20261121-dev.json").write_text(json.dumps(dev, ensure_ascii=False), encoding="utf-8")
+    viec, chet = B.giac_quan(ba_tep["bv"], ba_tep["dx"], ba_tep["ra"], thu)
+    assert chet == [] and "tập DEV" in viec[0][2] and "API K1 70%" in viec[0][2]
+    _bao_cao_api(thu, ngay="20261120")                                         # có TEST (cũ hơn) ⇒ vẫn ưu tiên TEST
+    viec, _ = B.giac_quan(ba_tep["bv"], ba_tep["dx"], ba_tep["ra"], thu)
+    assert "tập TEST" in viec[0][2] and "API K1 90%" in viec[0][2]
 
 
 def test_giac_quan_bo_vang_hong_la_chet_khong_phai_het_viec(tmp_path):
     (tmp_path / "bv.json").write_text("{hỏng", encoding="utf-8")
-    viec, chet = B.giac_quan(tmp_path / "bv.json", tmp_path / "dx.json", tmp_path / "ra.json")
+    viec, chet = B.giac_quan(tmp_path / "bv.json", tmp_path / "dx.json", tmp_path / "ra.json", tmp_path)
     assert viec == [] and chet
 
 
-def test_giac_quan_de_xuat_hong_bao_chet(ba_tep):
+def test_giac_quan_de_xuat_hong_bao_chet(ba_tep, tmp_path):
     dx = json.loads(ba_tep["dx"].read_text(encoding="utf-8"))
     dx["dot_bien"][0]["kieu"] = "xyz"
     ba_tep["dx"].write_text(json.dumps(dx, ensure_ascii=False), encoding="utf-8")
-    _viec, chet = B.giac_quan(ba_tep["bv"], ba_tep["dx"], ba_tep["ra"])
+    _viec, chet = B.giac_quan(ba_tep["bv"], ba_tep["dx"], ba_tep["ra"], _bao_cao_api(tmp_path / "bc"))
     assert any("hỏng" in c for c in chet)
 
 
