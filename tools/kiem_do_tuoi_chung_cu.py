@@ -215,19 +215,36 @@ def la_khong_can(lat_cat: str, khong_can: dict) -> bool:
 
 
 def in_bang_tuoi(lau: list[tuple[str, int]], khong_can: dict | None = None) -> None:
-    """In phân bố tuổi để dòng 🟢 ở trên không bị đọc quá rộng."""
+    """In phân bố tuổi để dòng 🟢 ở trên không bị đọc quá rộng.
+
+    VÁ 20/11/2026 — số đếm và danh sách phải nói về CÙNG một tập. Trước bản vá, dòng tóm tắt
+    đếm «N chủ đề quá 35 ngày» trên TOÀN BỘ lát cắt (gồm bản tin gộp `khong_can`), còn dòng
+    «Lâu nhất» lại LOẠI bản tin gộp. Đo 20/11/2026: dòng tóm tắt in «11 chủ đề quá 35 ngày»
+    trong khi «Lâu nhất» chỉ tới 31 ngày — cả 11 đều là bản tin tuần gộp (Uptodate, W24–W32,
+    NgoaiTru) mà orchestrator không làm mới được (không có A2). Một phiên đã đọc dòng đó thành
+    «11 chủ đề cần bản nối tiếp» và suýt lập danh sách ≈ 0,5–0,8 triệu token/chủ đề cho việc
+    không làm được. Nay trung vị và số «quá hạn» chỉ tính chủ đề LÀM MỚI ĐƯỢC; bản tin gộp in
+    thành dòng riêng (vẫn hiện, không giấu). Gọi không có `khong_can` ⇒ giữ hành vi cũ (mọi lát cắt).
+    """
     if not lau:
         return
-    tuoi = [t for _k, t in lau]
+    kc = khong_can or {}
+    lam_moi_duoc = [x for x in lau if not la_khong_can(x[0], kc)]
+    gop = [x for x in lau if la_khong_can(x[0], kc)]
+    tuoi = [t for _k, t in lam_moi_duoc]
     qua = sum(1 for t in tuoi if t > HAN_CAP_NHAT_NGAY)
-    print(f"   {len(lau)} chủ đề · trung vị {sorted(tuoi)[len(tuoi) // 2]} ngày kể từ lần "
-          f"xem lại · {qua} chủ đề quá {HAN_CAP_NHAT_NGAY} ngày")
+    if tuoi:
+        print(f"   {len(lam_moi_duoc)} chủ đề · trung vị {sorted(tuoi)[len(tuoi) // 2]} ngày kể từ lần "
+              f"xem lại · {qua} chủ đề quá {HAN_CAP_NHAT_NGAY} ngày")
+    else:
+        print("   0 chủ đề làm mới được (chỉ có bản tin gộp)")
+    if gop:
+        gop_qua = sum(1 for _k, t in gop if t > HAN_CAP_NHAT_NGAY)
+        print(f"   ({len(gop)} bản tin gộp không tính vào các số trên — không thể làm mới thành một chủ đề; "
+              f"{gop_qua} bản quá {HAN_CAP_NHAT_NGAY} ngày)")
     if qua:
-        lam_moi_duoc = [x for x in lau if not la_khong_can(x[0], khong_can or {})]
         ten = " · ".join(f"{k} ({t}ng)" for k, t in lam_moi_duoc[:5])
         print(f"   Lâu nhất: {ten}")
-        if khong_can is not None and len(lam_moi_duoc) < len(lau):
-            print(f"   ({len(lau) - len(lam_moi_duoc)} bản tin gộp không tính vào «lâu nhất» — không thể làm mới thành một chủ đề)")
         print("   (Đây là số ĐO, không phải phán quyết 'đã lỗi thời' — nhịp cập nhật mỗi")
         print("    lĩnh vực một khác, chọn chủ đề xem lại trước là quyết định của bác sĩ.)")
 
