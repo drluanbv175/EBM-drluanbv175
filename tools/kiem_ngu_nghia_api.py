@@ -621,6 +621,11 @@ TEP_CHINH_SACH = REPO / "sync" / "api-khi-can.json"
 KHOA_CHINH_SACH = "ngu_nghia_xuat_goi"
 NGUON_XUAT = "kiem_ngu_nghia_xuat_goi"
 TRAN_GOI_MOI_GOI = 40                   # trần lượt gọi MỚI cho một dashboard (~0,012 USD/lượt kèm toàn văn ⇒ ≤ ~0,5 USD)
+# TRẦN NGÀY của bước xuất gói (20/11/2026 — góp ý rà độc lập): trần tháng của cầu nối (20 USD) chặn TỔNG, nhưng một lượt xuất
+# HÀNG LOẠT (vd orchestrator nối tiếp 50 dashboard × 40 lượt) có thể tiêu gần hết trần tháng trong một ngày, cạn phần của các
+# việc API khác (kiểm đề cương, API khi cần). Đếm lượt ĐÃ GỌI hôm nay từ chính bộ đệm kết quả xuất gói (mỗi bản ghi có `luc`),
+# không thêm sổ mới; chạm trần ⇒ không gọi tiếp, in rõ — chạy lại ngày sau để chấm phần còn lại.
+TRAN_GOI_MOI_NGAY = 150                 # ≈ 1,8 USD/ngày
 NHAN_CHUA_HIEU_CHUAN = ("CHƯA HIỆU CHUẨN TRÊN LỖI THẬT — độ bắt lỗi mới đo trên đột biến tổng hợp "
                         "(quality/eval/kiem-cheo-ngu-nghia/do-nhay-api-*.md) và 20 mục bộ vàng; 40 mục thật còn chờ nhãn "
                         "bác sĩ. Đây là GỢI Ý đọc lại nguồn, không phải kết luận. Trục điều kiện báo nhiều nhất (7/17 bất "
@@ -681,7 +686,7 @@ def muc_xuat(data: dict, ten_dash: str, giu_mu: tuple[set, set], bvk=None) -> tu
 def kiem_dashboard_api(dash: Path, *, cau_noi, goi_api: bool, online: bool, client=None, model: str | None = None,
                        lay=None, bv: dict | None = None, tep_dem: Path | None = None, tep_tt: Path | None = None,
                        tep_dem_bv: Path | None = None, toi_da: int = TRAN_GOI_MOI_GOI, kqtc=None, bvk=None,
-                       quyen_fn=None) -> int:
+                       quyen_fn=None, tran_ngay: int = TRAN_GOI_MOI_NGAY, hom_nay: dt.date | None = None) -> int:
     """Chấm các mục `apply` có PMID của một dashboard (CẢNH BÁO). In dòng «Tổng:» cho bộ năm đọc."""
     kqtc = kqtc or _kqtc()
     bvk = bvk or _bvk()
@@ -731,8 +736,13 @@ def kiem_dashboard_api(dash: Path, *, cau_noi, goi_api: bool, online: bool, clie
             ket_qua[m["id"]] = x["ket_qua"]
         else:
             viec.append((k, m, tt, doan))
-    bo_tran = max(0, len(viec) - max(0, toi_da))
-    viec = viec[:max(0, toi_da)]
+    ngay = (hom_nay or dt.date.today()).isoformat()
+    da_goi_hom_nay = sum(1 for x in dem.values() if isinstance(x, dict) and str(x.get("luc") or "").startswith(ngay))
+    con_ngay = max(0, tran_ngay - da_goi_hom_nay)
+    tran_luot = min(max(0, toi_da), con_ngay)
+    bo_tran = max(0, len(viec) - tran_luot)
+    cham_tran_ngay = bool(viec) and con_ngay < min(len(viec), max(0, toi_da))
+    viec = viec[:tran_luot]
     dung_vi, loi = "", []
     if viec and not goi_api:
         print(f"   (chạy khô) {len(viec)} mục chưa có kết quả — không gọi API")
@@ -782,7 +792,10 @@ def kiem_dashboard_api(dash: Path, *, cau_noi, goi_api: bool, online: bool, clie
         print(f"   ✗ {x}")
     if dung_vi:
         print(f"   ⛔ dừng gọi API: {dung_vi}")
-    if bo_tran:
+    if bo_tran and cham_tran_ngay:
+        print(f"   ⚠ chạm TRẦN NGÀY {tran_ngay} lượt gọi của bước xuất gói (hôm nay đã gọi {da_goi_hom_nay}) — {bo_tran} mục "
+              "chưa chấm lượt này (chạy lại ngày sau để chấm tiếp)")
+    elif bo_tran:
         print(f"   ⚠ vượt trần {toi_da} lượt/dashboard — {bo_tran} mục chưa chấm lượt này (chạy lại để chấm tiếp)")
     print(f"Tổng: {len(muc)} mục apply có PMID · ẩn giữ mù bộ vàng {an} · có kết quả {len(ket_qua)} · kèm đoạn toàn văn "
           f"{co_tv} · thiếu tóm tắt "
