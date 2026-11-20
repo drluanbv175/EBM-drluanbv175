@@ -15,11 +15,11 @@
    "nhan_bac_si": {
     "dung_quan_the": true,
     "dung_chieu": true,
-    "du_dieu_kien": true,
-    "ghi_chu": null,
-    "loi_bac_si": "1: Đ Đ Đ · 2: Đ Đ Đ · 3: Đ Đ ? GLP-1 RA cho béo phì không ĐTĐ và tầm soát rung nhĩ cần đối chiếu toàn văn · 4: Đ Đ ? như mục 3 · 5: Đ Đ Đ · 6: Đ Đ Đ · 7: Đ Đ Đ · 8: Đ Đ Đ · 9: Đ Đ Đ · 10: Đ Đ S giai đoạn 2 dùng SGLT2i và ức chế RAA chỉ khi có bệnh thận mạn hoặc ĐTĐ có chỉ định · 11: Đ Đ Đ · 12: Đ Đ Đ · 13: Đ Đ Đ · 14: Đ Đ Đ · 15: Đ Đ Đ · 16: Đ Đ Đ · 17: Đ Đ S nguồn giảm insulin 35–50% chỉ cho típ 2 · 18: Đ Đ Đ · 19: Đ Đ Đ · 20: Đ Đ Đ",
-    "ngay": "2026-10-20",
-    "de_xuat_boi": "Claude — bác sĩ xác nhận 20/10/2026: «đồng ý nhãn bộ vàng»"
+    "du_dieu_kien": false,
+    "ghi_chu": "Beers 2023 mở rộng khuyến cáo tránh sang MỌI sulfonylurea, mục còn ghi «tác dụng dài» theo bản 2019",
+    "loi_bac_si": "1: Đ Đ S Beers 2023 mở rộng khuyến cáo tránh sang MỌI sulfonylurea, mục còn ghi «tác dụng dài» theo bản 2019 · 11: Đ Đ S IMPACT: FEV1 50–80% cần ≥2 đợt vừa hoặc ≥1 đợt nặng, mục gộp «≥1 đợt cấp» · 12: Đ Đ S lợi ích tử vong thuộc chương trình cai thuốc tích cực 10 tuần; «DUY NHẤT» nói quá nguồn · 16: Đ Đ S nguồn chỉ tầm soát viêm khớp/IBD khi khám hoặc hỏi bệnh gợi ý",
+    "ngay": "2026-11-20",
+    "de_xuat_boi": "Claude (đối chiếu toàn văn) — bác sĩ chọn «Theo khuyến nghị» 20/11/2026; mục 17 KHÔNG đổi vì Bảng 2/5 JBDS khớp mục"
    }
   },
   {
@@ -215,11 +215,11 @@
    "nhan_bac_si": {
     "dung_quan_the": true,
     "dung_chieu": true,
-    "du_dieu_kien": true,
-    "ghi_chu": null,
-    "loi_bac_si": "1: Đ Đ Đ · 2: Đ Đ Đ · 3: Đ Đ ? GLP-1 RA cho béo phì không ĐTĐ và tầm soát rung nhĩ cần đối chiếu toàn văn · 4: Đ Đ ? như mục 3 · 5: Đ Đ Đ · 6: Đ Đ Đ · 7: Đ Đ Đ · 8: Đ Đ Đ · 9: Đ Đ Đ · 10: Đ Đ S giai đoạn 2 dùng SGLT2i và ức chế RAA chỉ khi có bệnh thận mạn hoặc ĐTĐ có chỉ định · 11: Đ Đ Đ · 12: Đ Đ Đ · 13: Đ Đ Đ · 14: Đ Đ Đ · 15: Đ Đ Đ · 16: Đ Đ Đ · 17: Đ Đ S nguồn giảm insulin 35–50% chỉ cho típ 2 · 18: Đ Đ Đ · 19: Đ Đ Đ · 20: Đ Đ Đ",
-    "ngay": "2026-10-20",
-    "de_xuat_boi": "Claude — bác sĩ xác nhận 20/10/2026: «đồng ý nhãn bộ vàng»"
+    "du_dieu_kien": false,
+    "ghi_chu": "IMPACT: FEV1 50–80% cần ≥2 đợt vừa hoặc ≥1 đợt nặng, mục gộp «≥1 đợt cấp»",
+    "loi_bac_si": "1: Đ Đ S Beers 2023 mở rộng khuyến cáo tránh sang MỌI sulfonylurea, mục còn ghi «tác dụng dài» theo bản 2019 · 11: Đ Đ S IMPACT: FEV1 50–80% cần ≥2 đợt vừa hoặc ≥1 đợt nặng, mục gộp «≥1 đợt cấp» · 12: Đ Đ S lợi ích tử vong thuộc chương trình cai thuốc tích cực 10 tuần; «DUY NHẤT» nói quá nguồn · 16: Đ Đ S nguồn chỉ tầm soát viêm khớp/IBD khi khám hoặc hỏi bệnh gợi ý",
+    "ngay": "2026-11-20",
+    "de_xuat_boi": "Claude (đối chiếu toàn văn) — bác sĩ chọn «Theo khuyến nghị» 20/11/2026; mục 17 KHÔNG đổi vì Bảng 2/5 JBDS khớp mục"
    }
   },
   {
@@ -235,11 +235,11 @@
    "nhan_bac_si": {
     "dung_quan_the": true,
     "dung_chieu": true,
-    "du_dieu_kien": true,
-    "ghi_chu": null,
-    "loi_bac_si": "1: Đ Đ Đ · 2: Đ Đ Đ · 3: Đ Đ ? GLP-1 RA cho béo phì không ĐTĐ và tầm soát rung nhĩ cần đối chiếu toàn văn · 4: Đ Đ ? như mục 3 · 5: Đ Đ Đ · 6: Đ Đ Đ · 7: Đ Đ Đ · 8: Đ Đ Đ · 9: Đ Đ Đ · 10: Đ Đ S giai đoạn 2 dùng SGLT2i và ức chế RAA chỉ khi có bệnh thận mạn hoặc ĐTĐ có chỉ định · 11: Đ Đ Đ · 12: Đ Đ Đ · 13: Đ Đ Đ · 14: Đ Đ Đ · 15: Đ Đ Đ · 16: Đ Đ Đ · 17: Đ Đ S nguồn giảm insulin 35–50% chỉ cho típ 2 · 18: Đ Đ Đ · 19: Đ Đ Đ · 20: Đ Đ Đ",
-    "ngay": "2026-10-20",
-    "de_xuat_boi": "Claude — bác sĩ xác nhận 20/10/2026: «đồng ý nhãn bộ vàng»"
+    "du_dieu_kien": false,
+    "ghi_chu": "lợi ích tử vong thuộc chương trình cai thuốc tích cực 10 tuần; «DUY NHẤT» nói quá nguồn",
+    "loi_bac_si": "1: Đ Đ S Beers 2023 mở rộng khuyến cáo tránh sang MỌI sulfonylurea, mục còn ghi «tác dụng dài» theo bản 2019 · 11: Đ Đ S IMPACT: FEV1 50–80% cần ≥2 đợt vừa hoặc ≥1 đợt nặng, mục gộp «≥1 đợt cấp» · 12: Đ Đ S lợi ích tử vong thuộc chương trình cai thuốc tích cực 10 tuần; «DUY NHẤT» nói quá nguồn · 16: Đ Đ S nguồn chỉ tầm soát viêm khớp/IBD khi khám hoặc hỏi bệnh gợi ý",
+    "ngay": "2026-11-20",
+    "de_xuat_boi": "Claude (đối chiếu toàn văn) — bác sĩ chọn «Theo khuyến nghị» 20/11/2026; mục 17 KHÔNG đổi vì Bảng 2/5 JBDS khớp mục"
    }
   },
   {
@@ -315,11 +315,11 @@
    "nhan_bac_si": {
     "dung_quan_the": true,
     "dung_chieu": true,
-    "du_dieu_kien": true,
-    "ghi_chu": null,
-    "loi_bac_si": "1: Đ Đ Đ · 2: Đ Đ Đ · 3: Đ Đ ? GLP-1 RA cho béo phì không ĐTĐ và tầm soát rung nhĩ cần đối chiếu toàn văn · 4: Đ Đ ? như mục 3 · 5: Đ Đ Đ · 6: Đ Đ Đ · 7: Đ Đ Đ · 8: Đ Đ Đ · 9: Đ Đ Đ · 10: Đ Đ S giai đoạn 2 dùng SGLT2i và ức chế RAA chỉ khi có bệnh thận mạn hoặc ĐTĐ có chỉ định · 11: Đ Đ Đ · 12: Đ Đ Đ · 13: Đ Đ Đ · 14: Đ Đ Đ · 15: Đ Đ Đ · 16: Đ Đ Đ · 17: Đ Đ S nguồn giảm insulin 35–50% chỉ cho típ 2 · 18: Đ Đ Đ · 19: Đ Đ Đ · 20: Đ Đ Đ",
-    "ngay": "2026-10-20",
-    "de_xuat_boi": "Claude — bác sĩ xác nhận 20/10/2026: «đồng ý nhãn bộ vàng»"
+    "du_dieu_kien": false,
+    "ghi_chu": "nguồn chỉ tầm soát viêm khớp/IBD khi khám hoặc hỏi bệnh gợi ý",
+    "loi_bac_si": "1: Đ Đ S Beers 2023 mở rộng khuyến cáo tránh sang MỌI sulfonylurea, mục còn ghi «tác dụng dài» theo bản 2019 · 11: Đ Đ S IMPACT: FEV1 50–80% cần ≥2 đợt vừa hoặc ≥1 đợt nặng, mục gộp «≥1 đợt cấp» · 12: Đ Đ S lợi ích tử vong thuộc chương trình cai thuốc tích cực 10 tuần; «DUY NHẤT» nói quá nguồn · 16: Đ Đ S nguồn chỉ tầm soát viêm khớp/IBD khi khám hoặc hỏi bệnh gợi ý",
+    "ngay": "2026-11-20",
+    "de_xuat_boi": "Claude (đối chiếu toàn văn) — bác sĩ chọn «Theo khuyến nghị» 20/11/2026; mục 17 KHÔNG đổi vì Bảng 2/5 JBDS khớp mục"
    }
   },
   {

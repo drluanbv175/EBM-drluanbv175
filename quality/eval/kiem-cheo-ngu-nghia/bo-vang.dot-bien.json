@@ -1,0 +1,1807 @@
+{
+ "_mo_ta": "Đột biến có kiểm soát ĐÃ được bác sĩ duyệt — nhãn theo cấu trúc phép sửa (xem dot-bien.de-xuat.json). Tách riêng mục thật khi đo (nguon_muc: dot_bien).",
+ "muc": [
+  {
+   "dashboard": "WebDashboard_EBM_CapNhatTuan_NgoaiTru_20260609.html",
+   "id": "ITEM-04·D01",
+   "title": "AGS Beers 2023 — rà soát thuốc nên tránh ở người cao tuổi",
+   "population": "Người ≥50 tuổi (ngoại trú, đa thuốc)",
+   "action": "Rà soát thuốc theo Beers 2023: cảnh giác benzodiazepine, thuốc kháng cholinergic, NSAID, sulfonylurea tác dụng dài, PPI kéo dài; cân nhắc giảm liều/ngưng có kế hoạch.",
+   "pmid": "37139824",
+   "doi": "10.1111/jgs.18372",
+   "gradeLevel": "na",
+   "nguon_muc": "dot_bien",
+   "dot_bien": {
+    "ma": "D01",
+    "tu_muc": 1,
+    "kieu": "quan_the",
+    "mo_ta": "Nới tuổi xuống ≥50 — Beers chỉ dành cho người ≥65 tuổi"
+   },
+   "nhan_du_kien": {
+    "dung_quan_the": false,
+    "dung_chieu": true,
+    "du_dieu_kien": null
+   },
+   "nhan_bac_si": {
+    "dung_quan_the": false,
+    "dung_chieu": true,
+    "du_dieu_kien": null,
+    "ghi_chu": "Nới tuổi xuống ≥50 — Beers chỉ dành cho người ≥65 tuổi",
+    "loi_bac_si": "duyệt đột biến: tất cả 56 (bác sĩ chọn «Duyệt tất cả 56» 20/11/2026)",
+    "ngay": "2026-11-20",
+    "de_xuat_boi": "đột biến có kiểm soát (Claude soạn) — bác sĩ duyệt danh sách"
+   }
+  },
+  {
+   "dashboard": "WebDashboard_EBM_CapNhatTuan_NgoaiTru_20260609.html",
+   "id": "ITEM-04·D02",
+   "title": "AGS Beers 2023 — rà soát thuốc nên tránh ở người cao tuổi",
+   "population": "Trẻ em và thanh thiếu niên dùng nhiều thuốc",
+   "action": "Rà soát thuốc theo Beers 2023: cảnh giác benzodiazepine, thuốc kháng cholinergic, NSAID, sulfonylurea tác dụng dài, PPI kéo dài; cân nhắc giảm liều/ngưng có kế hoạch.",
+   "pmid": "37139824",
+   "doi": "10.1111/jgs.18372",
+   "gradeLevel": "na",
+   "nguon_muc": "dot_bien",
+   "dot_bien": {
+    "ma": "D02",
+    "tu_muc": 1,
+    "kieu": "quan_the",
+    "mo_ta": "Đổi sang trẻ em — Beers là tiêu chí cho người cao tuổi"
+   },
+   "nhan_du_kien": {
+    "dung_quan_the": false,
+    "dung_chieu": true,
+    "du_dieu_kien": null
+   },
+   "nhan_bac_si": {
+    "dung_quan_the": false,
+    "dung_chieu": true,
+    "du_dieu_kien": null,
+    "ghi_chu": "Đổi sang trẻ em — Beers là tiêu chí cho người cao tuổi",
+    "loi_bac_si": "duyệt đột biến: tất cả 56 (bác sĩ chọn «Duyệt tất cả 56» 20/11/2026)",
+    "ngay": "2026-11-20",
+    "de_xuat_boi": "đột biến có kiểm soát (Claude soạn) — bác sĩ duyệt danh sách"
+   }
+  },
+  {
+   "dashboard": "WebDashboard_EBM_CapNhatTuan_NgoaiTru_20260609.html",
+   "id": "ITEM-04·D03",
+   "title": "AGS Beers 2023 — không cần rà soát thuốc theo danh mục ở người cao tuổi",
+   "population": "Người ≥65 tuổi (ngoại trú, đa thuốc)",
+   "action": "Không rà soát thuốc theo Beers 2023; tiếp tục benzodiazepine, thuốc kháng cholinergic, NSAID, sulfonylurea tác dụng dài, PPI kéo dài như đơn đang dùng.",
+   "pmid": "37139824",
+   "doi": "10.1111/jgs.18372",
+   "gradeLevel": "na",
+   "nguon_muc": "dot_bien",
+   "dot_bien": {
+    "ma": "D03",
+    "tu_muc": 1,
+    "kieu": "chieu",
+    "mo_ta": "Đảo chiều: bảo tiếp tục các thuốc Beers khuyên tránh"
+   },
+   "nhan_du_kien": {
+    "dung_quan_the": true,
+    "dung_chieu": false,
+    "du_dieu_kien": null
+   },
+   "nhan_bac_si": {
+    "dung_quan_the": true,
+    "dung_chieu": false,
+    "du_dieu_kien": null,
+    "ghi_chu": "Đảo chiều: bảo tiếp tục các thuốc Beers khuyên tránh",
+    "loi_bac_si": "duyệt đột biến: tất cả 56 (bác sĩ chọn «Duyệt tất cả 56» 20/11/2026)",
+    "ngay": "2026-11-20",
+    "de_xuat_boi": "đột biến có kiểm soát (Claude soạn) — bác sĩ duyệt danh sách"
+   }
+  },
+  {
+   "dashboard": "WebDashboard_EBM_CapNhatTuan_NgoaiTru_20260609.html",
+   "id": "ITEM-04·D04",
+   "title": "AGS Beers 2023 — rà soát thuốc nên tránh ở người cao tuổi",
+   "population": "Người ≥65 tuổi (ngoại trú, đa thuốc)",
+   "action": "Ngưng ngay mọi benzodiazepine, thuốc kháng cholinergic, NSAID, sulfonylurea tác dụng dài và PPI ở người cao tuổi.",
+   "pmid": "37139824",
+   "doi": "10.1111/jgs.18372",
+   "gradeLevel": "na",
+   "nguon_muc": "dot_bien",
+   "dot_bien": {
+    "ma": "D04",
+    "tu_muc": 1,
+    "kieu": "dieu_kien",
+    "mo_ta": "Rụng «cân nhắc … có kế hoạch»: biến khuyến cáo «có thể không phù hợp» thành lệnh ngưng tất cả ngay"
+   },
+   "nhan_du_kien": {
+    "dung_quan_the": true,
+    "dung_chieu": true,
+    "du_dieu_kien": false
+   },
+   "nhan_bac_si": {
+    "dung_quan_the": true,
+    "dung_chieu": true,
+    "du_dieu_kien": false,
+    "ghi_chu": "Rụng «cân nhắc … có kế hoạch»: biến khuyến cáo «có thể không phù hợp» thành lệnh ngưng tất cả ngay",
+    "loi_bac_si": "duyệt đột biến: tất cả 56 (bác sĩ chọn «Duyệt tất cả 56» 20/11/2026)",
+    "ngay": "2026-11-20",
+    "de_xuat_boi": "đột biến có kiểm soát (Claude soạn) — bác sĩ duyệt danh sách"
+   }
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_BenhDMCanh_DuPhongDotQuy_20260609.html",
+   "id": "ITEM-01·D05",
+   "title": "KHÔNG tầm soát hẹp ĐM cảnh ở người KHÔNG triệu chứng",
+   "population": "Người lớn đã có cơn thiếu máu não thoáng qua (TIA) hoặc đột quỵ",
+   "action": "Không siêu âm ĐM cảnh thường quy để sàng lọc ở người không triệu chứng. Tập trung kiểm soát yếu tố nguy cơ tim mạch.",
+   "pmid": "33528542",
+   "doi": "10.1001/jama.2020.26988",
+   "gradeLevel": "mod",
+   "nguon_muc": "dot_bien",
+   "dot_bien": {
+    "ma": "D05",
+    "tu_muc": 2,
+    "kieu": "quan_the",
+    "mo_ta": "Đổi sang người ĐÃ có TIA/đột quỵ — nhóm cần khảo sát, ngoài phạm vi khuyến cáo không tầm soát"
+   },
+   "nhan_du_kien": {
+    "dung_quan_the": false,
+    "dung_chieu": true,
+    "du_dieu_kien": null
+   },
+   "nhan_bac_si": {
+    "dung_quan_the": false,
+    "dung_chieu": true,
+    "du_dieu_kien": null,
+    "ghi_chu": "Đổi sang người ĐÃ có TIA/đột quỵ — nhóm cần khảo sát, ngoài phạm vi khuyến cáo không tầm soát",
+    "loi_bac_si": "duyệt đột biến: tất cả 56 (bác sĩ chọn «Duyệt tất cả 56» 20/11/2026)",
+    "ngay": "2026-11-20",
+    "de_xuat_boi": "đột biến có kiểm soát (Claude soạn) — bác sĩ duyệt danh sách"
+   }
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_BenhDMCanh_DuPhongDotQuy_20260609.html",
+   "id": "ITEM-01·D06",
+   "title": "Tầm soát hẹp ĐM cảnh ở người KHÔNG triệu chứng",
+   "population": "Người lớn không triệu chứng, không tiền sử TIA/đột quỵ",
+   "action": "Siêu âm ĐM cảnh thường quy để sàng lọc ở người lớn không triệu chứng, nhất là người có yếu tố nguy cơ tim mạch.",
+   "pmid": "33528542",
+   "doi": "10.1001/jama.2020.26988",
+   "gradeLevel": "mod",
+   "nguon_muc": "dot_bien",
+   "dot_bien": {
+    "ma": "D06",
+    "tu_muc": 2,
+    "kieu": "chieu",
+    "mo_ta": "Đảo chiều: khuyên tầm soát thường quy (USPSTF khuyên KHÔNG)"
+   },
+   "nhan_du_kien": {
+    "dung_quan_the": true,
+    "dung_chieu": false,
+    "du_dieu_kien": null
+   },
+   "nhan_bac_si": {
+    "dung_quan_the": true,
+    "dung_chieu": false,
+    "du_dieu_kien": null,
+    "ghi_chu": "Đảo chiều: khuyên tầm soát thường quy (USPSTF khuyên KHÔNG)",
+    "loi_bac_si": "duyệt đột biến: tất cả 56 (bác sĩ chọn «Duyệt tất cả 56» 20/11/2026)",
+    "ngay": "2026-11-20",
+    "de_xuat_boi": "đột biến có kiểm soát (Claude soạn) — bác sĩ duyệt danh sách"
+   }
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_BenhDMCanh_DuPhongDotQuy_20260609.html",
+   "id": "ITEM-01·D07",
+   "title": "KHÔNG tầm soát hẹp ĐM cảnh ở người KHÔNG triệu chứng",
+   "population": "Trẻ em và thanh thiếu niên không triệu chứng",
+   "action": "Không siêu âm ĐM cảnh thường quy để sàng lọc ở người không triệu chứng. Tập trung kiểm soát yếu tố nguy cơ tim mạch.",
+   "pmid": "33528542",
+   "doi": "10.1001/jama.2020.26988",
+   "gradeLevel": "mod",
+   "nguon_muc": "dot_bien",
+   "dot_bien": {
+    "ma": "D07",
+    "tu_muc": 2,
+    "kieu": "quan_the",
+    "mo_ta": "Đổi sang trẻ em — khuyến cáo USPSTF chỉ cho người lớn"
+   },
+   "nhan_du_kien": {
+    "dung_quan_the": false,
+    "dung_chieu": true,
+    "du_dieu_kien": null
+   },
+   "nhan_bac_si": {
+    "dung_quan_the": false,
+    "dung_chieu": true,
+    "du_dieu_kien": null,
+    "ghi_chu": "Đổi sang trẻ em — khuyến cáo USPSTF chỉ cho người lớn",
+    "loi_bac_si": "duyệt đột biến: tất cả 56 (bác sĩ chọn «Duyệt tất cả 56» 20/11/2026)",
+    "ngay": "2026-11-20",
+    "de_xuat_boi": "đột biến có kiểm soát (Claude soạn) — bác sĩ duyệt danh sách"
+   }
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_BenhDMCanh_DuPhongDotQuy_20260609.html",
+   "id": "ITEM-01·D08",
+   "title": "KHÔNG tầm soát hẹp ĐM cảnh ở người KHÔNG triệu chứng",
+   "population": "Người lớn không triệu chứng, không tiền sử TIA/đột quỵ",
+   "action": "Không siêu âm ĐM cảnh. Tập trung kiểm soát yếu tố nguy cơ tim mạch.",
+   "pmid": "33528542",
+   "doi": "10.1001/jama.2020.26988",
+   "gradeLevel": "mod",
+   "nguon_muc": "dot_bien",
+   "dot_bien": {
+    "ma": "D08",
+    "tu_muc": 2,
+    "kieu": "dieu_kien",
+    "mo_ta": "Rụng «không triệu chứng / thường quy để sàng lọc»: lời «không siêu âm» lan sang cả người có triệu chứng"
+   },
+   "nhan_du_kien": {
+    "dung_quan_the": true,
+    "dung_chieu": true,
+    "du_dieu_kien": false
+   },
+   "nhan_bac_si": {
+    "dung_quan_the": true,
+    "dung_chieu": true,
+    "du_dieu_kien": false,
+    "ghi_chu": "Rụng «không triệu chứng / thường quy để sàng lọc»: lời «không siêu âm» lan sang cả người có triệu chứng",
+    "loi_bac_si": "duyệt đột biến: tất cả 56 (bác sĩ chọn «Duyệt tất cả 56» 20/11/2026)",
+    "ngay": "2026-11-20",
+    "de_xuat_boi": "đột biến có kiểm soát (Claude soạn) — bác sĩ duyệt danh sách"
+   }
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_BenhMachMauNao_HopNhat_20260614.html",
+   "id": "ITEM-01·D09",
+   "title": "Dự phòng TIÊN PHÁT đột quỵ — khung khuyến cáo cập nhật nhất",
+   "population": "Người lớn đã từng đột quỵ hoặc TIA (dự phòng thứ phát)",
+   "action": "Áp dụng khung dự phòng tiên phát: kiểm soát HA <130/80 cho hầu hết, statin theo nguy cơ ASCVD, vận động/ăn uống lành mạnh, bỏ thuốc lá, tầm soát rung nhĩ ở nhóm nguy cơ; cân nhắc GLP-1 RA ở ĐTĐ type 2/béo phì nguy cơ tim mạch cao.",
+   "pmid": "39429201",
+   "doi": "10.1161/STR.0000000000000475",
+   "gradeLevel": "high",
+   "nguon_muc": "dot_bien",
+   "dot_bien": {
+    "ma": "D09",
+    "tu_muc": 3,
+    "kieu": "quan_the",
+    "mo_ta": "Đổi sang dự phòng THỨ PHÁT — guideline chỉ cho người chưa từng đột quỵ"
+   },
+   "nhan_du_kien": {
+    "dung_quan_the": false,
+    "dung_chieu": true,
+    "du_dieu_kien": null
+   },
+   "nhan_bac_si": {
+    "dung_quan_the": false,
+    "dung_chieu": true,
+    "du_dieu_kien": null,
+    "ghi_chu": "Đổi sang dự phòng THỨ PHÁT — guideline chỉ cho người chưa từng đột quỵ",
+    "loi_bac_si": "duyệt đột biến: tất cả 56 (bác sĩ chọn «Duyệt tất cả 56» 20/11/2026)",
+    "ngay": "2026-11-20",
+    "de_xuat_boi": "đột biến có kiểm soát (Claude soạn) — bác sĩ duyệt danh sách"
+   }
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_BenhMachMauNao_HopNhat_20260614.html",
+   "id": "ITEM-01·D10",
+   "title": "Dự phòng TIÊN PHÁT đột quỵ — khung khuyến cáo cập nhật nhất",
+   "population": "Người lớn chưa từng đột quỵ",
+   "action": "Áp dụng khung dự phòng tiên phát: kiểm soát HA <130/80 cho mọi người, statin cho mọi người lớn, vận động/ăn uống lành mạnh, bỏ thuốc lá, tầm soát rung nhĩ cho mọi người lớn; dùng GLP-1 RA cho mọi người béo phì.",
+   "pmid": "39429201",
+   "doi": "10.1161/STR.0000000000000475",
+   "gradeLevel": "high",
+   "nguon_muc": "dot_bien",
+   "dot_bien": {
+    "ma": "D10",
+    "tu_muc": 3,
+    "kieu": "dieu_kien",
+    "mo_ta": "Rụng mọi điều kiện nguy cơ: statin, tầm soát rung nhĩ, GLP-1 RA cho tất cả"
+   },
+   "nhan_du_kien": {
+    "dung_quan_the": true,
+    "dung_chieu": true,
+    "du_dieu_kien": false
+   },
+   "nhan_bac_si": {
+    "dung_quan_the": true,
+    "dung_chieu": true,
+    "du_dieu_kien": false,
+    "ghi_chu": "Rụng mọi điều kiện nguy cơ: statin, tầm soát rung nhĩ, GLP-1 RA cho tất cả",
+    "loi_bac_si": "duyệt đột biến: tất cả 56 (bác sĩ chọn «Duyệt tất cả 56» 20/11/2026)",
+    "ngay": "2026-11-20",
+    "de_xuat_boi": "đột biến có kiểm soát (Claude soạn) — bác sĩ duyệt danh sách"
+   }
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_BenhMachMauNao_HopNhat_20260614.html",
+   "id": "ITEM-01·D11",
+   "title": "Dự phòng TIÊN PHÁT đột quỵ — chỉ cần lối sống, không dùng thuốc",
+   "population": "Người lớn chưa từng đột quỵ",
+   "action": "Không dùng statin hay hạ HA tích cực để dự phòng tiên phát đột quỵ; chỉ khuyến khích vận động, ăn uống lành mạnh và bỏ thuốc lá.",
+   "pmid": "39429201",
+   "doi": "10.1161/STR.0000000000000475",
+   "gradeLevel": "high",
+   "nguon_muc": "dot_bien",
+   "dot_bien": {
+    "ma": "D11",
+    "tu_muc": 3,
+    "kieu": "chieu",
+    "mo_ta": "Đảo chiều: chỉ lối sống, không dùng thuốc dự phòng"
+   },
+   "nhan_du_kien": {
+    "dung_quan_the": true,
+    "dung_chieu": false,
+    "du_dieu_kien": null
+   },
+   "nhan_bac_si": {
+    "dung_quan_the": true,
+    "dung_chieu": false,
+    "du_dieu_kien": null,
+    "ghi_chu": "Đảo chiều: chỉ lối sống, không dùng thuốc dự phòng",
+    "loi_bac_si": "duyệt đột biến: tất cả 56 (bác sĩ chọn «Duyệt tất cả 56» 20/11/2026)",
+    "ngay": "2026-11-20",
+    "de_xuat_boi": "đột biến có kiểm soát (Claude soạn) — bác sĩ duyệt danh sách"
+   }
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_BenhThanMan_BenhKem_DoiTuongDacBiet_20260813.html",
+   "id": "ITEM-01·D12",
+   "title": "KDIGO 2024 — phân loại nguyên nhân · mức lọc cầu thận · albumin niệu (hệ CGA) là NỀN cho mọi quyết định về bệnh kết hợp",
+   "population": "Người lớn khám sức khoẻ định kỳ, không có bệnh thận mạn",
+   "action": "Với MỌI người bệnh thận mạn, ghi đủ ba trục vào bệnh án chứ không chỉ một con số eGFR: (a) nguyên nhân (đái tháo đường, tăng huyết áp, cầu thận, thận đa nang, tắc nghẽn, không rõ); (b) giai đoạn G theo eGFR — G1 từ 90 trở lên, G2 60 đến 89, G3a 45 đến 59, G3b 30 đến 44, G4 15 đến 29, G5 dưới 15; (c) mức albumin niệu A theo tỷ số albumin/creatinine niệu — A1 dưới 30 mg/g, A2 từ 30 đến 300 mg/g, A3 trên 300 mg/g. Chính ô giao nhau giữa G và A quyết định tần suất theo dõi, ngưỡng chuyển thận học và mức độ quyết liệt của điều trị bệnh kết hợp. Đo albumin niệu bằng mẫu nước tiểu bất kỳ (ưu tiên mẫu đầu tiên buổi sáng), lặp lại để xác nhận vì albumin niệu dao động.",
+   "pmid": "38490803",
+   "doi": "10.1016/j.kint.2023.10.018",
+   "gradeLevel": "na",
+   "nguon_muc": "dot_bien",
+   "dot_bien": {
+    "ma": "D12",
+    "tu_muc": 5,
+    "kieu": "quan_the",
+    "mo_ta": "Đổi sang người KHÔNG có bệnh thận mạn — hệ CGA chỉ để phân loại bệnh thận mạn"
+   },
+   "nhan_du_kien": {
+    "dung_quan_the": false,
+    "dung_chieu": true,
+    "du_dieu_kien": null
+   },
+   "nhan_bac_si": {
+    "dung_quan_the": false,
+    "dung_chieu": true,
+    "du_dieu_kien": null,
+    "ghi_chu": "Đổi sang người KHÔNG có bệnh thận mạn — hệ CGA chỉ để phân loại bệnh thận mạn",
+    "loi_bac_si": "duyệt đột biến: tất cả 56 (bác sĩ chọn «Duyệt tất cả 56» 20/11/2026)",
+    "ngay": "2026-11-20",
+    "de_xuat_boi": "đột biến có kiểm soát (Claude soạn) — bác sĩ duyệt danh sách"
+   }
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_BenhThanMan_BenhKem_DoiTuongDacBiet_20260813.html",
+   "id": "ITEM-01·D13",
+   "title": "KDIGO 2024 — chỉ cần eGFR, không cần albumin niệu để phân loại bệnh thận mạn",
+   "population": "Người lớn và trẻ em có bệnh thận mạn ở mọi giai đoạn, mọi nguyên nhân",
+   "action": "Không đo albumin niệu thường quy; phân giai đoạn bệnh thận mạn chỉ bằng eGFR (G1 từ 90 trở lên tới G5 dưới 15).",
+   "pmid": "38490803",
+   "doi": "10.1016/j.kint.2023.10.018",
+   "gradeLevel": "na",
+   "nguon_muc": "dot_bien",
+   "dot_bien": {
+    "ma": "D13",
+    "tu_muc": 5,
+    "kieu": "chieu",
+    "mo_ta": "Đảo chiều: bỏ albumin niệu, chỉ dùng eGFR (KDIGO đòi đủ ba trục)"
+   },
+   "nhan_du_kien": {
+    "dung_quan_the": true,
+    "dung_chieu": false,
+    "du_dieu_kien": null
+   },
+   "nhan_bac_si": {
+    "dung_quan_the": true,
+    "dung_chieu": false,
+    "du_dieu_kien": null,
+    "ghi_chu": "Đảo chiều: bỏ albumin niệu, chỉ dùng eGFR (KDIGO đòi đủ ba trục)",
+    "loi_bac_si": "duyệt đột biến: tất cả 56 (bác sĩ chọn «Duyệt tất cả 56» 20/11/2026)",
+    "ngay": "2026-11-20",
+    "de_xuat_boi": "đột biến có kiểm soát (Claude soạn) — bác sĩ duyệt danh sách"
+   }
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_BenhThanMan_BenhKem_DoiTuongDacBiet_20260813.html",
+   "id": "ITEM-01·D14",
+   "title": "KDIGO 2024 — phân loại nguyên nhân · mức lọc cầu thận · albumin niệu (hệ CGA) là NỀN cho mọi quyết định về bệnh kết hợp",
+   "population": "Người lớn và trẻ em có bệnh thận mạn ở mọi giai đoạn, mọi nguyên nhân",
+   "action": "Với MỌI người bệnh thận mạn, ghi đủ ba trục vào bệnh án: (a) nguyên nhân; (b) giai đoạn G theo eGFR — G1 từ 90 trở lên, G2 60 đến 89, G3a 45 đến 59, G3b 30 đến 44, G4 15 đến 29, G5 dưới 15; (c) mức albumin niệu A theo tỷ số albumin/creatinine niệu — A1 dưới 30 mg/g, A2 từ 30 đến 300 mg/g, A3 trên 300 mg/g. Xếp mức albumin niệu ngay từ một mẫu nước tiểu bất kỳ, không cần đo lại.",
+   "pmid": "38490803",
+   "doi": "10.1016/j.kint.2023.10.018",
+   "gradeLevel": "na",
+   "nguon_muc": "dot_bien",
+   "dot_bien": {
+    "ma": "D14",
+    "tu_muc": 5,
+    "kieu": "dieu_kien",
+    "mo_ta": "Rụng «lặp lại để xác nhận»: kết luận albumin niệu từ một mẫu duy nhất"
+   },
+   "nhan_du_kien": {
+    "dung_quan_the": true,
+    "dung_chieu": true,
+    "du_dieu_kien": false
+   },
+   "nhan_bac_si": {
+    "dung_quan_the": true,
+    "dung_chieu": true,
+    "du_dieu_kien": false,
+    "ghi_chu": "Rụng «lặp lại để xác nhận»: kết luận albumin niệu từ một mẫu duy nhất",
+    "loi_bac_si": "duyệt đột biến: tất cả 56 (bác sĩ chọn «Duyệt tất cả 56» 20/11/2026)",
+    "ngay": "2026-11-20",
+    "de_xuat_boi": "đột biến có kiểm soát (Claude soạn) — bác sĩ duyệt danh sách"
+   }
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_BenhThanMan_CKD_20260607.html",
+   "id": "ITEM-01·D15",
+   "title": "Chẩn đoán & phân giai đoạn CKD (eGFR + albumin niệu)",
+   "population": "Người lớn nguy cơ/nghi CKD",
+   "action": "Chẩn đoán CKD ngay khi có một lần eGFR <60 hoặc UACR ≥30 mg/g. Phân tầng theo eGFR (G1 ≥90 → G5 <15) và albumin niệu UACR (A1 <30, A2 30–300, A3 >300 mg/g). Tầm soát ở ĐTĐ, THA, bệnh tim mạch. Dùng eGFR creatinine (± cystatin C khi cần xác nhận).",
+   "pmid": "38490803",
+   "doi": "10.1016/j.kint.2023.10.018",
+   "gradeLevel": "high",
+   "nguon_muc": "dot_bien",
+   "dot_bien": {
+    "ma": "D15",
+    "tu_muc": 6,
+    "kieu": "dieu_kien",
+    "mo_ta": "Rụng «kéo dài ≥3 tháng»: chẩn đoán CKD từ một lần xét nghiệm"
+   },
+   "nhan_du_kien": {
+    "dung_quan_the": true,
+    "dung_chieu": true,
+    "du_dieu_kien": false
+   },
+   "nhan_bac_si": {
+    "dung_quan_the": true,
+    "dung_chieu": true,
+    "du_dieu_kien": false,
+    "ghi_chu": "Rụng «kéo dài ≥3 tháng»: chẩn đoán CKD từ một lần xét nghiệm",
+    "loi_bac_si": "duyệt đột biến: tất cả 56 (bác sĩ chọn «Duyệt tất cả 56» 20/11/2026)",
+    "ngay": "2026-11-20",
+    "de_xuat_boi": "đột biến có kiểm soát (Claude soạn) — bác sĩ duyệt danh sách"
+   }
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_BenhThanMan_CKD_20260607.html",
+   "id": "ITEM-01·D16",
+   "title": "Chẩn đoán & phân giai đoạn CKD (eGFR + albumin niệu)",
+   "population": "Trẻ sơ sinh và trẻ dưới 2 tuổi nghi bệnh thận",
+   "action": "Chẩn đoán CKD khi bất thường cấu trúc/chức năng thận kéo dài ≥3 tháng. Phân tầng theo eGFR (G1 ≥90 → G5 <15) và albumin niệu UACR (A1 <30, A2 30–300, A3 >300 mg/g). Tầm soát ở ĐTĐ, THA, bệnh tim mạch. Dùng eGFR creatinine (± cystatin C khi cần xác nhận).",
+   "pmid": "38490803",
+   "doi": "10.1016/j.kint.2023.10.018",
+   "gradeLevel": "high",
+   "nguon_muc": "dot_bien",
+   "dot_bien": {
+    "ma": "D16",
+    "tu_muc": 6,
+    "kieu": "quan_the",
+    "mo_ta": "Đổi sang trẻ sơ sinh/trẻ nhỏ — ngưỡng G1–G5 không áp dụng cho trẻ dưới 2 tuổi"
+   },
+   "nhan_du_kien": {
+    "dung_quan_the": false,
+    "dung_chieu": true,
+    "du_dieu_kien": null
+   },
+   "nhan_bac_si": {
+    "dung_quan_the": false,
+    "dung_chieu": true,
+    "du_dieu_kien": null,
+    "ghi_chu": "Đổi sang trẻ sơ sinh/trẻ nhỏ — ngưỡng G1–G5 không áp dụng cho trẻ dưới 2 tuổi",
+    "loi_bac_si": "duyệt đột biến: tất cả 56 (bác sĩ chọn «Duyệt tất cả 56» 20/11/2026)",
+    "ngay": "2026-11-20",
+    "de_xuat_boi": "đột biến có kiểm soát (Claude soạn) — bác sĩ duyệt danh sách"
+   }
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_BenhThanMan_CKD_20260607.html",
+   "id": "ITEM-01·D17",
+   "title": "Không tầm soát CKD khi chưa có triệu chứng",
+   "population": "Người lớn nguy cơ/nghi CKD",
+   "action": "Không tầm soát CKD ở người ĐTĐ, THA, bệnh tim mạch khi chưa có triệu chứng; chỉ xét nghiệm eGFR khi có phù hoặc tiểu ít.",
+   "pmid": "38490803",
+   "doi": "10.1016/j.kint.2023.10.018",
+   "gradeLevel": "high",
+   "nguon_muc": "dot_bien",
+   "dot_bien": {
+    "ma": "D17",
+    "tu_muc": 6,
+    "kieu": "chieu",
+    "mo_ta": "Đảo chiều: không tầm soát CKD ở nhóm nguy cơ"
+   },
+   "nhan_du_kien": {
+    "dung_quan_the": true,
+    "dung_chieu": false,
+    "du_dieu_kien": null
+   },
+   "nhan_bac_si": {
+    "dung_quan_the": true,
+    "dung_chieu": false,
+    "du_dieu_kien": null,
+    "ghi_chu": "Đảo chiều: không tầm soát CKD ở nhóm nguy cơ",
+    "loi_bac_si": "duyệt đột biến: tất cả 56 (bác sĩ chọn «Duyệt tất cả 56» 20/11/2026)",
+    "ngay": "2026-11-20",
+    "de_xuat_boi": "đột biến có kiểm soát (Claude soạn) — bác sĩ duyệt danh sách"
+   }
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_BenhThanMan_CKD_20260607.html",
+   "id": "ITEM-01·D18",
+   "title": "Chẩn đoán & phân giai đoạn CKD (eGFR + albumin niệu)",
+   "population": "Người lớn nguy cơ/nghi CKD",
+   "action": "Chẩn đoán CKD khi bất thường cấu trúc/chức năng thận kéo dài ≥3 tháng. Phân tầng theo eGFR (G1 ≥90 → G5 <15) và albumin niệu UACR (A1 <30, A2 30–300, A3 >300 mg/g). Tầm soát ở ĐTĐ, THA, bệnh tim mạch. Luôn đo cả eGFR creatinine và cystatin C cho mọi người.",
+   "pmid": "38490803",
+   "doi": "10.1016/j.kint.2023.10.018",
+   "gradeLevel": "high",
+   "nguon_muc": "dot_bien",
+   "dot_bien": {
+    "ma": "D18",
+    "tu_muc": 6,
+    "kieu": "dieu_kien",
+    "mo_ta": "Rụng «khi cần xác nhận»: cystatin C cho mọi người"
+   },
+   "nhan_du_kien": {
+    "dung_quan_the": true,
+    "dung_chieu": true,
+    "du_dieu_kien": false
+   },
+   "nhan_bac_si": {
+    "dung_quan_the": true,
+    "dung_chieu": true,
+    "du_dieu_kien": false,
+    "ghi_chu": "Rụng «khi cần xác nhận»: cystatin C cho mọi người",
+    "loi_bac_si": "duyệt đột biến: tất cả 56 (bác sĩ chọn «Duyệt tất cả 56» 20/11/2026)",
+    "ngay": "2026-11-20",
+    "de_xuat_boi": "đột biến có kiểm soát (Claude soạn) — bác sĩ duyệt danh sách"
+   }
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_BienChungThanKinh_DTD_20260607.html",
+   "id": "ITEM-01·D19",
+   "title": "Tầm soát & chẩn đoán bệnh thần kinh ngoại biên đối xứng xa (DSPN)",
+   "population": "Mọi người bệnh ĐTĐ type 1 & 2",
+   "action": "Tầm soát từ lúc chẩn đoán ở mọi người ĐTĐ, cả type 1 lẫn type 2, sau đó hằng năm. Dùng monofilament 10 g (đánh giá nguy cơ loét) kết hợp ≥1 test sợi nhỏ (đau kim/nhiệt) và sợi lớn (rung 128 Hz/phản xạ gân gót). Chẩn đoán chủ yếu lâm sàng; đo dẫn truyền thần kinh chỉ khi biểu hiện không điển hình.",
+   "pmid": "41358886",
+   "doi": "10.2337/dc26-S012",
+   "gradeLevel": "high",
+   "nguon_muc": "dot_bien",
+   "dot_bien": {
+    "ma": "D19",
+    "tu_muc": 7,
+    "kieu": "dieu_kien",
+    "mo_ta": "Rụng mốc «5 năm sau chẩn đoán» của típ 1"
+   },
+   "nhan_du_kien": {
+    "dung_quan_the": true,
+    "dung_chieu": true,
+    "du_dieu_kien": false
+   },
+   "nhan_bac_si": {
+    "dung_quan_the": true,
+    "dung_chieu": true,
+    "du_dieu_kien": false,
+    "ghi_chu": "Rụng mốc «5 năm sau chẩn đoán» của típ 1",
+    "loi_bac_si": "duyệt đột biến: tất cả 56 (bác sĩ chọn «Duyệt tất cả 56» 20/11/2026)",
+    "ngay": "2026-11-20",
+    "de_xuat_boi": "đột biến có kiểm soát (Claude soạn) — bác sĩ duyệt danh sách"
+   }
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_BienChungThanKinh_DTD_20260607.html",
+   "id": "ITEM-01·D20",
+   "title": "Tầm soát & chẩn đoán bệnh thần kinh ngoại biên đối xứng xa (DSPN)",
+   "population": "Người tiền đái tháo đường, chưa chẩn đoán ĐTĐ",
+   "action": "Tầm soát từ lúc chẩn đoán (type 2) / 5 năm sau chẩn đoán (type 1), sau đó hằng năm. Dùng monofilament 10 g (đánh giá nguy cơ loét) kết hợp ≥1 test sợi nhỏ (đau kim/nhiệt) và sợi lớn (rung 128 Hz/phản xạ gân gót). Chẩn đoán chủ yếu lâm sàng; đo dẫn truyền thần kinh chỉ khi biểu hiện không điển hình.",
+   "pmid": "41358886",
+   "doi": "10.2337/dc26-S012",
+   "gradeLevel": "high",
+   "nguon_muc": "dot_bien",
+   "dot_bien": {
+    "ma": "D20",
+    "tu_muc": 7,
+    "kieu": "quan_the",
+    "mo_ta": "Đổi sang tiền đái tháo đường — khuyến cáo tầm soát DSPN là cho người ĐTĐ"
+   },
+   "nhan_du_kien": {
+    "dung_quan_the": false,
+    "dung_chieu": true,
+    "du_dieu_kien": null
+   },
+   "nhan_bac_si": {
+    "dung_quan_the": false,
+    "dung_chieu": true,
+    "du_dieu_kien": null,
+    "ghi_chu": "Đổi sang tiền đái tháo đường — khuyến cáo tầm soát DSPN là cho người ĐTĐ",
+    "loi_bac_si": "duyệt đột biến: tất cả 56 (bác sĩ chọn «Duyệt tất cả 56» 20/11/2026)",
+    "ngay": "2026-11-20",
+    "de_xuat_boi": "đột biến có kiểm soát (Claude soạn) — bác sĩ duyệt danh sách"
+   }
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_BienChungThanKinh_DTD_20260607.html",
+   "id": "ITEM-01·D21",
+   "title": "Không cần tầm soát định kỳ bệnh thần kinh ngoại biên ở người ĐTĐ",
+   "population": "Mọi người bệnh ĐTĐ type 1 & 2",
+   "action": "Không cần tầm soát định kỳ bằng monofilament; chỉ khám thần kinh khi người bệnh than tê bì hoặc đau.",
+   "pmid": "41358886",
+   "doi": "10.2337/dc26-S012",
+   "gradeLevel": "high",
+   "nguon_muc": "dot_bien",
+   "dot_bien": {
+    "ma": "D21",
+    "tu_muc": 7,
+    "kieu": "chieu",
+    "mo_ta": "Đảo chiều: không tầm soát định kỳ"
+   },
+   "nhan_du_kien": {
+    "dung_quan_the": true,
+    "dung_chieu": false,
+    "du_dieu_kien": null
+   },
+   "nhan_bac_si": {
+    "dung_quan_the": true,
+    "dung_chieu": false,
+    "du_dieu_kien": null,
+    "ghi_chu": "Đảo chiều: không tầm soát định kỳ",
+    "loi_bac_si": "duyệt đột biến: tất cả 56 (bác sĩ chọn «Duyệt tất cả 56» 20/11/2026)",
+    "ngay": "2026-11-20",
+    "de_xuat_boi": "đột biến có kiểm soát (Claude soạn) — bác sĩ duyệt danh sách"
+   }
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_BienChungThanKinh_DTD_20260607.html",
+   "id": "ITEM-01·D22",
+   "title": "Tầm soát & chẩn đoán bệnh thần kinh ngoại biên đối xứng xa (DSPN)",
+   "population": "Mọi người bệnh ĐTĐ type 1 & 2",
+   "action": "Tầm soát từ lúc chẩn đoán (type 2) / 5 năm sau chẩn đoán (type 1), sau đó hằng năm. Dùng monofilament 10 g (đánh giá nguy cơ loét) kết hợp ≥1 test sợi nhỏ (đau kim/nhiệt) và sợi lớn (rung 128 Hz/phản xạ gân gót). Đo dẫn truyền thần kinh cho mọi người bệnh để xác định chẩn đoán.",
+   "pmid": "41358886",
+   "doi": "10.2337/dc26-S012",
+   "gradeLevel": "high",
+   "nguon_muc": "dot_bien",
+   "dot_bien": {
+    "ma": "D22",
+    "tu_muc": 7,
+    "kieu": "dieu_kien",
+    "mo_ta": "Rụng «chỉ khi biểu hiện không điển hình»: đo dẫn truyền thần kinh cho mọi người"
+   },
+   "nhan_du_kien": {
+    "dung_quan_the": true,
+    "dung_chieu": true,
+    "du_dieu_kien": false
+   },
+   "nhan_bac_si": {
+    "dung_quan_the": true,
+    "dung_chieu": true,
+    "du_dieu_kien": false,
+    "ghi_chu": "Rụng «chỉ khi biểu hiện không điển hình»: đo dẫn truyền thần kinh cho mọi người",
+    "loi_bac_si": "duyệt đột biến: tất cả 56 (bác sĩ chọn «Duyệt tất cả 56» 20/11/2026)",
+    "ngay": "2026-11-20",
+    "de_xuat_boi": "đột biến có kiểm soát (Claude soạn) — bác sĩ duyệt danh sách"
+   }
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_CAP_ATS2025_20260628.html",
+   "id": "ITEM-01·D23",
+   "title": "ATS 2025 CAP: kháng sinh ≥3 ngày (tối thiểu) khi đạt ổn định lâm sàng",
+   "population": "Người lớn CAP ngoại trú và nhập viện không nặng",
+   "action": "ATS 2025 khuyến cáo: CAP ngoại trú không nặng và nhập viện không nặng — dừng kháng sinh sau 3 ngày. Không cần 5–7 ngày thường quy. CAP nặng: ≥5 ngày.",
+   "pmid": "42127879",
+   "doi": "10.1016/j.ajem.2026.05.020",
+   "gradeLevel": "mod",
+   "nguon_muc": "dot_bien",
+   "dot_bien": {
+    "ma": "D23",
+    "tu_muc": 9,
+    "kieu": "dieu_kien",
+    "mo_ta": "Rụng «khi đạt ổn định lâm sàng»: dừng ở ngày 3 bất kể đáp ứng"
+   },
+   "nhan_du_kien": {
+    "dung_quan_the": true,
+    "dung_chieu": true,
+    "du_dieu_kien": false
+   },
+   "nhan_bac_si": {
+    "dung_quan_the": true,
+    "dung_chieu": true,
+    "du_dieu_kien": false,
+    "ghi_chu": "Rụng «khi đạt ổn định lâm sàng»: dừng ở ngày 3 bất kể đáp ứng",
+    "loi_bac_si": "duyệt đột biến: tất cả 56 (bác sĩ chọn «Duyệt tất cả 56» 20/11/2026)",
+    "ngay": "2026-11-20",
+    "de_xuat_boi": "đột biến có kiểm soát (Claude soạn) — bác sĩ duyệt danh sách"
+   }
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_CAP_ATS2025_20260628.html",
+   "id": "ITEM-01·D24",
+   "title": "ATS 2025 CAP: kháng sinh ≥3 ngày (tối thiểu) khi đạt ổn định lâm sàng",
+   "population": "Người lớn CAP nặng phải nhập hồi sức",
+   "action": "ATS 2025 khuyến cáo: CAP ngoại trú không nặng và nhập viện không nặng — dừng kháng sinh sau ≥3 ngày khi đạt ổn định lâm sàng (không còn sốt, SpO2 ổn, không cần IV). Không cần 5–7 ngày thường quy. CAP nặng: ≥5 ngày.",
+   "pmid": "42127879",
+   "doi": "10.1016/j.ajem.2026.05.020",
+   "gradeLevel": "mod",
+   "nguon_muc": "dot_bien",
+   "dot_bien": {
+    "ma": "D24",
+    "tu_muc": 9,
+    "kieu": "quan_the",
+    "mo_ta": "Đổi sang CAP NẶNG phải hồi sức — nhóm này cần ≥5 ngày"
+   },
+   "nhan_du_kien": {
+    "dung_quan_the": false,
+    "dung_chieu": true,
+    "du_dieu_kien": null
+   },
+   "nhan_bac_si": {
+    "dung_quan_the": false,
+    "dung_chieu": true,
+    "du_dieu_kien": null,
+    "ghi_chu": "Đổi sang CAP NẶNG phải hồi sức — nhóm này cần ≥5 ngày",
+    "loi_bac_si": "duyệt đột biến: tất cả 56 (bác sĩ chọn «Duyệt tất cả 56» 20/11/2026)",
+    "ngay": "2026-11-20",
+    "de_xuat_boi": "đột biến có kiểm soát (Claude soạn) — bác sĩ duyệt danh sách"
+   }
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_CAP_ATS2025_20260628.html",
+   "id": "ITEM-01·D25",
+   "title": "ATS 2025 CAP: kháng sinh ≥3 ngày (tối thiểu) khi đạt ổn định lâm sàng",
+   "population": "Trẻ em viêm phổi cộng đồng điều trị ngoại trú",
+   "action": "ATS 2025 khuyến cáo: CAP ngoại trú không nặng và nhập viện không nặng — dừng kháng sinh sau ≥3 ngày khi đạt ổn định lâm sàng (không còn sốt, SpO2 ổn, không cần IV). Không cần 5–7 ngày thường quy. CAP nặng: ≥5 ngày.",
+   "pmid": "42127879",
+   "doi": "10.1016/j.ajem.2026.05.020",
+   "gradeLevel": "mod",
+   "nguon_muc": "dot_bien",
+   "dot_bien": {
+    "ma": "D25",
+    "tu_muc": 9,
+    "kieu": "quan_the",
+    "mo_ta": "Đổi sang trẻ em — guideline ATS cho người lớn"
+   },
+   "nhan_du_kien": {
+    "dung_quan_the": false,
+    "dung_chieu": true,
+    "du_dieu_kien": null
+   },
+   "nhan_bac_si": {
+    "dung_quan_the": false,
+    "dung_chieu": true,
+    "du_dieu_kien": null,
+    "ghi_chu": "Đổi sang trẻ em — guideline ATS cho người lớn",
+    "loi_bac_si": "duyệt đột biến: tất cả 56 (bác sĩ chọn «Duyệt tất cả 56» 20/11/2026)",
+    "ngay": "2026-11-20",
+    "de_xuat_boi": "đột biến có kiểm soát (Claude soạn) — bác sĩ duyệt danh sách"
+   }
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_CAP_ATS2025_20260628.html",
+   "id": "ITEM-01·D26",
+   "title": "ATS 2025 CAP: không rút ngắn kháng sinh dù đã ổn định lâm sàng",
+   "population": "Người lớn CAP ngoại trú và nhập viện không nặng",
+   "action": "Không dừng kháng sinh sớm: duy trì đủ 7–10 ngày cho mọi CAP ngoại trú và nhập viện không nặng, kể cả khi đã ổn định lâm sàng.",
+   "pmid": "42127879",
+   "doi": "10.1016/j.ajem.2026.05.020",
+   "gradeLevel": "mod",
+   "nguon_muc": "dot_bien",
+   "dot_bien": {
+    "ma": "D26",
+    "tu_muc": 9,
+    "kieu": "chieu",
+    "mo_ta": "Đảo chiều: không rút ngắn, giữ 7–10 ngày"
+   },
+   "nhan_du_kien": {
+    "dung_quan_the": true,
+    "dung_chieu": false,
+    "du_dieu_kien": null
+   },
+   "nhan_bac_si": {
+    "dung_quan_the": true,
+    "dung_chieu": false,
+    "du_dieu_kien": null,
+    "ghi_chu": "Đảo chiều: không rút ngắn, giữ 7–10 ngày",
+    "loi_bac_si": "duyệt đột biến: tất cả 56 (bác sĩ chọn «Duyệt tất cả 56» 20/11/2026)",
+    "ngay": "2026-11-20",
+    "de_xuat_boi": "đột biến có kiểm soát (Claude soạn) — bác sĩ duyệt danh sách"
+   }
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_CAP_ATS2025_20260628.html",
+   "id": "ITEM-01·D27",
+   "title": "ATS 2025 CAP: kháng sinh ≥3 ngày (tối thiểu) khi đạt ổn định lâm sàng",
+   "population": "Người lớn CAP ngoại trú và nhập viện không nặng",
+   "action": "ATS 2025 khuyến cáo: CAP ngoại trú không nặng và nhập viện không nặng — dừng kháng sinh sau ≥3 ngày khi hết sốt. Không cần 5–7 ngày thường quy. CAP nặng: ≥5 ngày.",
+   "pmid": "42127879",
+   "doi": "10.1016/j.ajem.2026.05.020",
+   "gradeLevel": "mod",
+   "nguon_muc": "dot_bien",
+   "dot_bien": {
+    "ma": "D27",
+    "tu_muc": 9,
+    "kieu": "dieu_kien",
+    "mo_ta": "Rụng một phần tiêu chí ổn định: chỉ cần hết sốt"
+   },
+   "nhan_du_kien": {
+    "dung_quan_the": true,
+    "dung_chieu": true,
+    "du_dieu_kien": false
+   },
+   "nhan_bac_si": {
+    "dung_quan_the": true,
+    "dung_chieu": true,
+    "du_dieu_kien": false,
+    "ghi_chu": "Rụng một phần tiêu chí ổn định: chỉ cần hết sốt",
+    "loi_bac_si": "duyệt đột biến: tất cả 56 (bác sĩ chọn «Duyệt tất cả 56» 20/11/2026)",
+    "ngay": "2026-11-20",
+    "de_xuat_boi": "đột biến có kiểm soát (Claude soạn) — bác sĩ duyệt danh sách"
+   }
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_CAP_ATS2025_20260628.html",
+   "id": "ITEM-01·D28",
+   "title": "ATS 2025 CAP: không cần kháng sinh cho CAP ngoại trú không nặng",
+   "population": "Người lớn CAP ngoại trú và nhập viện không nặng",
+   "action": "Không dùng kháng sinh cho CAP ngoại trú không nặng; theo dõi triệu chứng và tái khám sau 3 ngày.",
+   "pmid": "42127879",
+   "doi": "10.1016/j.ajem.2026.05.020",
+   "gradeLevel": "mod",
+   "nguon_muc": "dot_bien",
+   "dot_bien": {
+    "ma": "D28",
+    "tu_muc": 9,
+    "kieu": "chieu",
+    "mo_ta": "Đảo chiều: không dùng kháng sinh cho CAP ngoại trú không nặng"
+   },
+   "nhan_du_kien": {
+    "dung_quan_the": true,
+    "dung_chieu": false,
+    "du_dieu_kien": null
+   },
+   "nhan_bac_si": {
+    "dung_quan_the": true,
+    "dung_chieu": false,
+    "du_dieu_kien": null,
+    "ghi_chu": "Đảo chiều: không dùng kháng sinh cho CAP ngoại trú không nặng",
+    "loi_bac_si": "duyệt đột biến: tất cả 56 (bác sĩ chọn «Duyệt tất cả 56» 20/11/2026)",
+    "ngay": "2026-11-20",
+    "de_xuat_boi": "đột biến có kiểm soát (Claude soạn) — bác sĩ duyệt danh sách"
+   }
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_CKM_TimThanChuyenHoa_20260628.html",
+   "id": "ITEM-01·D29",
+   "title": "Phân giai đoạn CKM (AHA 2023) — không cần dùng trong thực hành",
+   "population": "Mọi người lớn có ≥ 1 yếu tố nguy cơ chuyển hóa, thận hoặc tim mạch",
+   "action": "Không phân giai đoạn CKM; quản lý riêng rẽ từng bệnh tim, thận, chuyển hoá như trước.",
+   "pmid": "37807924",
+   "doi": "10.1161/CIR.0000000000001184",
+   "gradeLevel": "na",
+   "nguon_muc": "dot_bien",
+   "dot_bien": {
+    "ma": "D29",
+    "tu_muc": 10,
+    "kieu": "chieu",
+    "mo_ta": "Đảo chiều: không dùng phân giai đoạn CKM"
+   },
+   "nhan_du_kien": {
+    "dung_quan_the": true,
+    "dung_chieu": false,
+    "du_dieu_kien": null
+   },
+   "nhan_bac_si": {
+    "dung_quan_the": true,
+    "dung_chieu": false,
+    "du_dieu_kien": null,
+    "ghi_chu": "Đảo chiều: không dùng phân giai đoạn CKM",
+    "loi_bac_si": "duyệt đột biến: tất cả 56 (bác sĩ chọn «Duyệt tất cả 56» 20/11/2026)",
+    "ngay": "2026-11-20",
+    "de_xuat_boi": "đột biến có kiểm soát (Claude soạn) — bác sĩ duyệt danh sách"
+   }
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_COPD_20260610.html",
+   "id": "ITEM-05·D30",
+   "title": "Bộ ba ICS/LABA/LAMA một bình hít giảm đợt cấp và nhập viện (IMPACT)",
+   "population": "COPD ít triệu chứng, không có đợt cấp năm qua (nhóm A) (n=10.355)",
+   "action": "Leo thang lên bộ ba cho nhóm E còn đợt cấp dù giãn phế quản kép; ưu tiên thiết bị một-bình.",
+   "pmid": "29668352",
+   "doi": "10.1056/NEJMoa1713901",
+   "gradeLevel": "high",
+   "nguon_muc": "dot_bien",
+   "dot_bien": {
+    "ma": "D30",
+    "tu_muc": 11,
+    "kieu": "quan_the",
+    "mo_ta": "Đổi sang COPD nhóm A không đợt cấp — IMPACT tuyển người có đợt cấp"
+   },
+   "nhan_du_kien": {
+    "dung_quan_the": false,
+    "dung_chieu": true,
+    "du_dieu_kien": null
+   },
+   "nhan_bac_si": {
+    "dung_quan_the": false,
+    "dung_chieu": true,
+    "du_dieu_kien": null,
+    "ghi_chu": "Đổi sang COPD nhóm A không đợt cấp — IMPACT tuyển người có đợt cấp",
+    "loi_bac_si": "duyệt đột biến: tất cả 56 (bác sĩ chọn «Duyệt tất cả 56» 20/11/2026)",
+    "ngay": "2026-11-20",
+    "de_xuat_boi": "đột biến có kiểm soát (Claude soạn) — bác sĩ duyệt danh sách"
+   }
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_COPD_20260610.html",
+   "id": "ITEM-05·D31",
+   "title": "Bộ ba ICS/LABA/LAMA một bình hít giảm đợt cấp và nhập viện (IMPACT)",
+   "population": "Hen phế quản người lớn có ≥1 đợt cấp năm qua (n=10.355)",
+   "action": "Leo thang lên bộ ba cho nhóm E còn đợt cấp dù giãn phế quản kép; ưu tiên thiết bị một-bình.",
+   "pmid": "29668352",
+   "doi": "10.1056/NEJMoa1713901",
+   "gradeLevel": "high",
+   "nguon_muc": "dot_bien",
+   "dot_bien": {
+    "ma": "D31",
+    "tu_muc": 11,
+    "kieu": "quan_the",
+    "mo_ta": "Đổi sang hen phế quản — IMPACT là thử nghiệm ở COPD"
+   },
+   "nhan_du_kien": {
+    "dung_quan_the": false,
+    "dung_chieu": true,
+    "du_dieu_kien": null
+   },
+   "nhan_bac_si": {
+    "dung_quan_the": false,
+    "dung_chieu": true,
+    "du_dieu_kien": null,
+    "ghi_chu": "Đổi sang hen phế quản — IMPACT là thử nghiệm ở COPD",
+    "loi_bac_si": "duyệt đột biến: tất cả 56 (bác sĩ chọn «Duyệt tất cả 56» 20/11/2026)",
+    "ngay": "2026-11-20",
+    "de_xuat_boi": "đột biến có kiểm soát (Claude soạn) — bác sĩ duyệt danh sách"
+   }
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_COPD_20260610.html",
+   "id": "ITEM-05·D32",
+   "title": "Bộ ba ICS/LABA/LAMA một bình hít giảm đợt cấp và nhập viện (IMPACT)",
+   "population": "COPD có triệu chứng + ≥1 đợt cấp năm qua (n=10.355)",
+   "action": "Dùng bộ ba ICS/LABA/LAMA ngay từ đầu cho mọi bệnh nhân COPD; ưu tiên thiết bị một-bình.",
+   "pmid": "29668352",
+   "doi": "10.1056/NEJMoa1713901",
+   "gradeLevel": "high",
+   "nguon_muc": "dot_bien",
+   "dot_bien": {
+    "ma": "D32",
+    "tu_muc": 11,
+    "kieu": "dieu_kien",
+    "mo_ta": "Rụng điều kiện leo thang: bộ ba ngay từ đầu cho mọi COPD"
+   },
+   "nhan_du_kien": {
+    "dung_quan_the": true,
+    "dung_chieu": true,
+    "du_dieu_kien": false
+   },
+   "nhan_bac_si": {
+    "dung_quan_the": true,
+    "dung_chieu": true,
+    "du_dieu_kien": false,
+    "ghi_chu": "Rụng điều kiện leo thang: bộ ba ngay từ đầu cho mọi COPD",
+    "loi_bac_si": "duyệt đột biến: tất cả 56 (bác sĩ chọn «Duyệt tất cả 56» 20/11/2026)",
+    "ngay": "2026-11-20",
+    "de_xuat_boi": "đột biến có kiểm soát (Claude soạn) — bác sĩ duyệt danh sách"
+   }
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_COPD_20260610.html",
+   "id": "ITEM-05·D33",
+   "title": "Không leo thang lên bộ ba ICS/LABA/LAMA ở COPD còn đợt cấp",
+   "population": "COPD có triệu chứng + ≥1 đợt cấp năm qua (n=10.355)",
+   "action": "Không leo thang lên bộ ba ICS/LABA/LAMA; giữ giãn phế quản kép vì bộ ba không giảm đợt cấp.",
+   "pmid": "29668352",
+   "doi": "10.1056/NEJMoa1713901",
+   "gradeLevel": "high",
+   "nguon_muc": "dot_bien",
+   "dot_bien": {
+    "ma": "D33",
+    "tu_muc": 11,
+    "kieu": "chieu",
+    "mo_ta": "Đảo chiều: không leo thang lên bộ ba"
+   },
+   "nhan_du_kien": {
+    "dung_quan_the": true,
+    "dung_chieu": false,
+    "du_dieu_kien": null
+   },
+   "nhan_bac_si": {
+    "dung_quan_the": true,
+    "dung_chieu": false,
+    "du_dieu_kien": null,
+    "ghi_chu": "Đảo chiều: không leo thang lên bộ ba",
+    "loi_bac_si": "duyệt đột biến: tất cả 56 (bác sĩ chọn «Duyệt tất cả 56» 20/11/2026)",
+    "ngay": "2026-11-20",
+    "de_xuat_boi": "đột biến có kiểm soát (Claude soạn) — bác sĩ duyệt danh sách"
+   }
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_COPD_20260610.html",
+   "id": "ITEM-05·D34",
+   "title": "Bộ ba ICS/LABA/LAMA một bình hít giảm đợt cấp và nhập viện (IMPACT)",
+   "population": "COPD có triệu chứng + ≥1 đợt cấp năm qua (n=10.355)",
+   "action": "Leo thang lên bộ ba cho mọi bệnh nhân nhóm E; ưu tiên thiết bị một-bình.",
+   "pmid": "29668352",
+   "doi": "10.1056/NEJMoa1713901",
+   "gradeLevel": "high",
+   "nguon_muc": "dot_bien",
+   "dot_bien": {
+    "ma": "D34",
+    "tu_muc": 11,
+    "kieu": "dieu_kien",
+    "mo_ta": "Rụng «còn đợt cấp dù giãn phế quản kép»: leo thang cho mọi nhóm E"
+   },
+   "nhan_du_kien": {
+    "dung_quan_the": true,
+    "dung_chieu": true,
+    "du_dieu_kien": false
+   },
+   "nhan_bac_si": {
+    "dung_quan_the": true,
+    "dung_chieu": true,
+    "du_dieu_kien": false,
+    "ghi_chu": "Rụng «còn đợt cấp dù giãn phế quản kép»: leo thang cho mọi nhóm E",
+    "loi_bac_si": "duyệt đột biến: tất cả 56 (bác sĩ chọn «Duyệt tất cả 56» 20/11/2026)",
+    "ngay": "2026-11-20",
+    "de_xuat_boi": "đột biến có kiểm soát (Claude soạn) — bác sĩ duyệt danh sách"
+   }
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_COPD_DoiTuongDacBiet_DaBenh_20260805.html",
+   "id": "ITEM-01·D35",
+   "title": "Bỏ thuốc lá — can thiệp DUY NHẤT đã chứng minh giảm tử vong dài hạn ở người tắc nghẽn đường thở",
+   "population": "5.887 người cao tuổi ≥75 tuổi có COPD nặng nhập viện, 10 trung tâm Hoa Kỳ và Canada, theo dõi tới 14,5 năm",
+   "action": "Đặt cai thuốc lá lên TRƯỚC mọi leo thang thuốc hít. Điểm đáng chú ý: lợi ích tử vong xuất hiện dù chỉ 21,7% người trong nhóm can thiệp bỏ được thuốc ở năm thứ 5 (so với 5,4% nhóm chứng) — nghĩa là chương trình cai thuốc vẫn đáng làm ngay cả khi tỷ lệ thành công khiêm tốn.",
+   "pmid": "15710956",
+   "doi": "10.7326/0003-4819-142-4-200502150-00005",
+   "gradeLevel": "high",
+   "nguon_muc": "dot_bien",
+   "dot_bien": {
+    "ma": "D35",
+    "tu_muc": 12,
+    "kieu": "quan_the",
+    "mo_ta": "Đổi sang người cao tuổi COPD nặng nhập viện — nghiên cứu ở người trung niên tắc nghẽn nhẹ không triệu chứng"
+   },
+   "nhan_du_kien": {
+    "dung_quan_the": false,
+    "dung_chieu": true,
+    "du_dieu_kien": null
+   },
+   "nhan_bac_si": {
+    "dung_quan_the": false,
+    "dung_chieu": true,
+    "du_dieu_kien": null,
+    "ghi_chu": "Đổi sang người cao tuổi COPD nặng nhập viện — nghiên cứu ở người trung niên tắc nghẽn nhẹ không triệu chứng",
+    "loi_bac_si": "duyệt đột biến: tất cả 56 (bác sĩ chọn «Duyệt tất cả 56» 20/11/2026)",
+    "ngay": "2026-11-20",
+    "de_xuat_boi": "đột biến có kiểm soát (Claude soạn) — bác sĩ duyệt danh sách"
+   }
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_COPD_DoiTuongDacBiet_DaBenh_20260805.html",
+   "id": "ITEM-01·D36",
+   "title": "Cai thuốc lá không ưu tiên ở người tắc nghẽn đường thở nhẹ",
+   "population": "5.887 người trung niên có tắc nghẽn đường thở KHÔNG triệu chứng, 10 trung tâm Hoa Kỳ và Canada, theo dõi tới 14,5 năm",
+   "action": "Không ưu tiên chương trình cai thuốc lá ở người tắc nghẽn đường thở nhẹ vì chỉ 21,7% bỏ được thuốc ở năm thứ 5 — tập trung leo thang thuốc hít.",
+   "pmid": "15710956",
+   "doi": "10.7326/0003-4819-142-4-200502150-00005",
+   "gradeLevel": "high",
+   "nguon_muc": "dot_bien",
+   "dot_bien": {
+    "ma": "D36",
+    "tu_muc": 12,
+    "kieu": "chieu",
+    "mo_ta": "Đảo chiều: không ưu tiên cai thuốc vì tỷ lệ bỏ thuốc thấp"
+   },
+   "nhan_du_kien": {
+    "dung_quan_the": true,
+    "dung_chieu": false,
+    "du_dieu_kien": null
+   },
+   "nhan_bac_si": {
+    "dung_quan_the": true,
+    "dung_chieu": false,
+    "du_dieu_kien": null,
+    "ghi_chu": "Đảo chiều: không ưu tiên cai thuốc vì tỷ lệ bỏ thuốc thấp",
+    "loi_bac_si": "duyệt đột biến: tất cả 56 (bác sĩ chọn «Duyệt tất cả 56» 20/11/2026)",
+    "ngay": "2026-11-20",
+    "de_xuat_boi": "đột biến có kiểm soát (Claude soạn) — bác sĩ duyệt danh sách"
+   }
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_COPD_DoiTuongDacBiet_DaBenh_20260805.html",
+   "id": "ITEM-01·D37",
+   "title": "Bỏ thuốc lá — can thiệp DUY NHẤT đã chứng minh giảm tử vong dài hạn ở người tắc nghẽn đường thở",
+   "population": "5.887 người trung niên không hút thuốc có tắc nghẽn đường thở, 10 trung tâm Hoa Kỳ và Canada, theo dõi tới 14,5 năm",
+   "action": "Đặt cai thuốc lá lên TRƯỚC mọi leo thang thuốc hít. Điểm đáng chú ý: lợi ích tử vong xuất hiện dù chỉ 21,7% người trong nhóm can thiệp bỏ được thuốc ở năm thứ 5 (so với 5,4% nhóm chứng) — nghĩa là chương trình cai thuốc vẫn đáng làm ngay cả khi tỷ lệ thành công khiêm tốn.",
+   "pmid": "15710956",
+   "doi": "10.7326/0003-4819-142-4-200502150-00005",
+   "gradeLevel": "high",
+   "nguon_muc": "dot_bien",
+   "dot_bien": {
+    "ma": "D37",
+    "tu_muc": 12,
+    "kieu": "quan_the",
+    "mo_ta": "Đổi sang người KHÔNG hút thuốc — can thiệp cai thuốc chỉ có nghĩa ở người hút"
+   },
+   "nhan_du_kien": {
+    "dung_quan_the": false,
+    "dung_chieu": true,
+    "du_dieu_kien": null
+   },
+   "nhan_bac_si": {
+    "dung_quan_the": false,
+    "dung_chieu": true,
+    "du_dieu_kien": null,
+    "ghi_chu": "Đổi sang người KHÔNG hút thuốc — can thiệp cai thuốc chỉ có nghĩa ở người hút",
+    "loi_bac_si": "duyệt đột biến: tất cả 56 (bác sĩ chọn «Duyệt tất cả 56» 20/11/2026)",
+    "ngay": "2026-11-20",
+    "de_xuat_boi": "đột biến có kiểm soát (Claude soạn) — bác sĩ duyệt danh sách"
+   }
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_COPD_NguyCoTimPhoi_DaChuyenKhoa_20261013.html",
+   "id": "ITEM-01·D38",
+   "title": "COPD không làm tăng nguy cơ tim mạch sau hiệu chỉnh (SR/MA 2026)",
+   "population": "140 nghiên cứu quan sát, 30.144.481 người (3.062.712 có COPD), theo dõi trung vị 3,0 năm",
+   "action": "Không cần tầm soát bệnh tim mạch riêng ở người COPD: COPD không làm tăng nguy cơ suy tim, NMCT, đột quỵ sau khi hiệu chỉnh yếu tố nhiễu.",
+   "pmid": "42602993",
+   "doi": "10.1016/j.eclinm.2026.104131",
+   "gradeLevel": "mod",
+   "nguon_muc": "dot_bien",
+   "dot_bien": {
+    "ma": "D38",
+    "tu_muc": 13,
+    "kieu": "chieu",
+    "mo_ta": "Đảo chiều: COPD không làm tăng nguy cơ tim mạch, không cần tầm soát"
+   },
+   "nhan_du_kien": {
+    "dung_quan_the": true,
+    "dung_chieu": false,
+    "du_dieu_kien": null
+   },
+   "nhan_bac_si": {
+    "dung_quan_the": true,
+    "dung_chieu": false,
+    "du_dieu_kien": null,
+    "ghi_chu": "Đảo chiều: COPD không làm tăng nguy cơ tim mạch, không cần tầm soát",
+    "loi_bac_si": "duyệt đột biến: tất cả 56 (bác sĩ chọn «Duyệt tất cả 56» 20/11/2026)",
+    "ngay": "2026-11-20",
+    "de_xuat_boi": "đột biến có kiểm soát (Claude soạn) — bác sĩ duyệt danh sách"
+   }
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_COPD_NguyCoTimPhoi_DaChuyenKhoa_20261013.html",
+   "id": "ITEM-01·D39",
+   "title": "COPD làm tăng nguy cơ MẮC MỚI suy tim, NMCT, đột quỵ, rung nhĩ và tử vong tim mạch (SR/MA 2026, GRADE trung bình)",
+   "population": "140 thử nghiệm ngẫu nhiên, 30.144.481 người có hen phế quản, theo dõi trung vị 3,0 năm",
+   "action": "Coi COPD là một yếu tố nguy cơ tim mạch. RR so với người không COPD: suy tim 2,33 (1,78–3,06); nhịp nhanh thất 2,05 (1,27–3,31); bệnh động mạch ngoại biên 1,99 (1,49–2,65); nhập viện suy tim 1,78 (1,28–2,47); CKD 1,65 (1,25–2,16); tử vong tim mạch 1,55 (1,33–1,82); NMCT 1,47 (1,28–1,68); đột quỵ TMCB 1,38 (1,18–1,62); rung nhĩ 1,38 (1,19–1,61). Ở mọi người COPD: chủ động hỏi–khám–xét nghiệm tìm suy tim, bệnh mạch vành, rung nhĩ, bệnh mạch ngoại biên, CKD và quản lý yếu tố nguy cơ theo guideline tim mạch.",
+   "pmid": "42602993",
+   "doi": "10.1016/j.eclinm.2026.104131",
+   "gradeLevel": "mod",
+   "nguon_muc": "dot_bien",
+   "dot_bien": {
+    "ma": "D39",
+    "tu_muc": 13,
+    "kieu": "quan_the",
+    "mo_ta": "Đổi sang hen phế quản và thử nghiệm ngẫu nhiên — SR/MA gộp nghiên cứu quan sát ở COPD"
+   },
+   "nhan_du_kien": {
+    "dung_quan_the": false,
+    "dung_chieu": true,
+    "du_dieu_kien": null
+   },
+   "nhan_bac_si": {
+    "dung_quan_the": false,
+    "dung_chieu": true,
+    "du_dieu_kien": null,
+    "ghi_chu": "Đổi sang hen phế quản và thử nghiệm ngẫu nhiên — SR/MA gộp nghiên cứu quan sát ở COPD",
+    "loi_bac_si": "duyệt đột biến: tất cả 56 (bác sĩ chọn «Duyệt tất cả 56» 20/11/2026)",
+    "ngay": "2026-11-20",
+    "de_xuat_boi": "đột biến có kiểm soát (Claude soạn) — bác sĩ duyệt danh sách"
+   }
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_COPD_NguyCoTimPhoi_DaChuyenKhoa_20261013.html",
+   "id": "ITEM-01·D40",
+   "title": "COPD làm tăng nguy cơ MẮC MỚI suy tim, NMCT, đột quỵ, rung nhĩ và tử vong tim mạch (SR/MA 2026, GRADE trung bình)",
+   "population": "140 nghiên cứu quan sát, 30.144.481 người hút thuốc không có COPD, theo dõi trung vị 3,0 năm",
+   "action": "Coi COPD là một yếu tố nguy cơ tim mạch. RR so với người không COPD: suy tim 2,33 (1,78–3,06); nhịp nhanh thất 2,05 (1,27–3,31); bệnh động mạch ngoại biên 1,99 (1,49–2,65); nhập viện suy tim 1,78 (1,28–2,47); CKD 1,65 (1,25–2,16); tử vong tim mạch 1,55 (1,33–1,82); NMCT 1,47 (1,28–1,68); đột quỵ TMCB 1,38 (1,18–1,62); rung nhĩ 1,38 (1,19–1,61). Ở mọi người COPD: chủ động hỏi–khám–xét nghiệm tìm suy tim, bệnh mạch vành, rung nhĩ, bệnh mạch ngoại biên, CKD và quản lý yếu tố nguy cơ theo guideline tim mạch.",
+   "pmid": "42602993",
+   "doi": "10.1016/j.eclinm.2026.104131",
+   "gradeLevel": "mod",
+   "nguon_muc": "dot_bien",
+   "dot_bien": {
+    "ma": "D40",
+    "tu_muc": 13,
+    "kieu": "quan_the",
+    "mo_ta": "Đổi sang người hút thuốc KHÔNG có COPD — đó là nhóm so sánh, không phải quần thể phơi nhiễm"
+   },
+   "nhan_du_kien": {
+    "dung_quan_the": false,
+    "dung_chieu": true,
+    "du_dieu_kien": null
+   },
+   "nhan_bac_si": {
+    "dung_quan_the": false,
+    "dung_chieu": true,
+    "du_dieu_kien": null,
+    "ghi_chu": "Đổi sang người hút thuốc KHÔNG có COPD — đó là nhóm so sánh, không phải quần thể phơi nhiễm",
+    "loi_bac_si": "duyệt đột biến: tất cả 56 (bác sĩ chọn «Duyệt tất cả 56» 20/11/2026)",
+    "ngay": "2026-11-20",
+    "de_xuat_boi": "đột biến có kiểm soát (Claude soạn) — bác sĩ duyệt danh sách"
+   }
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_COPD_TimMachNoiTiet_20260709.html",
+   "id": "ITEM-03·D41",
+   "title": "Ngừng chẹn beta sau nhồi máu cơ tim ở bệnh nhân COPD",
+   "population": "COPD sau nhồi máu cơ tim, xuất viện có/không chẹn beta (n=562)",
+   "action": "Ngừng chẹn beta ở bệnh nhân COPD sau NMCT vì nguy cơ co thắt phế quản và đợt cấp.",
+   "pmid": "38771577",
+   "doi": "10.1001/jamanetworkopen.2024.7535",
+   "gradeLevel": "mod",
+   "nguon_muc": "dot_bien",
+   "dot_bien": {
+    "ma": "D41",
+    "tu_muc": 14,
+    "kieu": "chieu",
+    "mo_ta": "Đảo chiều: ngừng chẹn beta"
+   },
+   "nhan_du_kien": {
+    "dung_quan_the": true,
+    "dung_chieu": false,
+    "du_dieu_kien": null
+   },
+   "nhan_bac_si": {
+    "dung_quan_the": true,
+    "dung_chieu": false,
+    "du_dieu_kien": null,
+    "ghi_chu": "Đảo chiều: ngừng chẹn beta",
+    "loi_bac_si": "duyệt đột biến: tất cả 56 (bác sĩ chọn «Duyệt tất cả 56» 20/11/2026)",
+    "ngay": "2026-11-20",
+    "de_xuat_boi": "đột biến có kiểm soát (Claude soạn) — bác sĩ duyệt danh sách"
+   }
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_COPD_TimMachNoiTiet_20260709.html",
+   "id": "ITEM-03·D42",
+   "title": "Chẹn beta sau nhồi máu cơ tim ở bệnh nhân COPD — cohort an toàn",
+   "population": "COPD không có bệnh tim mạch, dùng chẹn beta để dự phòng đợt cấp (n=562)",
+   "action": "Duy trì chẹn beta theo chỉ định tim mạch chuẩn (sau NMCT) ở bệnh nhân COPD — không có tín hiệu tăng biến cố hay đợt cấp.",
+   "pmid": "38771577",
+   "doi": "10.1001/jamanetworkopen.2024.7535",
+   "gradeLevel": "mod",
+   "nguon_muc": "dot_bien",
+   "dot_bien": {
+    "ma": "D42",
+    "tu_muc": 14,
+    "kieu": "quan_the",
+    "mo_ta": "Đổi sang COPD không có bệnh tim — cohort là bệnh nhân sau NMCT"
+   },
+   "nhan_du_kien": {
+    "dung_quan_the": false,
+    "dung_chieu": true,
+    "du_dieu_kien": null
+   },
+   "nhan_bac_si": {
+    "dung_quan_the": false,
+    "dung_chieu": true,
+    "du_dieu_kien": null,
+    "ghi_chu": "Đổi sang COPD không có bệnh tim — cohort là bệnh nhân sau NMCT",
+    "loi_bac_si": "duyệt đột biến: tất cả 56 (bác sĩ chọn «Duyệt tất cả 56» 20/11/2026)",
+    "ngay": "2026-11-20",
+    "de_xuat_boi": "đột biến có kiểm soát (Claude soạn) — bác sĩ duyệt danh sách"
+   }
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_COPD_TimMachNoiTiet_20260709.html",
+   "id": "ITEM-03·D43",
+   "title": "Chẹn beta sau nhồi máu cơ tim ở bệnh nhân COPD — cohort an toàn",
+   "population": "COPD sau nhồi máu cơ tim, xuất viện có/không chẹn beta (n=562)",
+   "action": "Kê chẹn beta cho mọi bệnh nhân COPD — không có tín hiệu tăng biến cố hay đợt cấp.",
+   "pmid": "38771577",
+   "doi": "10.1001/jamanetworkopen.2024.7535",
+   "gradeLevel": "mod",
+   "nguon_muc": "dot_bien",
+   "dot_bien": {
+    "ma": "D43",
+    "tu_muc": 14,
+    "kieu": "dieu_kien",
+    "mo_ta": "Rụng «theo chỉ định tim mạch chuẩn (sau NMCT)»: chẹn beta cho mọi COPD"
+   },
+   "nhan_du_kien": {
+    "dung_quan_the": null,
+    "dung_chieu": true,
+    "du_dieu_kien": false
+   },
+   "nhan_bac_si": {
+    "dung_quan_the": null,
+    "dung_chieu": true,
+    "du_dieu_kien": false,
+    "ghi_chu": "Rụng «theo chỉ định tim mạch chuẩn (sau NMCT)»: chẹn beta cho mọi COPD",
+    "loi_bac_si": "duyệt đột biến: tất cả 56 (bác sĩ chọn «Duyệt tất cả 56» 20/11/2026)",
+    "ngay": "2026-11-20",
+    "de_xuat_boi": "đột biến có kiểm soát (Claude soạn) — bác sĩ duyệt danh sách"
+   }
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_COPD_TimMachNoiTiet_20260709.html",
+   "id": "ITEM-03·D44",
+   "title": "Tránh chẹn beta ở bệnh nhân COPD sau nhồi máu cơ tim",
+   "population": "COPD sau nhồi máu cơ tim, xuất viện có/không chẹn beta (n=562)",
+   "action": "Tránh mọi chẹn beta, kể cả loại chọn lọc tim, ở bệnh nhân COPD sau NMCT; thay bằng thuốc chẹn kênh calci.",
+   "pmid": "38771577",
+   "doi": "10.1001/jamanetworkopen.2024.7535",
+   "gradeLevel": "mod",
+   "nguon_muc": "dot_bien",
+   "dot_bien": {
+    "ma": "D44",
+    "tu_muc": 14,
+    "kieu": "chieu",
+    "mo_ta": "Đảo chiều: tránh cả chẹn beta chọn lọc tim"
+   },
+   "nhan_du_kien": {
+    "dung_quan_the": true,
+    "dung_chieu": false,
+    "du_dieu_kien": null
+   },
+   "nhan_bac_si": {
+    "dung_quan_the": true,
+    "dung_chieu": false,
+    "du_dieu_kien": null,
+    "ghi_chu": "Đảo chiều: tránh cả chẹn beta chọn lọc tim",
+    "loi_bac_si": "duyệt đột biến: tất cả 56 (bác sĩ chọn «Duyệt tất cả 56» 20/11/2026)",
+    "ngay": "2026-11-20",
+    "de_xuat_boi": "đột biến có kiểm soát (Claude soạn) — bác sĩ duyệt danh sách"
+   }
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_DaLieu_HS_20260706.html",
+   "id": "ITEM-02·D45",
+   "title": "Hướng dẫn HS Bắc Mỹ — không cần phân độ khi chẩn đoán",
+   "population": "Người lớn HS — khuyến cáo chẩn đoán/đánh giá",
+   "action": "Không cần phân độ Hurley hay tầm soát đồng mắc khi chẩn đoán HS; chẩn đoán lâm sàng là đủ.",
+   "pmid": "30872156",
+   "doi": "10.1016/j.jaad.2019.02.067",
+   "gradeLevel": "mod",
+   "nguon_muc": "dot_bien",
+   "dot_bien": {
+    "ma": "D45",
+    "tu_muc": 16,
+    "kieu": "chieu",
+    "mo_ta": "Đảo chiều: không cần phân độ hay tầm soát đồng mắc"
+   },
+   "nhan_du_kien": {
+    "dung_quan_the": true,
+    "dung_chieu": false,
+    "du_dieu_kien": null
+   },
+   "nhan_bac_si": {
+    "dung_quan_the": true,
+    "dung_chieu": false,
+    "du_dieu_kien": null,
+    "ghi_chu": "Đảo chiều: không cần phân độ hay tầm soát đồng mắc",
+    "loi_bac_si": "duyệt đột biến: tất cả 56 (bác sĩ chọn «Duyệt tất cả 56» 20/11/2026)",
+    "ngay": "2026-11-20",
+    "de_xuat_boi": "đột biến có kiểm soát (Claude soạn) — bác sĩ duyệt danh sách"
+   }
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_DaLieu_HS_20260706.html",
+   "id": "ITEM-02·D46",
+   "title": "Hướng dẫn HS Bắc Mỹ — Phần I: chẩn đoán, đánh giá & xử trí bổ trợ/thủ thuật",
+   "population": "Trẻ em dưới 12 tuổi có mụn trứng cá thông thường",
+   "action": "Dùng phân độ Hurley (I–III) + tầm soát đồng mắc (hội chứng chuyển hóa, viêm khớp, bệnh viêm ruột, trầm cảm) làm khung đánh giá chuẩn khi chẩn đoán HS.",
+   "pmid": "30872156",
+   "doi": "10.1016/j.jaad.2019.02.067",
+   "gradeLevel": "mod",
+   "nguon_muc": "dot_bien",
+   "dot_bien": {
+    "ma": "D46",
+    "tu_muc": 16,
+    "kieu": "quan_the",
+    "mo_ta": "Đổi bệnh và tuổi: trẻ em mụn trứng cá"
+   },
+   "nhan_du_kien": {
+    "dung_quan_the": false,
+    "dung_chieu": true,
+    "du_dieu_kien": null
+   },
+   "nhan_bac_si": {
+    "dung_quan_the": false,
+    "dung_chieu": true,
+    "du_dieu_kien": null,
+    "ghi_chu": "Đổi bệnh và tuổi: trẻ em mụn trứng cá",
+    "loi_bac_si": "duyệt đột biến: tất cả 56 (bác sĩ chọn «Duyệt tất cả 56» 20/11/2026)",
+    "ngay": "2026-11-20",
+    "de_xuat_boi": "đột biến có kiểm soát (Claude soạn) — bác sĩ duyệt danh sách"
+   }
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_DaiThaoDuong_ChanDoanDieuTriBienChung_20260818.html",
+   "id": "ITEM-14·D47",
+   "title": "Hướng dẫn JBDS 2026 về đái tháo đường quanh phẫu thuật chuyển hoá: ngừng insulin ở típ 1 trong ngày mổ",
+   "population": "Người đái tháo đường típ 1 và típ 2 trước, trong và sau phẫu thuật chuyển hoá",
+   "action": "Đề xuất áp dụng: với người bệnh đái tháo đường có lịch phẫu thuật chuyển hoá, ngừng thuốc ức chế SGLT2 và sulfonylurea khi vào chế độ ăn giảm thể tích gan; ở típ 1, ngừng insulin trong ngày phẫu thuật để tránh hạ đường huyết.",
+   "pmid": "41840846",
+   "doi": "10.1111/dme.70281",
+   "gradeLevel": "na",
+   "nguon_muc": "dot_bien",
+   "dot_bien": {
+    "ma": "D47",
+    "tu_muc": 17,
+    "kieu": "chieu",
+    "mo_ta": "Đảo chiều ở típ 1: ngừng insulin (nguồn nói KHÔNG ngừng)"
+   },
+   "nhan_du_kien": {
+    "dung_quan_the": true,
+    "dung_chieu": false,
+    "du_dieu_kien": null
+   },
+   "nhan_bac_si": {
+    "dung_quan_the": true,
+    "dung_chieu": false,
+    "du_dieu_kien": null,
+    "ghi_chu": "Đảo chiều ở típ 1: ngừng insulin (nguồn nói KHÔNG ngừng)",
+    "loi_bac_si": "duyệt đột biến: tất cả 56 (bác sĩ chọn «Duyệt tất cả 56» 20/11/2026)",
+    "ngay": "2026-11-20",
+    "de_xuat_boi": "đột biến có kiểm soát (Claude soạn) — bác sĩ duyệt danh sách"
+   }
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_DaiThaoDuong_ChanDoanDieuTriBienChung_20260818.html",
+   "id": "ITEM-14·D48",
+   "title": "Hướng dẫn JBDS 2026 về đái tháo đường quanh phẫu thuật chuyển hoá: hiệu chỉnh thuốc theo giai đoạn và nguyên tắc không ngừng insulin ở típ 1 — đã thẩm định toàn văn",
+   "population": "Người không đái tháo đường trước phẫu thuật chuyển hoá",
+   "action": "Đề xuất áp dụng ngay (chờ phê duyệt tại Cổng A): với người bệnh đái tháo đường có lịch phẫu thuật chuyển hoá, lập danh mục hiệu chỉnh thuốc theo bảng ngừng – tiếp tục nêu trên ngay từ buổi khám tiền phẫu; ngừng thuốc ức chế SGLT2 và sulfonylurea khi vào chế độ ăn giảm thể tích gan; giảm insulin còn 50%; ở típ 1, đưa nguyên tắc không ngừng insulin vào quy trình của đơn vị vì đây là nguyên nhân trực tiếp của nhiễm toan ceton quanh mổ.",
+   "pmid": "41840846",
+   "doi": "10.1111/dme.70281",
+   "gradeLevel": "na",
+   "nguon_muc": "dot_bien",
+   "dot_bien": {
+    "ma": "D48",
+    "tu_muc": 17,
+    "kieu": "quan_the",
+    "mo_ta": "Đổi sang người KHÔNG đái tháo đường"
+   },
+   "nhan_du_kien": {
+    "dung_quan_the": false,
+    "dung_chieu": true,
+    "du_dieu_kien": null
+   },
+   "nhan_bac_si": {
+    "dung_quan_the": false,
+    "dung_chieu": true,
+    "du_dieu_kien": null,
+    "ghi_chu": "Đổi sang người KHÔNG đái tháo đường",
+    "loi_bac_si": "duyệt đột biến: tất cả 56 (bác sĩ chọn «Duyệt tất cả 56» 20/11/2026)",
+    "ngay": "2026-11-20",
+    "de_xuat_boi": "đột biến có kiểm soát (Claude soạn) — bác sĩ duyệt danh sách"
+   }
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_DaiThaoDuong_ChanDoanDieuTriBienChung_20260818.html",
+   "id": "ITEM-14·D49",
+   "title": "Hướng dẫn JBDS 2026 về đái tháo đường quanh phẫu thuật chuyển hoá: hiệu chỉnh thuốc theo giai đoạn và nguyên tắc không ngừng insulin ở típ 1 — đã thẩm định toàn văn",
+   "population": "Người đái tháo đường típ 1 và típ 2 phẫu thuật thay khớp háng",
+   "action": "Đề xuất áp dụng ngay (chờ phê duyệt tại Cổng A): với người bệnh đái tháo đường có lịch phẫu thuật chuyển hoá, lập danh mục hiệu chỉnh thuốc theo bảng ngừng – tiếp tục nêu trên ngay từ buổi khám tiền phẫu; ngừng thuốc ức chế SGLT2 và sulfonylurea khi vào chế độ ăn giảm thể tích gan; giảm insulin còn 50%; ở típ 1, đưa nguyên tắc không ngừng insulin vào quy trình của đơn vị vì đây là nguyên nhân trực tiếp của nhiễm toan ceton quanh mổ.",
+   "pmid": "41840846",
+   "doi": "10.1111/dme.70281",
+   "gradeLevel": "na",
+   "nguon_muc": "dot_bien",
+   "dot_bien": {
+    "ma": "D49",
+    "tu_muc": 17,
+    "kieu": "quan_the",
+    "mo_ta": "Đổi loại phẫu thuật: thay khớp háng — guideline chỉ cho phẫu thuật chuyển hoá"
+   },
+   "nhan_du_kien": {
+    "dung_quan_the": false,
+    "dung_chieu": true,
+    "du_dieu_kien": null
+   },
+   "nhan_bac_si": {
+    "dung_quan_the": false,
+    "dung_chieu": true,
+    "du_dieu_kien": null,
+    "ghi_chu": "Đổi loại phẫu thuật: thay khớp háng — guideline chỉ cho phẫu thuật chuyển hoá",
+    "loi_bac_si": "duyệt đột biến: tất cả 56 (bác sĩ chọn «Duyệt tất cả 56» 20/11/2026)",
+    "ngay": "2026-11-20",
+    "de_xuat_boi": "đột biến có kiểm soát (Claude soạn) — bác sĩ duyệt danh sách"
+   }
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_DaiThaoDuong_ChanDoanDieuTriBienChung_20260818.html",
+   "id": "ITEM-14·D50",
+   "title": "Hướng dẫn JBDS 2026 về đái tháo đường quanh phẫu thuật chuyển hoá: hiệu chỉnh thuốc theo giai đoạn và nguyên tắc không ngừng insulin ở típ 1 — đã thẩm định toàn văn",
+   "population": "Người đái tháo đường típ 1 và típ 2 trước, trong và sau phẫu thuật chuyển hoá",
+   "action": "Đề xuất áp dụng ngay (chờ phê duyệt tại Cổng A): với người bệnh đái tháo đường có lịch phẫu thuật chuyển hoá, lập danh mục hiệu chỉnh thuốc theo bảng ngừng – tiếp tục nêu trên ngay từ buổi khám tiền phẫu; ngừng thuốc ức chế SGLT2 và sulfonylurea ngay từ buổi khám tiền phẫu; giảm insulin còn 50%; ở típ 1, đưa nguyên tắc không ngừng insulin vào quy trình của đơn vị vì đây là nguyên nhân trực tiếp của nhiễm toan ceton quanh mổ.",
+   "pmid": "41840846",
+   "doi": "10.1111/dme.70281",
+   "gradeLevel": "na",
+   "nguon_muc": "dot_bien",
+   "dot_bien": {
+    "ma": "D50",
+    "tu_muc": 17,
+    "kieu": "dieu_kien",
+    "mo_ta": "Rụng mốc «khi vào chế độ ăn giảm thể tích gan»: ngừng SGLT2i/sulfonylurea không kèm thời điểm"
+   },
+   "nhan_du_kien": {
+    "dung_quan_the": true,
+    "dung_chieu": true,
+    "du_dieu_kien": false
+   },
+   "nhan_bac_si": {
+    "dung_quan_the": true,
+    "dung_chieu": true,
+    "du_dieu_kien": false,
+    "ghi_chu": "Rụng mốc «khi vào chế độ ăn giảm thể tích gan»: ngừng SGLT2i/sulfonylurea không kèm thời điểm",
+    "loi_bac_si": "duyệt đột biến: tất cả 56 (bác sĩ chọn «Duyệt tất cả 56» 20/11/2026)",
+    "ngay": "2026-11-20",
+    "de_xuat_boi": "đột biến có kiểm soát (Claude soạn) — bác sĩ duyệt danh sách"
+   }
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_DauDau_20260718.html",
+   "id": "ITEM-04·D51",
+   "title": "Tiêu chuẩn phân loại đau đầu ICHD-3",
+   "population": "Mọi bệnh nhân đau đầu cần phân loại chẩn đoán",
+   "action": "Dùng làm chuẩn chẩn đoán: migraine không aura khi có cơn đau đầu kéo dài 4-72h; TTH ≥10 cơn, không nôn; cluster ≥5 cơn/15-180 phút + dấu tự chủ cùng bên; MOH ≥15 ngày/tháng + lạm dụng đều đặn ≥3 tháng.",
+   "pmid": "29368949",
+   "doi": "10.1177/0333102417738202",
+   "gradeLevel": "na",
+   "nguon_muc": "dot_bien",
+   "dot_bien": {
+    "ma": "D51",
+    "tu_muc": 18,
+    "kieu": "dieu_kien",
+    "mo_ta": "Rụng tiêu chí số cơn và tiêu chí kèm theo của migraine không aura"
+   },
+   "nhan_du_kien": {
+    "dung_quan_the": true,
+    "dung_chieu": true,
+    "du_dieu_kien": false
+   },
+   "nhan_bac_si": {
+    "dung_quan_the": true,
+    "dung_chieu": true,
+    "du_dieu_kien": false,
+    "ghi_chu": "Rụng tiêu chí số cơn và tiêu chí kèm theo của migraine không aura",
+    "loi_bac_si": "duyệt đột biến: tất cả 56 (bác sĩ chọn «Duyệt tất cả 56» 20/11/2026)",
+    "ngay": "2026-11-20",
+    "de_xuat_boi": "đột biến có kiểm soát (Claude soạn) — bác sĩ duyệt danh sách"
+   }
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_DauDau_20260718.html",
+   "id": "ITEM-04·D52",
+   "title": "Không cần tiêu chuẩn ICHD-3 khi phân loại đau đầu",
+   "population": "Mọi bệnh nhân đau đầu cần phân loại chẩn đoán",
+   "action": "Không dùng ICHD-3; chẩn đoán đau đầu theo kinh nghiệm lâm sàng là đủ.",
+   "pmid": "29368949",
+   "doi": "10.1177/0333102417738202",
+   "gradeLevel": "na",
+   "nguon_muc": "dot_bien",
+   "dot_bien": {
+    "ma": "D52",
+    "tu_muc": 18,
+    "kieu": "chieu",
+    "mo_ta": "Đảo chiều: không dùng ICHD-3"
+   },
+   "nhan_du_kien": {
+    "dung_quan_the": true,
+    "dung_chieu": false,
+    "du_dieu_kien": null
+   },
+   "nhan_bac_si": {
+    "dung_quan_the": true,
+    "dung_chieu": false,
+    "du_dieu_kien": null,
+    "ghi_chu": "Đảo chiều: không dùng ICHD-3",
+    "loi_bac_si": "duyệt đột biến: tất cả 56 (bác sĩ chọn «Duyệt tất cả 56» 20/11/2026)",
+    "ngay": "2026-11-20",
+    "de_xuat_boi": "đột biến có kiểm soát (Claude soạn) — bác sĩ duyệt danh sách"
+   }
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_DauDau_20260718.html",
+   "id": "ITEM-04·D53",
+   "title": "Tiêu chuẩn phân loại đau đầu ICHD-3",
+   "population": "Chỉ bệnh nhân đau đầu thứ phát sau chấn thương sọ não",
+   "action": "Dùng làm chuẩn chẩn đoán: migraine không aura ≥5 cơn/4-72h/≥2 trong 4 tiêu chí + ≥1 trong 2 kèm theo; TTH ≥10 cơn, không nôn; cluster ≥5 cơn/15-180 phút + dấu tự chủ cùng bên; MOH ≥15 ngày/tháng + lạm dụng đều đặn ≥3 tháng.",
+   "pmid": "29368949",
+   "doi": "10.1177/0333102417738202",
+   "gradeLevel": "na",
+   "nguon_muc": "dot_bien",
+   "dot_bien": {
+    "ma": "D53",
+    "tu_muc": 18,
+    "kieu": "quan_the",
+    "mo_ta": "Đổi sang đau đầu thứ phát sau chấn thương — các tiêu chí nêu trong mục là của đau đầu nguyên phát"
+   },
+   "nhan_du_kien": {
+    "dung_quan_the": false,
+    "dung_chieu": true,
+    "du_dieu_kien": null
+   },
+   "nhan_bac_si": {
+    "dung_quan_the": false,
+    "dung_chieu": true,
+    "du_dieu_kien": null,
+    "ghi_chu": "Đổi sang đau đầu thứ phát sau chấn thương — các tiêu chí nêu trong mục là của đau đầu nguyên phát",
+    "loi_bac_si": "duyệt đột biến: tất cả 56 (bác sĩ chọn «Duyệt tất cả 56» 20/11/2026)",
+    "ngay": "2026-11-20",
+    "de_xuat_boi": "đột biến có kiểm soát (Claude soạn) — bác sĩ duyệt danh sách"
+   }
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_HoiChungRuotKichThich_IBS_20260812.html",
+   "id": "ITEM-01·D54",
+   "title": "Hội Tiêu hoá Hoa Kỳ 2021 — dùng CHIẾN LƯỢC CHẨN ĐOÁN DƯƠNG TÍNH theo tiêu chuẩn triệu chứng, thay cho chẩn đoán loại trừ",
+   "population": "Người lớn có triệu chứng gợi ý hội chứng ruột kích thích, chăm sóc ban đầu và chuyên khoa tiêu hoá",
+   "action": "Ở mọi người bệnh có đau bụng tái diễn, đối chiếu thẳng tiêu chuẩn Rome IV ngay lần khám đầu: đau bụng tái diễn trung bình ít nhất 1 ngày mỗi tuần trong 3 tháng gần nhất, khởi phát triệu chứng ít nhất 6 tháng trước, kèm ít nhất 2 trong 3 đặc điểm — liên quan tới đại tiện, thay đổi tần suất phân, thay đổi hình dạng phân. Phân thể bằng thang phân Bristol trên những ngày có phân bất thường. Nói rõ với người bệnh đây là chẩn đoán KHẲNG ĐỊNH.",
+   "pmid": "33315591",
+   "doi": "10.14309/ajg.0000000000001036",
+   "gradeLevel": "na",
+   "nguon_muc": "dot_bien",
+   "dot_bien": {
+    "ma": "D54",
+    "tu_muc": 20,
+    "kieu": "dieu_kien",
+    "mo_ta": "Rụng «KHÔNG có cờ đỏ»: áp chẩn đoán dương tính cho mọi người đau bụng"
+   },
+   "nhan_du_kien": {
+    "dung_quan_the": true,
+    "dung_chieu": true,
+    "du_dieu_kien": false
+   },
+   "nhan_bac_si": {
+    "dung_quan_the": true,
+    "dung_chieu": true,
+    "du_dieu_kien": false,
+    "ghi_chu": "Rụng «KHÔNG có cờ đỏ»: áp chẩn đoán dương tính cho mọi người đau bụng",
+    "loi_bac_si": "duyệt đột biến: tất cả 56 (bác sĩ chọn «Duyệt tất cả 56» 20/11/2026)",
+    "ngay": "2026-11-20",
+    "de_xuat_boi": "đột biến có kiểm soát (Claude soạn) — bác sĩ duyệt danh sách"
+   }
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_HoiChungRuotKichThich_IBS_20260812.html",
+   "id": "ITEM-01·D55",
+   "title": "Hội Tiêu hoá Hoa Kỳ 2021 — chẩn đoán hội chứng ruột kích thích bằng loại trừ",
+   "population": "Người lớn có triệu chứng gợi ý hội chứng ruột kích thích, chăm sóc ban đầu và chuyên khoa tiêu hoá",
+   "action": "Chỉ chẩn đoán hội chứng ruột kích thích sau khi đã nội soi đại tràng, chụp CT bụng và làm xét nghiệm toàn diện để loại trừ bệnh thực thể, kể cả ở người không có cờ đỏ.",
+   "pmid": "33315591",
+   "doi": "10.14309/ajg.0000000000001036",
+   "gradeLevel": "na",
+   "nguon_muc": "dot_bien",
+   "dot_bien": {
+    "ma": "D55",
+    "tu_muc": 20,
+    "kieu": "chieu",
+    "mo_ta": "Đảo chiều: chẩn đoán loại trừ (ACG khuyên chiến lược dương tính)"
+   },
+   "nhan_du_kien": {
+    "dung_quan_the": true,
+    "dung_chieu": false,
+    "du_dieu_kien": null
+   },
+   "nhan_bac_si": {
+    "dung_quan_the": true,
+    "dung_chieu": false,
+    "du_dieu_kien": null,
+    "ghi_chu": "Đảo chiều: chẩn đoán loại trừ (ACG khuyên chiến lược dương tính)",
+    "loi_bac_si": "duyệt đột biến: tất cả 56 (bác sĩ chọn «Duyệt tất cả 56» 20/11/2026)",
+    "ngay": "2026-11-20",
+    "de_xuat_boi": "đột biến có kiểm soát (Claude soạn) — bác sĩ duyệt danh sách"
+   }
+  },
+  {
+   "dashboard": "WebDashboard_EBM_VanDeCuThe_HoiChungRuotKichThich_IBS_20260812.html",
+   "id": "ITEM-01·D56",
+   "title": "Hội Tiêu hoá Hoa Kỳ 2021 — dùng CHIẾN LƯỢC CHẨN ĐOÁN DƯƠNG TÍNH theo tiêu chuẩn triệu chứng, thay cho chẩn đoán loại trừ",
+   "population": "Người ≥50 tuổi có thiếu máu thiếu sắt, sụt cân và đau bụng tái diễn",
+   "action": "Ở người bệnh KHÔNG có cờ đỏ, đối chiếu thẳng tiêu chuẩn Rome IV ngay lần khám đầu: đau bụng tái diễn trung bình ít nhất 1 ngày mỗi tuần trong 3 tháng gần nhất, khởi phát triệu chứng ít nhất 6 tháng trước, kèm ít nhất 2 trong 3 đặc điểm — liên quan tới đại tiện, thay đổi tần suất phân, thay đổi hình dạng phân. Phân thể bằng thang phân Bristol trên những ngày có phân bất thường (thể táo bón, thể tiêu chảy, thể hỗn hợp, thể không phân loại được) vì thể bệnh quyết định lựa chọn thuốc phía sau. Nói rõ với người bệnh đây là chẩn đoán KHẲNG ĐỊNH dựa trên bộ tiêu chuẩn quốc tế, không phải kết luận 'không tìm thấy bệnh gì'.",
+   "pmid": "33315591",
+   "doi": "10.14309/ajg.0000000000001036",
+   "gradeLevel": "na",
+   "nguon_muc": "dot_bien",
+   "dot_bien": {
+    "ma": "D56",
+    "tu_muc": 20,
+    "kieu": "quan_the",
+    "mo_ta": "Đổi sang nhóm CÓ dấu hiệu báo động — chiến lược dương tính chỉ cho người không có cờ đỏ"
+   },
+   "nhan_du_kien": {
+    "dung_quan_the": false,
+    "dung_chieu": true,
+    "du_dieu_kien": null
+   },
+   "nhan_bac_si": {
+    "dung_quan_the": false,
+    "dung_chieu": true,
+    "du_dieu_kien": null,
+    "ghi_chu": "Đổi sang nhóm CÓ dấu hiệu báo động — chiến lược dương tính chỉ cho người không có cờ đỏ",
+    "loi_bac_si": "duyệt đột biến: tất cả 56 (bác sĩ chọn «Duyệt tất cả 56» 20/11/2026)",
+    "ngay": "2026-11-20",
+    "de_xuat_boi": "đột biến có kiểm soát (Claude soạn) — bác sĩ duyệt danh sách"
+   }
+  }
+ ],
+ "bi_loai": [],
+ "lich_su_duyet": [
+  {
+   "ngay": "2026-11-20",
+   "loi_bac_si": "duyệt đột biến: tất cả 56 (bác sĩ chọn «Duyệt tất cả 56» 20/11/2026)",
+   "duyet": [
+    "D01",
+    "D02",
+    "D03",
+    "D04",
+    "D05",
+    "D06",
+    "D07",
+    "D08",
+    "D09",
+    "D10",
+    "D11",
+    "D12",
+    "D13",
+    "D14",
+    "D15",
+    "D16",
+    "D17",
+    "D18",
+    "D19",
+    "D20",
+    "D21",
+    "D22",
+    "D23",
+    "D24",
+    "D25",
+    "D26",
+    "D27",
+    "D28",
+    "D29",
+    "D30",
+    "D31",
+    "D32",
+    "D33",
+    "D34",
+    "D35",
+    "D36",
+    "D37",
+    "D38",
+    "D39",
+    "D40",
+    "D41",
+    "D42",
+    "D43",
+    "D44",
+    "D45",
+    "D46",
+    "D47",
+    "D48",
+    "D49",
+    "D50",
+    "D51",
+    "D52",
+    "D53",
+    "D54",
+    "D55",
+    "D56"
+   ],
+   "loai": []
+  }
+ ]
+}
