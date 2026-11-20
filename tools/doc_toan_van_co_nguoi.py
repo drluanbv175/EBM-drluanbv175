@@ -584,6 +584,20 @@ DIEU_KHOAN_NXB: dict[str, dict] = {
                       "bài đọc miễn phí nhưng KHÔNG nêu giấy phép mở, mọi việc tái bản phải xin phép ABFM; KHÔNG có điều về AI/TDM "
                       "⇒ «không rõ ⇒ xử như cấm»",
         "duong_hop_le": "văn bản cho phép của ABFM qua thư yêu cầu trên trang Permissions"},
+    # Đọc 20/11/2026 trên Chrome của bác sĩ — bài Antimicrob Agents Chemother 2006 (PMID 17005808) là bằng chứng toàn văn duy nhất
+    # của một mục «Áp dụng ngay»; tệp Unpaywall cũ không giấy phép mở của nó bị giữ lại khi cách ly (bác sĩ 20/11: «NXB chưa kiểm
+    # (ASM) ⇒ đọc trang điều khoản trước»). Tiền tố 10.1128 đối chiếu Crossref /prefixes cùng ngày (member 235).
+    "American Society for Microbiology (ASM Journals)": {
+        "ket_luan": "cam", "doi": ("10.1128/",), "mien": ("journals.asm.org", "asm.org"),
+        "nguon": "https://journals.asm.org/terms", "doc_luc": "2026-11-20",
+        "trich": "may store or print single copies of individual articles",
+        "loai_nguon": "Terms and Conditions của ASM Journals (đọc trên Chrome 20/11/2026): cá nhân chỉ được lưu/in bản đơn lẻ «solely "
+                      "for the user's own use», cấm phân phối, đăng lại, sửa đổi và lưu trữ có hệ thống; trang Non-Commercial TDM "
+                      "License (cập nhật 2021) chỉ cấp quyền khai thác văn bản cho nhà nghiên cứu thuộc cơ sở THUÊ BAO theo Site "
+                      "License; KHÔNG có điều về AI ⇒ «không rõ ⇒ xử như cấm». Bài cũ có bản đọc miễn phí ở PMC nhưng không thuộc "
+                      "tập giấy phép mở",
+        "duong_hop_le": "Non-Commercial TDM License qua Site License của cơ sở thuê bao; quyền khác qua Copyright Clearance Center "
+                        "(liên kết Request Permissions trên trang bài)"},
 }
 # GIẤY PHÉP MỞ KHAI Ở CẤP NXB (18/10/2026 — bác sĩ: «Sửa cổng để chấp nhận giấy phép CC khai ở cấp NXB khi đã đọc trang điều
 # khoản»). Bảng RIÊNG, KHÔNG gộp vào DIEU_KHOAN_NXB: bảng đó cố ý chỉ nhận «cấm» (mục khác sẽ miễn khai điều khoản cho mọi bài ở
