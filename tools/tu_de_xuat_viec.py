@@ -1682,13 +1682,39 @@ NGAY_API_KHI_CAN_CU = 8
 NGAY_BAO_CAO_CHU_DE = 14
 
 
+# Chẩn đoán lỗi một việc của lượt API khi cần từ ĐUÔI nhật ký từng công cụ (20/11/2026: lượt 04:30 lỗi vì NCBI chặn IP —
+# công cụ A12 tra PubMed trước khi gọi API — mà hòm việc báo «kiểm khoá/tín dụng/trần ở console», bác sĩ đi tìm sai chỗ).
+_LOI_NCBI = re.compile(r"misuse\.ncbi|MÁY CHỦ NCBI|NCBI[^\n]{0,80}(?:chặn|block)|info@ncbi\.nlm\.nih\.gov", re.I)
+_LOI_API = re.compile(r"\b(?:401|403)\b|authenticat|api[ _-]?key|credit|billing|HetNganSach|trần chi phí|"
+                      r"\b429\b|rate[ _-]?limit|overloaded|\b529\b", re.I)
+_LOI_MANG = re.compile(r"timed? ?out|ConnectionError|Connection (?:reset|refused|aborted)|Name or service not known|"
+                       r"nodename nor servname|Temporary failure in name resolution|SSLError", re.I)
+
+
+def chan_doan_loi_api_khi_can(r: dict) -> tuple[int, str]:
+    """(ưu tiên, gợi ý) cho một việc LỖI: NCBI chặn IP · lỗi Claude API (khoá/tín dụng/trần/giới hạn tốc độ) · lỗi mạng ·
+    không rõ. Đọc `dung` + `duoi` của từng `chi_tiet`. NCBI chặn KHÔNG phải lỗi của API Claude (không tốn tiền, không cần
+    console) ⇒ ưu tiên 3 và trỏ đúng cách gỡ."""
+    van = " ".join([str(r.get("dung") or "")] + [str((c or {}).get("duoi") or "") for c in (r.get("chi_tiet") or [])
+                                                  if isinstance(c, dict) and not c.get("ok", True)])
+    if _LOI_NCBI.search(van):
+        return 3, ("NCBI chặn IP thoát hiện tại — KHÔNG phải lỗi Claude API: đổi đường mạng/VPN rồi chạy lại, đo bằng "
+                   "medical-ebm-automation/tools/do_mang_nguon.py; chặn lâu ⇒ liên hệ info@ncbi.nlm.nih.gov")
+    if _LOI_API.search(van):
+        return 2, "lỗi Claude API — kiểm khoá/tín dụng/trần ở console.anthropic.com"
+    if _LOI_MANG.search(van):
+        return 3, "lỗi mạng tạm thời — chạy lại khi mạng ổn"
+    return 2, "nguyên nhân chưa rõ — xem ~/.ebm-api-khi-can.json.log"
+
+
 def giac_quan_api_khi_can(goc: Path | None = None, bay_gio: dt.datetime | None = None) -> list[tuple[int, str, str, str]]:
     """CƠ CHẾ TỰ CHẠY API CLAUDE KHI CẦN (18/11/2026, bác sĩ duyệt) — `tools/api_khi_can.py`, chính sách sync/api-khi-can.json.
 
     Chỉ ĐỌC chính sách + sổ lượt chạy `~/.ebm-api-khi-can.json` + báo cáo KIEM-CHU-DE-KHI-CAN_*.json — không gọi API:
       • chính sách vắng/hỏng ⇒ ⚪ (cơ chế TẮT — không được đọc thành «đang tự chạy»);
       • chưa xét lần nào / quá NGAY_API_KHI_CAN_CU ngày ⇒ ⚪ (hook đầu phiên chưa áp, hoặc lượt nền chết);
-      • lượt gần nhất có việc LỖI ⇒ 👤 ưu tiên 2 (khoá/tín dụng/trần chi phí — bác sĩ xem);
+      • lượt gần nhất có việc LỖI ⇒ 👤 kèm chẩn đoán (`chan_doan_loi_api_khi_can`: NCBI chặn IP ưu tiên 3 · lỗi Claude
+        API ưu tiên 2 · mạng · chưa rõ);
       • báo cáo kiểm lạc chủ đề tự động ≤ NGAY_BAO_CAO_CHU_DE ngày có mục NGHI LẠC ⇒ 👤 ưu tiên 2 (bác sĩ rà; máy không gỡ).
     Việc «cần chạy» từng loại do hai giác quan CAFÉ-S / kiểm máy báo (🛎 khi chính sách cho tự chạy) — không báo trùng ở đây."""
     _SO_GIAC_QUAN["chay"] += 1
@@ -1715,8 +1741,9 @@ def giac_quan_api_khi_can(goc: Path | None = None, bay_gio: dt.datetime | None =
         for v, r in (luot.get("viec") or {}).items():
             if isinstance(r, dict) and r.get("ket_qua") == "loi":
                 ly = r.get("dung") or (f"{r.get('so_loi')} việc lỗi" if r.get("so_loi") else r.get("duoi") or "lỗi")
-                viec.append((2, "👤", f"API khi cần {str(luot.get('luc'))[:16].replace('T', ' ')}: {m.TEN_VIEC.get(v, v)} "
-                                      f"LỖI — {str(ly)[:120]} (kiểm khoá/tín dụng/trần ở console.anthropic.com)",
+                uu, goi_y = chan_doan_loi_api_khi_can(r)
+                viec.append((uu, "👤", f"API khi cần {str(luot.get('luc'))[:16].replace('T', ' ')}: {m.TEN_VIEC.get(v, v)} "
+                                       f"LỖI — {str(ly)[:120]} ({goi_y})",
                              f"python3 tools/api_khi_can.py --chay --chi {v}"))
     for js in sorted(((goc or REPO) / "EBM-Dashboards" / "derivatives").glob("KIEM-CHU-DE-KHI-CAN_*.json"))[-1:]:
         try:
