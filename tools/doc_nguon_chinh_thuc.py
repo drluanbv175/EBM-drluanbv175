@@ -25,6 +25,12 @@ BẰNG CHỨNG (ghi vào `EBM-Dashboards/toan_van_oa/nguon_chinh_thuc/<băm kho�
   bac-si-da-doc   bác sĩ tự đọc nguồn ⇒ dòng `nguon` trong `trinh_duyet/bac-si-da-doc.jsonl` kèm kết luận của bác sĩ
                   (không hết hạn). Agent chỉ chép NGUYÊN VĂN lời bác sĩ — không tự điền.
 
+CỔNG CHẶN + SỔ NỢ (20/11/2026 — bác sĩ «Hoàn thiện tất cả vấn đề trên», chọn «Chặn, có sổ nợ»): cổng
+`kiem_doc_nguon_chinh_thuc_apply` CHẶN mục apply không PMID khi nguồn chưa có bằng chứng; riêng các mục ĐÃ TỒN lúc chuyển
+sang chặn nằm trong SỔ NỢ `EBM-Dashboards/no-nguon-chinh-thuc-apply.json` (khoá dashboard + item + khoá nguồn) ⇒ cảnh báo tới
+hạn. `so-no` báo cáo; `so-no --tao` lập sổ MỘT lần (chỉ gồm mục đang chưa đọc lúc lập — mục mới không bao giờ vào nợ);
+`so-no --gia-han` dời hạn, giữ nguyên danh sách. Cả hai đòi NGUYÊN VĂN lời bác sĩ (≥ 20 ký tự), hạn ≤ 90 ngày.
+
 Dùng:
     python3 tools/doc_nguon_chinh_thuc.py liet-ke [--tat-ca] [--json]
     python3 tools/doc_nguon_chinh_thuc.py tai [--ghi] [--toi-da N]
@@ -32,6 +38,9 @@ Dùng:
     python3 tools/doc_nguon_chinh_thuc.py nap-trinh-duyet --url URL [--doi DOI] --tieu-de "…" --so-ky-tu N --sha256 HEX \
             [--dieu-khoan "<căn cứ điều khoản>"] [--ghi]
     python3 tools/doc_nguon_chinh_thuc.py bac-si-da-doc --nguon "<DOI|URL>" --ghi-chu "<kết luận của bác sĩ>" [--ghi]
+    python3 tools/doc_nguon_chinh_thuc.py so-no [--json]
+    python3 tools/doc_nguon_chinh_thuc.py so-no --tao --han YYYY-MM-DD --can-cu "<nguyên văn lời bác sĩ>" [--ghi]
+    python3 tools/doc_nguon_chinh_thuc.py so-no --gia-han YYYY-MM-DD --can-cu "<nguyên văn lời bác sĩ>" [--ghi]
 Chạy khô mặc định (`--ghi` mới ghi). Mã thoát: 0 xong · 1 có nguồn chưa đọc được / đầu vào bị từ chối · 2 không đo được.
 Cần bác sĩ kiểm chứng.
 """
@@ -414,7 +423,136 @@ def huong_dan() -> str:
     ])
 
 
+# ───────────────────────── sổ nợ (bánh cóc) ─────────────────────────
+
+TEN_SO_NO = "no-nguon-chinh-thuc-apply.json"        # trùng verify_dashboard.TEN_SO_NO_NGUON (test chốt)
+CAN_CU_MIN = 20
+HAN_TOI_DA_NGAY = 90
+
+
+def doc_so_no(dash: Path) -> dict | None:
+    """Sổ nợ nguồn chính thức; vắng ⇒ None; hỏng ⇒ {"hong": lý do} (cổng coi như vắng — fail-closed)."""
+    tep = Path(dash) / TEN_SO_NO
+    if not tep.exists():
+        return None
+    try:
+        d = json.loads(tep.read_text(encoding="utf-8"))
+        dt.date.fromisoformat(d["han"])
+        if not isinstance(d.get("muc"), list):
+            raise ValueError("muc không phải danh sách")
+        return d
+    except (OSError, ValueError, KeyError, TypeError) as e:
+        return {"hong": f"{type(e).__name__}: {e}"}
+
+
+def phan_loai_no(muc: list[dict], co: set, so_no: dict | None, hom_nay: dt.date) -> dict:
+    """Mục apply không PMID mà CỔNG CHẶN hoặc cảnh báo: «khong_khoa» (không DOI/URL — chặn) · «ngoai_so» (chặn) · «qua_han»
+    (chặn) · «trong_han» (cảnh báo). Cùng định nghĩa với `verify_dashboard.kiem_doc_nguon_chinh_thuc_apply`."""
+    khoa_no, han = set(), None
+    if so_no and "hong" not in so_no:
+        han = dt.date.fromisoformat(so_no["han"])
+        khoa_no = {(x.get("dashboard"), x.get("item"), x.get("khoa")) for x in so_no["muc"] if isinstance(x, dict)}
+    ra = {"khong_khoa": [], "ngoai_so": [], "qua_han": [], "trong_han": [], "han": han.isoformat() if han else None}
+    for m in muc:
+        if not m["khoa"]:
+            ra["khong_khoa"].append(m)
+        elif m["khoa"] in co:
+            continue
+        elif (m["dashboard"], m["item"], m["khoa"]) in khoa_no:
+            ra["trong_han" if hom_nay <= han else "qua_han"].append(m)
+        else:
+            ra["ngoai_so"].append(m)
+    return ra
+
+
+def ghi_so_no(dash: Path, muc_no: list[dict], han: str, can_cu: str, *, ghi: bool, cu: dict | None,
+              hom_nay: dt.date) -> tuple[int, str]:
+    """Lập sổ nợ (CHỈ khi chưa có) hoặc gia hạn (giữ nguyên danh sách — bánh cóc). Mặc định chạy khô."""
+    if len((can_cu or "").strip()) < CAN_CU_MIN:
+        return 3, f"✗ phải ghi NGUYÊN VĂN lời bác sĩ (≥ {CAN_CU_MIN} ký tự) — agent không tự lập/gia hạn sổ nợ"
+    try:
+        h = dt.date.fromisoformat(han or "")
+    except ValueError:
+        return 3, f"✗ hạn «{han}» sai dạng YYYY-MM-DD"
+    if not (hom_nay < h <= hom_nay + dt.timedelta(days=HAN_TOI_DA_NGAY)):
+        return 3, f"✗ hạn phải sau hôm nay và không quá {HAN_TOI_DA_NGAY} ngày"
+    luc = dt.datetime.now().isoformat(timespec="seconds")
+    if cu is None:
+        so = {"_about": "Sổ NỢ nguồn chính thức (bánh cóc): mục apply KHÔNG PMID mà nguồn (DOI/URL) CHƯA có bằng chứng đã đọc, đã "
+                        "tồn lúc cổng chuyển sang CHẶN (20/11/2026). Cổng chỉ cảnh báo các mục này tới «han»; quá hạn ⇒ CHẶN. "
+                        "Đổi URL/DOI của mục là nguồn MỚI — không còn được nợ. Mục mới KHÔNG bao giờ được thêm vào. Sinh bằng "
+                        "tools/doc_nguon_chinh_thuc.py so-no — không sửa tay.",
+              "tao_luc": luc, "han": h.isoformat(), "can_cu": can_cu.strip(),
+              "muc": [{"dashboard": m["dashboard"], "item": m["item"], "khoa": m["khoa"]} for m in muc_no], "lich_su": []}
+        viec = f"lập sổ nợ {len(muc_no)} mục ({len({m['khoa'] for m in muc_no})} nguồn), hạn {h.isoformat()}"
+    else:
+        if "hong" in cu:
+            return 3, "✗ sổ nợ hiện có KHÔNG đọc được — không gia hạn đè lên sổ hỏng; bác sĩ xem tệp trước"
+        so = dict(cu)
+        so.setdefault("lich_su", []).append({"luc": luc, "han_cu": cu["han"], "han_moi": h.isoformat(),
+                                             "can_cu": can_cu.strip()})
+        so["han"] = h.isoformat()
+        viec = f"gia hạn {cu['han']} → {h.isoformat()} (danh sách giữ nguyên {len(cu['muc'])} mục)"
+    if not ghi:
+        return 0, f"(chạy khô) sẽ {viec} — thêm --ghi để ghi {TEN_SO_NO}"
+    (Path(dash) / TEN_SO_NO).write_text(json.dumps(so, ensure_ascii=False, indent=1) + "\n", encoding="utf-8", newline="\n")
+    return 0, f"✓ đã {viec} → {Path(dash) / TEN_SO_NO}"
+
+
+def bao_cao_so_no(no: dict, so_no: dict | None, hom_nay: dt.date) -> list[str]:
+    ten = lambda m: f"{m['dashboard'].replace('WebDashboard_EBM_VanDeCuThe_', '')} {m['item']}"  # noqa: E731
+    dong = [f"SỔ NỢ ĐỌC NGUỒN CHÍNH THỨC (mục apply không PMID) — {hom_nay.isoformat()}"]
+    if so_no and "hong" in so_no:
+        dong.append(f"🔴 SỔ NỢ KHÔNG ĐỌC ĐƯỢC ({so_no['hong']}) — cổng coi như KHÔNG có sổ ⇒ mọi mục chưa đọc đều bị CHẶN.")
+    for k, nhan in (("khong_khoa", "không có DOI/URL hợp lệ — cổng ĐANG CHẶN"),
+                    ("ngoai_so", "nguồn chưa đọc, NGOÀI sổ nợ — cổng ĐANG CHẶN"),
+                    ("qua_han", f"NỢ QUÁ HẠN {no['han']} — cổng ĐANG CHẶN")):
+        if no[k]:
+            dong.append(f"🔴 {len(no[k])} mục {nhan}:")
+            dong += [f"     · {ten(m)}  {m['khoa'] or '(không khoá)'}" for m in no[k]]
+    if no["trong_han"]:
+        con = (dt.date.fromisoformat(no["han"]) - hom_nay).days
+        dong.append(f"🟠 {len(no['trong_han'])} mục NỢ nguồn chính thức (hạn {no['han']}, còn {con} ngày — sau hạn cổng CHẶN):")
+        dong += [f"     · {ten(m)}  {m['khoa']}" for m in no["trong_han"]]
+    if not any(no[k] for k in ("khong_khoa", "ngoai_so", "qua_han", "trong_han")):
+        dong.append("🟢 Mọi mục «Áp dụng ngay» không PMID đã có bằng chứng đọc nguồn chính thức.")
+    else:
+        dong += ["Trả nợ: máy tải `tai --tat-ca --ghi` · làn trình duyệt `huong-dan` · bác sĩ đã tự đọc `bac-si-da-doc --nguon "
+                 "\"<DOI|URL>\" --ghi-chu \"<kết luận>\" --ghi` · hoặc bác sĩ hạ mục xuống «Cân nhắc»."]
+    return dong + ["Cần bác sĩ kiểm chứng."]
+
+
 # ───────────────────────── CLI ─────────────────────────
+
+def _lenh_so_no(a, kho: Path, dashboards: list[Path] | None, V, hom_nay: dt.date | None = None) -> int:
+    """Sổ nợ đo trên MỌI bản dashboard (cổng chạy trên bất kỳ bản nào được xuất lại, không chỉ bản mới nhất)."""
+    hom_nay = hom_nay or dt.date.today()
+    dash = kho.parent
+    muc = quet_muc(dashboards if dashboards is not None else chon_dashboard(True), V)
+    co = V.bang_chung_nguon_chinh_thuc(kho)
+    so_no = doc_so_no(dash)
+    if a.tao or a.gia_han:
+        if a.tao and so_no is not None:
+            print("✗ ĐÃ có sổ nợ — sổ chỉ được lập MỘT lần (bánh cóc: mục mới không vào nợ). Gia hạn: --gia-han.")
+            return 3
+        if a.gia_han and so_no is None:
+            print("✗ chưa có sổ nợ để gia hạn — lập bằng --tao trước")
+            return 3
+        muc_no = [m for m in muc if m["khoa"] and m["khoa"] not in co]
+        ma, tb = ghi_so_no(dash, muc_no, a.han if a.tao else a.gia_han, a.can_cu or "", ghi=a.ghi,
+                           cu=so_no if a.gia_han else None, hom_nay=hom_nay)
+        print(tb)
+        return ma
+    no = phan_loai_no(muc, co, so_no, hom_nay)
+    if a.json:
+        print(json.dumps({"ngay": hom_nay.isoformat(), "han": no["han"],
+                          "dem": {k: len(no[k]) for k in ("khong_khoa", "ngoai_so", "qua_han", "trong_han")},
+                          "muc": {k: no[k] for k in ("khong_khoa", "ngoai_so", "qua_han", "trong_han")}},
+                         ensure_ascii=False, indent=1))
+    else:
+        print("\n".join(bao_cao_so_no(no, so_no, hom_nay)))
+    return 1 if (no["khong_khoa"] or no["ngoai_so"] or no["qua_han"] or (so_no and "hong" in so_no)) else 0
+
 
 def main(argv: list[str] | None = None, *, kho: Path | None = None, dashboards: list[Path] | None = None,
          tai_fn=tai_trang) -> int:
@@ -440,6 +578,13 @@ def main(argv: list[str] | None = None, *, kho: Path | None = None, dashboards: 
     p.add_argument("--nguon", required=True)
     p.add_argument("--ghi-chu")
     p.add_argument("--ghi", action="store_true")
+    p = sub.add_parser("so-no", help="sổ nợ của cổng chặn (mọi bản dashboard)")
+    p.add_argument("--tao", action="store_true", help="lập sổ nợ cho mục đang chưa đọc (chỉ khi CHƯA có sổ)")
+    p.add_argument("--gia-han", metavar="YYYY-MM-DD", help="gia hạn sổ nợ (danh sách giữ nguyên)")
+    p.add_argument("--han", metavar="YYYY-MM-DD")
+    p.add_argument("--can-cu", default=None, help="NGUYÊN VĂN lời bác sĩ")
+    p.add_argument("--json", action="store_true")
+    p.add_argument("--ghi", action="store_true")
     a = ap.parse_args(argv)
     kho = kho or kho_mac_dinh()
     if a.lenh == "huong-dan":
@@ -457,6 +602,8 @@ def main(argv: list[str] | None = None, *, kho: Path | None = None, dashboards: 
         print(f"⚪ không thấy kho toàn văn {kho} — không đo được")
         return 2
     V = vd()
+    if a.lenh == "so-no":
+        return _lenh_so_no(a, kho, dashboards, V)
     dashboards = dashboards if dashboards is not None else chon_dashboard(a.tat_ca)
     muc = quet_muc(dashboards, V)
     nhom = nhom_theo_khoa(muc, V.bang_chung_nguon_chinh_thuc(kho))

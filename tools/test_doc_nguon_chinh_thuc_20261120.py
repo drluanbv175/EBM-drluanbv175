@@ -2,7 +2,8 @@
 """Bảo đảm đọc NGUỒN CHÍNH THỨC cho mục «Áp dụng ngay» không PMID (20/11/2026, bác sĩ «Làm 2,3,6» — mục 2). OFFLINE.
 
 Chốt: (1) khoá nguồn ổn định và GIỮ query (openFDA/DailyMed định danh nhãn bằng query); (2) chỉ hồ sơ đủ chuẩn mới là bằng
-chứng; (3) cổng chỉ CẢNH BÁO, không chặn, không đụng mục có PMID; (4) công cụ không ghi khi chạy khô, không tải miền chặn truy
+chứng; (3) cổng CHẶN mục chưa đọc (từ 20/11/2026 chiều — sổ nợ ở test_cong_nguon_chinh_thuc_chan_20261120), không đụng mục
+có PMID; (4) công cụ không ghi khi chạy khô, không tải miền chặn truy
 cập tự động, từ chối trang chặn/lỗi/ngắn, chỉ lưu bản sao chữ ở miền giấy phép mở; (5) «bác sĩ đã đọc» đòi kết luận của bác sĩ.
 """
 from __future__ import annotations
@@ -94,7 +95,7 @@ def _cong(items, kho):
     return e, w, o
 
 
-def test_cong_chi_canh_bao_khong_chan_va_bo_qua_muc_co_pmid(tmp_path):
+def test_cong_chan_muc_chua_doc_va_bo_qua_muc_co_pmid(tmp_path):
     kho = tmp_path / "toan_van_oa"
     kho.mkdir()
     _ho_so(kho, "url:https://a.gov/da-doc")
@@ -102,10 +103,10 @@ def test_cong_chi_canh_bao_khong_chan_va_bo_qua_muc_co_pmid(tmp_path):
              _muc("I3", pmid="12345678", url="https://a.gov/chua"), _muc("I4", decision="consider", url="https://a.gov/x"),
              _muc("I5")]
     e, w, o = _cong(items, kho)
-    assert e == []
-    assert any("[I2]" in x and "CHƯA có bằng chứng" in x for x in w)
-    assert any("[I5]" in x and "không truy nguyên" in x for x in w)
-    assert not any("[I3]" in x or "[I4]" in x or "[I1]" in x for x in w)
+    assert w == []
+    assert any("[I2]" in x and "CHƯA có bằng chứng" in x for x in e)
+    assert any("[I5]" in x and "không truy nguyên" in x for x in e)
+    assert not any("[I3]" in x or "[I4]" in x or "[I1]" in x for x in e)
     assert any("1/3" in x for x in o)
 
 

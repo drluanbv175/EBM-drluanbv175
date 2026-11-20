@@ -1012,9 +1012,14 @@ def kiem_toan_van_apply(items, kho, errors, warns, oks, *, ten_dashboard="", duo
 # chưa từng chứng minh đã đọc nguồn gốc. Khoá nguồn = `doi:<doi chữ thường>` hoặc `url:<scheme>://<host>/<path>[?query đã sắp]`
 # (bỏ fragment, tham số utm_*, dấu / cuối của path). BẰNG CHỨNG (một trong): hồ sơ `toan_van_oa/nguon_chinh_thuc/*.json` (máy tải trọn trang hoặc làn trình
 # duyệt thật — `tools/doc_nguon_chinh_thuc.py`) hoặc dòng `nguon` trong sổ «bác sĩ đã đọc» (`trinh_duyet/bac-si-da-doc.jsonl`).
-# MỨC: CẢNH BÁO (chưa chặn) — chuyển sang chặn là quyết định của bác sĩ và phải đi qua sổ nợ như nhóm PMID (bánh cóc), không
-# bật một cổng mới làm đỏ hàng loạt gói đã PASS.
+# MỨC: CHẶN (20/11/2026 — bác sĩ «Hoàn thiện tất cả vấn đề trên», chọn «Chặn, có sổ nợ»; trước đó chỉ cảnh báo). BÁNH CÓC như
+# nhóm PMID (BH161): mục apply không PMID mà nguồn chưa có bằng chứng đã đọc ⇒ LỖI; riêng mục ĐÃ TỒN lúc chuyển sang chặn nằm
+# trong SỔ NỢ `no-nguon-chinh-thuc-apply.json` cạnh dashboard (khoá = dashboard + item + KHOÁ NGUỒN — đổi URL/DOI là nguồn MỚI,
+# không còn được nợ), lập một lần bằng `tools/doc_nguon_chinh_thuc.py so-no --tao` với nguyên văn lời bác sĩ ⇒ cảnh báo tới
+# «han», quá hạn ⇒ lỗi. Sổ hỏng ⇒ coi như vắng (fail-closed). Mục apply không PMID mà không có cả DOI lẫn URL hợp lệ ⇒ lỗi
+# (không truy nguyên được nguồn thì không chứng minh được đã đọc).
 THU_MUC_NGUON_CHINH_THUC = "nguon_chinh_thuc"
+TEN_SO_NO_NGUON = "no-nguon-chinh-thuc-apply.json"
 SO_KY_TU_TOI_THIEU_NGUON = 1500
 _CACH_DOC_NGUON = ("may_tai", "trinh_duyet")
 
@@ -1069,13 +1074,33 @@ def bang_chung_nguon_chinh_thuc(kho):
     return ra
 
 
-def kiem_doc_nguon_chinh_thuc_apply(items, kho, errors, warns, oks):
-    """Mục decision='apply' KHÔNG có PMID chính: CẢNH BÁO khi nguồn chính thức (DOI/URL) chưa có bằng chứng đã đọc.
-    Mục không có cả DOI lẫn URL hợp lệ ⇒ cảnh báo riêng (không truy nguyên được nguồn để đọc). Không thấy kho ⇒ ⚪."""
+def doc_so_no_nguon(duong_so):
+    """(hạn: date | None, tập khoá (dashboard, item, khoá nguồn), cảnh báo | None). Vắng ⇒ (None, ∅, None); hỏng ⇒ coi như
+    vắng (fail-closed: mọi mục apply không PMID chưa đọc đều bị chặn)."""
+    p = Path(duong_so)
+    if not p.exists():
+        return None, set(), None
+    try:
+        d = json.loads(p.read_text(encoding="utf-8"))
+        han = date.fromisoformat(d["han"])
+        khoa = {(str(x.get("dashboard")), str(x.get("item")), str(x.get("khoa"))) for x in d["muc"] if isinstance(x, dict)}
+        return han, khoa, None
+    except (OSError, ValueError, KeyError, TypeError, AttributeError) as e:
+        return None, set(), ("sổ nợ nguồn chính thức %s KHÔNG đọc được (%s) — coi như không có sổ: mọi mục apply không PMID "
+                             "chưa đọc đều bị chặn" % (p.name, type(e).__name__))
+
+
+def kiem_doc_nguon_chinh_thuc_apply(items, kho, errors, warns, oks, *, ten_dashboard="", duong_so_no=None, hom_nay=None):
+    """Mục decision='apply' KHÔNG có PMID chính: nguồn chính thức (DOI/URL) chưa có bằng chứng đã đọc ⇒ CHẶN, trừ mục trong
+    sổ nợ còn hạn (cảnh báo). Mục không có cả DOI lẫn URL hợp lệ ⇒ chặn. Không thấy kho ⇒ ⚪ (xem khối chú thích phía trên)."""
     kho = Path(kho)
     if not kho.is_dir():
         oks.append("⚪ Không thấy kho toàn văn — CHƯA đo bảo đảm đọc nguồn chính thức cho mục apply không PMID (không phải đạt).")
         return
+    hom_nay = hom_nay or date.today()
+    han, khoa_no, loi_so = doc_so_no_nguon(duong_so_no or (kho.parent / TEN_SO_NO_NGUON))
+    if loi_so:
+        warns.append(loi_so)
     co = bang_chung_nguon_chinh_thuc(kho)
     tong = da_doc = 0
     for ch in items:
@@ -1085,16 +1110,23 @@ def kiem_doc_nguon_chinh_thuc_apply(items, kho, errors, warns, oks):
         iid = field(ch, "id") or "(?)"
         k = khoa_nguon_chinh_thuc(field(ch, "doi"), field(ch, "url"))
         if k is None:
-            warns.append("[%s] ĐỌC NGUỒN CHÍNH THỨC: decision='apply' không có PMID, DOI hay URL hợp lệ — không truy nguyên được "
-                         "nguồn để đọc." % iid)
+            errors.append("[%s] ĐỌC NGUỒN CHÍNH THỨC: decision='apply' không có PMID, DOI hay URL hợp lệ — không truy nguyên "
+                          "được nguồn để đọc (chặn): bổ sung DOI/URL nguồn chính thức, hoặc bác sĩ hạ xuống consider." % iid)
             continue
         if k in co:
             da_doc += 1
             continue
-        warns.append("[%s] ĐỌC NGUỒN CHÍNH THỨC: decision='apply' (không PMID) nhưng nguồn %s CHƯA có bằng chứng đã đọc — máy tải "
-                     "trọn trang/làn trình duyệt: `python3 tools/doc_nguon_chinh_thuc.py tai --ghi`; bác sĩ đã tự đọc: "
-                     "`python3 tools/doc_nguon_chinh_thuc.py bac-si-da-doc --nguon \"%s\" --ghi-chu \"<kết luận>\" --ghi` "
-                     "(hiện chỉ CẢNH BÁO, chưa chặn)." % (iid, k, k))
+        cach = ("máy tải trọn trang/làn trình duyệt: `python3 tools/doc_nguon_chinh_thuc.py tai --ghi`; bác sĩ đã tự đọc: "
+                "`python3 tools/doc_nguon_chinh_thuc.py bac-si-da-doc --nguon \"%s\" --ghi-chu \"<kết luận>\" --ghi`; hoặc bác sĩ "
+                "hạ xuống consider" % k)
+        if (ten_dashboard, iid, k) in khoa_no and han and hom_nay <= han:
+            warns.append("[%s] NỢ NGUỒN CHÍNH THỨC: decision='apply' (không PMID) nhưng nguồn %s CHƯA có bằng chứng đã đọc — "
+                         "hạn %s (còn %d ngày; quá hạn cổng CHẶN). Trả nợ: %s." % (iid, k, han.isoformat(),
+                                                                               (han - hom_nay).days, cach))
+        else:
+            ly_do = ("NỢ QUÁ HẠN %s" % han.isoformat()) if (ten_dashboard, iid, k) in khoa_no else "mục KHÔNG có trong sổ nợ"
+            errors.append("[%s] ĐỌC NGUỒN CHÍNH THỨC: decision='apply' (không PMID) nhưng nguồn %s CHƯA có bằng chứng đã đọc "
+                          "(%s) — chặn: %s." % (iid, k, ly_do, cach))
     if tong:
         oks.append("Đọc nguồn chính thức (mục apply không PMID): %d/%d có bằng chứng đã đọc." % (da_doc, tong))
 
@@ -1949,7 +1981,8 @@ def main():
             warns.append("--strict-sources đang chạy offline: đã kiểm hợp đồng nguồn, nhưng chưa phân giải thật PMID/DOI. Dashboard thật nên chạy thêm --online.")
         kiem_toan_van_apply(items, Path(a.file).resolve().parent / "toan_van_oa", errors, warns, oks,
                             ten_dashboard=Path(a.file).stem)
-        kiem_doc_nguon_chinh_thuc_apply(items, Path(a.file).resolve().parent / "toan_van_oa", errors, warns, oks)
+        kiem_doc_nguon_chinh_thuc_apply(items, Path(a.file).resolve().parent / "toan_van_oa", errors, warns, oks,
+                                        ten_dashboard=Path(a.file).stem)
 
     # 2) PII (heuristic — chỉ cảnh báo)
     pii = []
