@@ -285,6 +285,37 @@ def test_phieu_goi_bac_si_ky_khi_goi_bi_chan_chi_vi_cho_chu_ky_khong_bao_dung_la
     assert any("cổng liêm chính chặn" in x for x in v2)
 
 
+WL_NT = "Suy tim + bệnh nội tiết (tuyến giáp, thượng thận)"
+DL_NT = {**DL, "watchlist": WL + [WL_NT],
+         "muc": {**DL["muc"], "SuyTim_NoiTiet": WL_NT},
+         "theo_goc": {**DL["theo_goc"],
+                      "SuyTim": DL["theo_goc"]["SuyTim"] + [
+                          ("20261107", "SuyTim_NoiTiet", _d("SuyTim_NoiTiet_20261107"))]}}
+
+
+def test_anh_xa_cap_lat_cat_thang_anh_xa_cua_goc():
+    """20/11/2026: SuyTim_NoiTiet thuộc gốc SuyTim → watchlist CHUNG; orchestrator + phiếu tháng quét nhầm (24 ứng viên,
+    0 bài nội tiết). Khoá cấp lát cắt do người khai phải thắng ánh xạ của gốc."""
+    r = rs.resolve("SuyTim_NoiTiet", DL_NT)
+    assert r["loai"] == "watchlist" and r["a2_arg"] == WL_NT, r
+    assert [x["ten"] for x in r["lat_cat"]] == ["SuyTim_NoiTiet"]
+
+
+def test_goc_va_watchlist_chung_khong_keo_theo_lat_cat_khai_rieng():
+    r = rs.resolve("Suy tim", DL_NT)
+    ten = {x["ten"] for x in r["lat_cat"]}
+    assert r["a2_arg"] == WL[2] and "SuyTim_NoiTiet" not in ten, "lát cắt khai riêng bị A4/B2 của watchlist chung kéo theo"
+    assert {"SuyTim_TongHop", "TienLuongSuyTim"} <= ten
+    assert "SuyTim_NoiTiet" not in {x["ten"] for x in rs.resolve(WL[2], DL_NT)["lat_cat"]}
+    r_nt = rs.resolve(WL_NT, DL_NT)
+    assert [x["ten"] for x in r_nt["lat_cat"]] == ["SuyTim_NoiTiet"], "gõ tên watchlist riêng phải ra đúng lát cắt của nó"
+
+
+def test_khong_khai_cap_lat_cat_thi_giu_hanh_vi_cu():
+    du = {**DL_NT, "muc": DL["muc"]}
+    assert rs.resolve("SuyTim_NoiTiet", du)["a2_arg"] == WL[2]
+
+
 def test_chuoi_ngan_khong_duoc_coi_la_khop_duy_nhat():
     """P1-16/P1-02: «a», «da», «Đ» khớp gần cả kho — không phân giải."""
     for q in ("a", "da", "Đ", "nan", "1"):

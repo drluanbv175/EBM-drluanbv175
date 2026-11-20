@@ -122,10 +122,26 @@ def resolve(q: str, du_lieu: dict | None = None) -> dict:
         kq["ly_do"] = "tên chủ đề rỗng"
         return kq
 
+    tap_lat = {lat: g for g, lst in theo_goc.items() for _n, lat, _p in lst}
+    # ÁNH XẠ CẤP LÁT CẮT (20/11/2026). Khoá trong `muc` trùng TÊN MỘT LÁT CẮT (và không phải tên gốc) THẮNG ánh xạ của gốc.
+    # Vì sao: `SuyTim_NoiTiet` thuộc gốc `SuyTim` → «Suy tim — tiên lượng & điều trị», nên orchestrator và phiếu tháng
+    # EndNote quét watchlist CHUNG thay cho mục riêng «Suy tim + bệnh nội tiết…» đã có — đo 20/11/2026: 24 ứng viên, 0 bài
+    # về nội tiết, và phiếu tháng báo «2 guideline mới» cho lát cắt này dựa trên lượt quét sai đó. Vẫn chỉ tin NGƯỜI khai (BH28).
+    lat_rieng = {k: w for k, w in muc.items() if k in tap_lat and k not in theo_goc}
+
+    def _wl_cua_lat(lat: str) -> str | None:
+        """Watchlist HIỆU LỰC của một lát cắt: khoá cấp lát cắt nếu có, nếu không thì ánh xạ của gốc."""
+        return lat_rieng.get(lat) or muc.get(tap_lat.get(lat, ""))
+
+    def _lat_theo_wl(cac_goc: list[str], cac_wl: list[str], chi_lat: str | None = None) -> list[dict]:
+        """Lát cắt mới nhất mà watchlist HIỆU LỰC nằm trong `cac_wl` — kể cả lát cắt khai riêng thuộc gốc khác."""
+        goc_mo = set(cac_goc) | {tap_lat[lat] for lat, w in lat_rieng.items() if w in cac_wl}
+        return [x for x in _lat_cat_moi_nhat(theo_goc, sorted(goc_mo), chi_lat) if _wl_cua_lat(x["ten"]) in cac_wl]
+
     def _theo_wl(cac_wl: list[str], cach: str, a2_arg: str) -> dict:
-        goc = sorted(g for g, w in muc.items() if w in cac_wl)
+        goc = sorted(g for g, w in muc.items() if w in cac_wl and g not in lat_rieng)
         kq.update(loai="watchlist", cach=cach, wl_topics=list(cac_wl), a2_arg=a2_arg, goc=goc,
-                  lat_cat=_lat_cat_moi_nhat(theo_goc, goc))
+                  lat_cat=_lat_theo_wl(goc, cac_wl))
         return kq
 
     # (1) đúng tên watchlist
@@ -134,7 +150,6 @@ def resolve(q: str, du_lieu: dict | None = None) -> dict:
         return _theo_wl(dung[:1], "ten-watchlist", dung[0])
 
     # (2) đúng tên lát cắt hoặc chủ đề gốc — dùng ánh xạ NGƯỜI khai
-    tap_lat = {lat: g for g, lst in theo_goc.items() for _n, lat, _p in lst}
     lat_khop = [lat for lat in tap_lat if chuan(lat) == cq]
     goc_khop = [g for g in theo_goc if chuan(g) == cq]
     if lat_khop or goc_khop:
@@ -152,14 +167,14 @@ def resolve(q: str, du_lieu: dict | None = None) -> dict:
             # cấp CHỦ ĐỀ: lấy mọi gốc cùng trỏ một mục watchlist — A2 quét theo mục watchlist nên các gốc
             # này cùng được «làm mới» bởi một lượt quét (vd SuyTim + TienLuongSuyTim).
             cac_goc = sorted(x for x, w in muc.items() if w == w0) if w0 else [g]
-        if g in khong_can:
+        if g in khong_can and not (chi_lat and chi_lat in lat_rieng):
             kq.update(loai="khong_can", cach=cach, goc=[g], ly_do=str(khong_can[g]),
                       lat_cat=_lat_cat_moi_nhat(theo_goc, [g], chi_lat))
             return kq
-        w = muc.get(g)
+        w = _wl_cua_lat(chi_lat) if chi_lat else muc.get(g)
         if w:
             kq.update(loai="watchlist", cach=cach, wl_topics=[w], a2_arg=w, goc=cac_goc,
-                      lat_cat=_lat_cat_moi_nhat(theo_goc, cac_goc, chi_lat))
+                      lat_cat=_lat_theo_wl(cac_goc, [w], chi_lat))
             return kq
         kq.update(loai="khong_ro", cach=cach, goc=[g],
                   lat_cat=_lat_cat_moi_nhat(theo_goc, [g], chi_lat),

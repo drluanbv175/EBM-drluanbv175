@@ -82,6 +82,10 @@ def main() -> int:
     # hơn chưa khai, vì nó trông như đã canh.
     tro_sai = [(c, co_canh[c]) for c in chu_de
                if c in co_canh and ten_wl and co_canh[c] not in ten_wl]
+    # Khoá CẤP LÁT CẮT (20/11/2026, `chu_de_resolver`): khai riêng một lát cắt thắng ánh xạ của gốc — trỏ sai cũng là ✓ rỗng.
+    ten_lat = {lc for g in theo_goc for _n, lc, _p in theo_goc[g]}
+    tro_sai += [(k, w) for k, w in sorted(co_canh.items())
+                if k not in theo_goc and k in ten_lat and ten_wl and w not in ten_wl]
 
     if a.im_khi_on and not chua_khai and not tro_sai:
         return 0
