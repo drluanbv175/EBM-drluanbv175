@@ -500,17 +500,22 @@ def giac_quan_no_toan_van(dash_dir: Path, hom_nay: dt.date | None = None) -> lis
         ra.append((1 if con <= 7 else 2, f"{len(no['trong_han'])} mục «Áp dụng ngay» còn NỢ toàn văn — hạn {no['han']} (còn {con} "
                                          "ngày; quá hạn cổng chặn) — làn trình duyệt hoặc bác sĩ xác nhận đã đọc",
                    "python3 tools/so_toan_van.py"))
-    # 20/11/2026: mục apply KHÔNG có PMID — nguồn chính thức (DOI/URL) chưa có bằng chứng đã đọc (cổng mới chỉ cảnh báo).
+    # 20/11/2026: mục apply KHÔNG có PMID — nguồn chính thức (DOI/URL) chưa có bằng chứng đã đọc. Cổng CHẶN (bác sĩ chọn «Chặn,
+    # có sổ nợ»): ngoài sổ nợ / quá hạn / không DOI-URL ⇒ ưu tiên 1; nợ trong hạn ⇒ nhắc kèm số ngày (ưu tiên 1 khi ≤ 7 ngày).
     try:
-        ng = stv.quet_nguon_chinh_thuc(dash_dir, kho)
+        ng = stv.quet_nguon_chinh_thuc(dash_dir, kho, hom_nay)
     except Exception as exc:  # noqa: BLE001 — phần mở rộng hỏng phải hiện ra, không làm câm phần PMID
         _ghi_chet(["", "đọc nguồn chính thức"], f"lỗi {type(exc).__name__}")
         return ra
-    con = ng["so_nguon"] - ng["da_doc"]
-    if con:
-        ra.append((3, f"{con}/{ng['so_nguon']} nguồn chính thức (DOI/URL) của mục «Áp dụng ngay» KHÔNG PMID chưa có bằng chứng "
-                      "đã đọc — máy tải trọn trang được phần lớn; FDA/EMA và trang chặn bot đi làn trình duyệt",
-                   "python3 tools/doc_nguon_chinh_thuc.py tai --tat-ca --ghi"))
+    if ng["chan"]:
+        ra.append((1, f"{ng['chan']} mục «Áp dụng ngay» KHÔNG PMID bị cổng ĐANG CHẶN — nguồn chính thức (DOI/URL) chưa có bằng "
+                      "chứng đã đọc (ngoài sổ nợ, nợ quá hạn, hoặc không DOI/URL): máy tải trọn trang, làn trình duyệt, bác sĩ "
+                      "xác nhận đã đọc, hoặc hạ «Cân nhắc»", "python3 tools/doc_nguon_chinh_thuc.py so-no"))
+    if ng["no_trong_han"]:
+        con = (dt.date.fromisoformat(ng["han"]) - hom_nay).days
+        ra.append((1 if con <= 7 else 2, f"{ng['no_trong_han']} mục «Áp dụng ngay» KHÔNG PMID còn NỢ đọc nguồn chính thức — hạn "
+                                         f"{ng['han']} (còn {con} ngày; quá hạn cổng chặn) — làn trình duyệt hoặc bác sĩ xác "
+                                         "nhận đã đọc", "python3 tools/doc_nguon_chinh_thuc.py so-no"))
     return ra
 
 

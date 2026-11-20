@@ -1332,9 +1332,12 @@ vào sổ. Xem nợ + cách trả: `python3 tools/so_toan_van.py`. Chuỗi máy
 `ops/orchestrator.py --topic` chạy bước «TV» (`tools/toan_van_theo_chu_de.py`): gom bản hợp lệ → đọc sâu → phiếu làn trình
 duyệt cho bài còn thiếu — ĐỌC phiếu đó trước khi thẩm định ứng viên.
 **Mục `apply` KHÔNG PMID (20/11/2026):** nguồn chính thức chỉ có DOI/URL (FDA/MHRA, DailyMed/openFDA, trang guideline) cũng
-cần bằng chứng đã đọc — cổng cảnh báo «ĐỌC NGUỒN CHÍNH THỨC» (chưa chặn). `python3 tools/doc_nguon_chinh_thuc.py tai --ghi`
-(máy chỉ tải miền nhà nước/NXB giấy phép mở; NXB «cấm» chưa uỷ quyền ⇒ bác sĩ đọc rồi `bac-si-da-doc`; còn lại ⇒ làn trình
-duyệt `huong-dan`, NXB chưa kiểm phải khai `--dieu-khoan`).
+cần bằng chứng đã đọc — cổng «ĐỌC NGUỒN CHÍNH THỨC» CHẶN (từ 20/11/2026, bác sĩ chọn «Chặn, có sổ nợ»); mục không có cả
+DOI lẫn URL hợp lệ cũng bị chặn. Chỉ 9 mục tồn trong sổ nợ `no-nguon-chinh-thuc-apply.json` (hạn 20/12/2026; khoá gồm cả
+URL/DOI — đổi nguồn là mục MỚI) được cảnh báo; xem nợ: `python3 tools/doc_nguon_chinh_thuc.py so-no`. Tạo bằng chứng:
+`python3 tools/doc_nguon_chinh_thuc.py tai --ghi` (máy chỉ tải miền nhà nước/NXB giấy phép mở; NXB «cấm» chưa uỷ quyền ⇒
+bác sĩ đọc rồi `bac-si-da-doc`; còn lại ⇒ làn trình duyệt `huong-dan`, NXB chưa kiểm phải khai `--dieu-khoan`). Agent KHÔNG
+tự lập/gia hạn sổ nợ (`so-no --tao/--gia-han` đòi nguyên văn lời bác sĩ).
 
 **Tuyên bố độ phủ (LÔ I):** mỗi gói phát hành dán khối từ `python3 tools/tuyen_bo_do_phu.py`.
 

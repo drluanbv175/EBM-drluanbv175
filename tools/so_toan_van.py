@@ -105,15 +105,21 @@ def quet_muc(dash: Path, kho: Path, hom_nay: date | None = None) -> list[dict]:
     return tho
 
 
-def quet_nguon_chinh_thuc(dash: Path, kho: Path) -> dict:
+def quet_nguon_chinh_thuc(dash: Path, kho: Path, hom_nay: date | None = None) -> dict:
     """Mục apply KHÔNG có PMID (20/11/2026 — mở rộng bảo đảm sang nguồn chính thức DOI/URL): {so_muc, so_nguon, da_doc,
-    khong_khoa}. Dùng CHÍNH hàm của cổng (`verify_dashboard.khoa_nguon_chinh_thuc` · `bang_chung_nguon_chinh_thuc`)."""
+    khong_khoa, chan, no_trong_han, han}. Dùng CHÍNH hàm của cổng (`verify_dashboard.khoa_nguon_chinh_thuc` ·
+    `bang_chung_nguon_chinh_thuc`) và sổ nợ của cổng chặn (`doc_nguon_chinh_thuc.phan_loai_no` — sổ hỏng ⇒ mọi mục chưa đọc
+    tính là CHẶN, fail-closed)."""
     dn = _nap("_dnct_stv", REPO / "tools/doc_nguon_chinh_thuc.py")
     V = dn.vd()
     muc = dn.quet_muc(sorted(Path(dash).glob("WebDashboard_*.html")), V)
-    nhom = dn.nhom_theo_khoa(muc, V.bang_chung_nguon_chinh_thuc(kho))
+    co = V.bang_chung_nguon_chinh_thuc(kho)
+    nhom = dn.nhom_theo_khoa(muc, co)
+    no = dn.phan_loai_no(muc, co, dn.doc_so_no(dash), hom_nay or date.today())
     return {"so_muc": len(muc), "so_nguon": len(nhom), "da_doc": sum(1 for x in nhom.values() if x["da_doc"]),
-            "khong_khoa": sum(1 for m in muc if not m["khoa"])}
+            "khong_khoa": sum(1 for m in muc if not m["khoa"]),
+            "chan": len(no["khong_khoa"]) + len(no["ngoai_so"]) + len(no["qua_han"]),
+            "no_trong_han": len(no["trong_han"]), "han": no["han"]}
 
 
 def phan_loai_no(muc: list[dict], so_no: dict | None, hom_nay: date) -> dict:
@@ -171,8 +177,15 @@ def bao_cao(muc: list[dict], no: dict, so_no: dict | None, hom_nay: date, nguon:
         khong_pmid = [f"Nguồn chính thức của mục «Áp dụng ngay» KHÔNG có PMID (DOI/URL): {nguon['da_doc']}/{nguon['so_nguon']} "
                       f"nguồn có bằng chứng đã đọc ({nguon['so_muc']} mục"
                       + (f"; {nguon['khong_khoa']} mục không truy nguyên được nguồn" if nguon["khong_khoa"] else "") + ")."]
-        if con:
-            khong_pmid += [f"🟠 {con} nguồn chưa có bằng chứng — cổng hiện chỉ CẢNH BÁO. Làm tiếp:",
+        if nguon.get("chan"):
+            khong_pmid.append(f"🔴 {nguon['chan']} mục bị cổng CHẶN (nguồn chưa đọc NGOÀI sổ nợ, nợ quá hạn, hoặc không có DOI/URL).")
+        if nguon.get("no_trong_han"):
+            ngay = (date.fromisoformat(nguon["han"]) - hom_nay).days if nguon.get("han") else "?"
+            khong_pmid.append(f"🟠 {nguon['no_trong_han']} mục NỢ nguồn chính thức — hạn {nguon.get('han')} (còn {ngay} ngày; "
+                              "quá hạn cổng CHẶN).")
+        if con or nguon.get("chan") or nguon.get("no_trong_han"):
+            khong_pmid += [f"{con} nguồn chưa có bằng chứng đã đọc — cổng CHẶN mục mới (sổ nợ: "
+                           "python3 tools/doc_nguon_chinh_thuc.py so-no). Làm tiếp:",
                            "  máy tải trọn trang:  python3 tools/doc_nguon_chinh_thuc.py tai --tat-ca --ghi",
                            "  làn trình duyệt:     python3 tools/doc_nguon_chinh_thuc.py huong-dan",
                            "  bác sĩ đã tự đọc:    python3 tools/doc_nguon_chinh_thuc.py bac-si-da-doc --nguon \"<DOI|URL>\" "
