@@ -23,8 +23,10 @@ CÁCH LÀM
    GHÉP CẶP = chính mục gốc của từng đột biến (mục thật + nguồn thật). Đột biến chỉ tính «bắt» khi API phán trục đích của
    BẢN GỐC không phải false mà của BẢN ĐỘT BIẾN là false — gốc đã bị nghi thì không quy được cho đột biến (cùng luật với
    điều kiện tiên quyết K4 của do_nhay).
-4. Chia DEV/TEST theo MỤC (sha256 hạt giống + mục, gốc và mọi đột biến của nó cùng một tập): sửa prompt chỉ nhìn DEV; số
-   báo cáo để quyết là số trên TEST — tránh «học tủ» trên chính tập đo.
+4. Chia DEV/TEST theo PMID (sha256 hạt giống + PMID; mục không PMID ⇒ theo mục): gốc, mọi đột biến của nó VÀ mọi phiên bản
+   dashboard trích cùng một bài luôn cùng một tập. Sửa prompt chỉ nhìn DEV; số báo cáo để quyết là số trên TEST — tránh «học
+   tủ» trên chính tập đo. (Trước 20/11/2026 chiều chia theo MỤC = dashboard + chỉ số: cùng một PMID ở hai phiên bản dashboard
+   có thể rơi vào hai tập ⇒ rò rỉ DEV→TEST — góp ý rà độc lập. `--chia-theo muc` tái lập cách cũ.)
 5. Báo cáo không chép văn bản nguồn hay lý do của mô hình (bàn về văn bản có bản quyền) — chỉ định danh, lớp, mã phán quyết.
 
 GIỚI HẠN NÓI TRƯỚC
@@ -48,6 +50,7 @@ from __future__ import annotations
 import argparse
 import datetime as dt
 import hashlib
+import re
 import importlib.util
 import json
 import math
@@ -126,9 +129,23 @@ def _bam(*phan) -> str:
     return hashlib.sha256("|".join(str(x) for x in phan).encode("utf-8")).hexdigest()
 
 
-def tap_cua(hat: int, dashboard: str, chi_so) -> str:
-    """DEV/TEST theo MỤC — gốc và mọi đột biến của cùng mục luôn cùng tập."""
+def tap_cua(hat: int, dashboard: str, chi_so, pmid: str | None = None) -> str:
+    """DEV/TEST theo PMID khi có (mọi phiên bản dashboard trích cùng bài ⇒ cùng tập), không có PMID ⇒ theo MỤC."""
+    pm = str(pmid or "").strip()
+    if re.fullmatch(r"\d{6,9}", pm):
+        return "dev" if int(_bam(hat, "tach-pmid", pm)[:8], 16) % 2 == 0 else "test"
     return "dev" if int(_bam(hat, "tach", dashboard, chi_so)[:8], 16) % 2 == 0 else "test"
+
+
+CHIA_THEO = "pmid"                      # "muc" ⇒ tái lập cách chia trước 20/11/2026 chiều
+
+
+def tap_dot_bien(hat: int, d: dict, goc_theo_khoa: dict, chia_theo: str | None = None) -> str:
+    """Tập của một đột biến theo cách chia đang dùng (PMID lấy từ MỤC GỐC — đột biến không đổi PMID)."""
+    if (chia_theo or CHIA_THEO) == "muc":
+        return tap_cua(hat, d["dashboard"], d["_khoa"][1])
+    g = goc_theo_khoa.get(tuple(d["_khoa"])) or {}
+    return tap_cua(hat, d["dashboard"], d["_khoa"][1], str((g.get("muc") or {}).get("pmid") or ""))
 
 
 def _hien_api(it: dict) -> tuple:
@@ -360,7 +377,7 @@ def tong_hop(mau: list[dict], goc_theo_khoa: dict, R: dict, A, kqtc, mdl: str, p
     for tap in ("dev", "test", "tat_ca"):
         if chi_tap and tap != chi_tap:                 # đo một tập ⇒ báo cáo CHỈ tập đó (không trộn mục chưa chấm)
             continue
-        ds = [d for d in mau if tap == "tat_ca" or tap_cua(hat, d["dashboard"], d["_khoa"][1]) == tap]
+        ds = [d for d in mau if tap == "tat_ca" or tap_dot_bien(hat, d, goc_theo_khoa) == tap]
         lop = {}
         for ten in LOP_API:
             x = [d for d in ds if d["lop"] == ten]
@@ -471,6 +488,8 @@ def main(argv: list[str] | None = None, *, cau_noi=None, client=None) -> int:
     ap.add_argument("--so-mau", type=int, default=SO_MAU_MAC_DINH)
     ap.add_argument("--phien-ban", help="phiên bản prompt (mặc định phiên bản đang dùng của kiem_ngu_nghia_api)")
     ap.add_argument("--model")
+    ap.add_argument("--chia-theo", choices=("pmid", "muc"), default="pmid",
+                    help="chia DEV/TEST theo PMID (mặc định, chống rò rỉ giữa phiên bản) hoặc theo mục (cách cũ)")
     ap.add_argument("--chi-tap", choices=("dev", "test"), help="chỉ gọi/chấm một tập")
     ap.add_argument("--goi-api", action="store_true", help="gọi thật (tính phí) các lượt còn thiếu trong bộ đệm")
     ap.add_argument("--toi-da", type=int, help="trần số lượt gọi lượt này")
@@ -507,7 +526,9 @@ def main(argv: list[str] | None = None, *, cau_noi=None, client=None) -> int:
     if not mau:
         print("⚪ Không có đột biến nào trong tầm API — không đo được.")
         return 2
-    mau_goi = [d for d in mau if not a.chi_tap or tap_cua(hat, d["dashboard"], d["_khoa"][1]) == a.chi_tap]
+    global CHIA_THEO
+    CHIA_THEO = a.chia_theo
+    mau_goi = [d for d in mau if not a.chi_tap or tap_dot_bien(hat, d, dl["goc_theo_khoa"]) == a.chi_tap]
     yc = lap_yeu_cau(mau_goi, dl["goc_theo_khoa"], A, kqtc, mdl, pb)
     tep = Path(a.bo_dem) if a.bo_dem else tep_bo_dem()
     dem = doc_bo_dem(tep)
@@ -549,7 +570,7 @@ def main(argv: list[str] | None = None, *, cau_noi=None, client=None) -> int:
         print(f"  [{tap}] " + " · ".join(dong) + f" · đối chứng API nghi {_pt(dc['api_ty_le'])} (n={dc['n']})")
     ngay = a.ngay or dt.date.today().strftime("%Y%m%d")
     bj = {"cong_cu": "do_nhay_api_ngu_nghia", "ngay": ngay, "phien_ban": pb, "model": mdl, "hat_giong": hat,
-          "so_mau": a.so_mau, "so_dashboard": dl["so_dashboard"], "so_muc": dl["so_muc"], "phu_mau": phu,
+          "so_mau": a.so_mau, "chia_theo": CHIA_THEO, "so_dashboard": dl["so_dashboard"], "so_muc": dl["so_muc"], "phu_mau": phu,
           "bam_ma": {n: _bam_tep(Path(__file__).resolve().parent / n) for n in
                      ("do_nhay_api_ngu_nghia.py", "kiem_ngu_nghia_api.py", "do_nhay_kiem_ngu_nghia.py")},
           "ket_qua": th}

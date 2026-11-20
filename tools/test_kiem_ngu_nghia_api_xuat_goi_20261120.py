@@ -136,6 +136,27 @@ def test_tran_luot_goi_moi_dashboard(tmp_path, capsys):
     assert len(cn._goi) == 1 and "vượt trần 1 lượt/dashboard — 2 mục chưa chấm" in out
 
 
+def test_tran_ngay_dem_tu_bo_dem_xuat_goi(tmp_path, capsys):
+    """Trần NGÀY (20/11/2026): đếm lượt đã gọi hôm nay từ bộ đệm xuất gói; lượt của ngày khác không tính."""
+    import datetime as _dt
+    hom_nay = _dt.date(2026, 11, 20)
+    (tmp_path / "dem.json").write_text(json.dumps({
+        "a": {"ket_qua": {}, "luc": "2026-11-20T08:00:00"}, "b": {"ket_qua": {}, "luc": "2026-11-20T09:00:00"},
+        "c": {"ket_qua": {}, "luc": "2026-11-19T23:59:00"}}), encoding="utf-8")
+    cn = _cau_noi(ON)
+    _, out = _chay(tmp_path, cn, capsys, tran_ngay=3, hom_nay=hom_nay)
+    assert len(cn._goi) == 1, "đã gọi 2 hôm nay, trần 3 ⇒ chỉ còn 1 lượt"
+    assert "TRẦN NGÀY 3" in out and "hôm nay đã gọi 2" in out and "2 mục chưa chấm" in out
+    cn2 = _cau_noi(ON)
+    # trần 2 = đúng số lượt «a», «b» của 20/11 (không dựa vào dấu `luc` thật của lượt vừa gọi — CI có thể chạy ngày khác)
+    _, out2 = _chay(tmp_path, cn2, capsys, tran_ngay=2, hom_nay=hom_nay)
+    assert cn2._goi == [] and "TRẦN NGÀY 2" in out2, "đủ trần ⇒ không gọi"
+    cn3 = _cau_noi(ON)
+    _chay(tmp_path, cn3, capsys, tran_ngay=3, hom_nay=_dt.date(2026, 11, 21))
+    assert len(cn3._goi) == 2, "sang ngày mới ⇒ chấm phần còn lại"
+    assert A.TRAN_GOI_MOI_NGAY >= A.TRAN_GOI_MOI_GOI
+
+
 def test_loi_tran_chi_phi_dung_gui_va_ket_qua_hong_di_tiep(tmp_path, capsys):
     cn = _cau_noi(ON, nem=lambda n: _KetQuaHong("cắt cụt") if n == 1 else (_LoiCucBo("HetNganSach") if n == 2 else None))
     ma, out = _chay(tmp_path, cn, capsys)

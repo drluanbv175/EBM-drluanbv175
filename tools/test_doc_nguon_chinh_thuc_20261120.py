@@ -308,3 +308,20 @@ def test_chuyen_huong_sang_mien_khong_duoc_phep_bi_chan():
     with pytest.raises(D.urllib.error.URLError):
         h.redirect_request(req, None, 302, "Found", {}, "https://pmc.ncbi.nlm.nih.gov/articles/PMC1/")
     assert h.redirect_request(req, None, 302, "Found", {}, "https://www.gov.uk/b") is not None
+
+
+# ───── đối chiếu --doi với --url (góp ý rà độc lập 20/11/2026) ─────
+
+def test_nap_trinh_duyet_doi_chieu_doi_voi_url(tmp_path):
+    goc = dict(tieu_de="Trang thật", so_ky_tu=3000, sha256="d" * 64, ghi=True,
+               lan_fn=lambda u, d: {"lan": "trinh_duyet", "ly_do": "x", "can_dieu_khoan": False})
+    muc = [{"khoa": "doi:10.1234/co-url", "url": "https://journal.example.org/bai/1", "doi": "10.1234/co-url"},
+           {"khoa": "doi:10.1234/khong-url", "url": "", "doi": "10.1234/khong-url"}]
+    assert D.nap_trinh_duyet(tmp_path, "https://doi.org/10.9999/khac", doi="10.1234/co-url", muc=muc, **goc)[0] == 1
+    assert D.nap_trinh_duyet(tmp_path, "https://journal.example.org/x", doi="10.1234/go-nham", muc=muc, **goc)[0] == 1
+    assert D.nap_trinh_duyet(tmp_path, "https://mien-khac.example.net/x", doi="10.1234/co-url", muc=muc, **goc)[0] == 1
+    assert D.nap_trinh_duyet(tmp_path, "https://journal.example.org/x", doi="khong-phai-doi", muc=muc, **goc)[0] == 1
+    assert not (tmp_path / V.THU_MUC_NGUON_CHINH_THUC).exists(), "mọi lần từ chối không ghi gì"
+    assert D.nap_trinh_duyet(tmp_path, "https://journal.example.org/bai/1?tab=full", doi="10.1234/CO-URL", muc=muc, **goc)[0] == 0
+    assert D.nap_trinh_duyet(tmp_path, "https://nxb.example.com/b", doi="10.1234/khong-url", muc=muc, **goc)[0] == 0
+    assert V.bang_chung_nguon_chinh_thuc(tmp_path) == {"doi:10.1234/co-url", "doi:10.1234/khong-url"}

@@ -364,11 +364,40 @@ MA_TRONG_TRANG = ("(async()=>{const t=document.body.innerText.replace(/\\s+/g,' 
                   "sha256:[...new Uint8Array(h)].map(b=>b.toString(16).padStart(2,'0')).join('')}})()")
 
 
+def doi_khop_url(doi: str, url: str, muc: list[dict] | None, V) -> tuple[bool, str]:
+    """ĐỐI CHIẾU --doi với --url (20/11/2026 — góp ý rà độc lập): có DOI thì hồ sơ khoá theo DOI, nên một DOI gõ nhầm sẽ ghi
+    «đã đọc» cho NGUỒN KHÁC. Luật: DOI phải hợp lệ; URL dạng doi.org phải trỏ đúng DOI đó; còn lại DOI phải thuộc một mục apply
+    không PMID trong dashboard, và nếu mục đó có URL thì URL nạp phải CÙNG MIỀN (hostname) với URL của mục. Mục mang DOI mà
+    không có URL ⇒ không đối chiếu được miền, nhận."""
+    k = V.khoa_nguon_chinh_thuc(doi, None)
+    if k is None:
+        return False, f"--doi «{doi}» không phải DOI hợp lệ (10.xxxx/…)"
+    sp = urllib.parse.urlsplit(url)
+    host = (sp.hostname or "").lower()
+    if host in ("doi.org", "dx.doi.org"):
+        k_url = V.khoa_nguon_chinh_thuc(urllib.parse.unquote(sp.path.lstrip("/")), None)
+        return (True, "") if k_url == k else (False, f"URL doi.org trỏ DOI khác ({k_url or 'không hợp lệ'}) với --doi ({k})")
+    cung = [m for m in (muc or []) if m.get("khoa") == k]
+    if not cung:
+        return False, f"{k} không thuộc mục apply không PMID nào trong dashboard — kiểm lại --doi"
+    mien = {(urllib.parse.urlsplit(m["url"]).hostname or "").lower() for m in cung if m.get("url")}
+    if mien and host not in mien:
+        return False, f"URL ở miền {host}, khác miền URL của mục mang {k} ({', '.join(sorted(mien))}) — kiểm lại --doi/--url"
+    return True, ""
+
+
 def nap_trinh_duyet(kho: Path, url: str, tieu_de: str, so_ky_tu: int, sha256: str, *, ghi: bool, doi: str = "",
-                    dieu_khoan: str | None = None, lan_fn=None) -> tuple[int, str]:
+                    dieu_khoan: str | None = None, lan_fn=None, muc: list[dict] | None = None) -> tuple[int, str]:
     V = vd()
     if V.khoa_nguon_chinh_thuc(None, url) is None:
         return 1, "URL không hợp lệ (cần http/https)"
+    if (doi or "").strip():
+        host = (urllib.parse.urlsplit(url).hostname or "").lower()
+        if muc is None and host not in ("doi.org", "dx.doi.org"):
+            muc = quet_muc(chon_dashboard(True), V)
+        ok, ly = doi_khop_url(doi, url, muc, V)
+        if not ok:
+            return 1, f"từ chối — {ly}"
     k = V.khoa_nguon_chinh_thuc(doi, url)            # có DOI ⇒ khoá theo DOI (khớp khoá của mục trong dashboard)
     lan = (lan_fn or (lambda u, d: lan_doc(u, d, V=V)))(url, doi)
     if lan["lan"] == "bac_si":

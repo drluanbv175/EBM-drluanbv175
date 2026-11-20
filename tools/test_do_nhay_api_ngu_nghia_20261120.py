@@ -221,3 +221,19 @@ def test_loai_dot_bien_sinh_tu_muc_phan_b():
     giu, bo = D.loai_phan_b(mau, goc, D.khoa_phan_b(bv, A._bvk()), A._bvk())
     assert [d["_khoa"][1] for d in giu] == [2, 3] and bo == {"K1_quan_the": 2}
     assert D.khoa_phan_b(None, A._bvk()) == (set(), set())
+
+
+def test_chia_dev_test_theo_pmid_chong_ro_ri_giua_phien_ban():
+    """Góp ý rà độc lập 20/11/2026: cùng PMID ở hai phiên bản dashboard phải cùng một tập (trước đó chia theo dashboard+chỉ
+    số ⇒ 7/30 PMID nằm cả DEV lẫn TEST). Mục không PMID ⇒ chia theo mục như cũ; `--chia-theo muc` tái lập cách cũ."""
+    hat = 20261114
+    for pm in ("41275875", "38954657", "12345678", "30586067"):
+        tap = {D.tap_cua(hat, f"WebDashboard_X_{i}.html", i, pm) for i in range(30)}
+        assert len(tap) == 1, pm
+    assert {D.tap_cua(hat, "X.html", i, "") for i in range(60)} == {"dev", "test"}, "không PMID ⇒ theo mục"
+    goc = {("A.html", 1): {"muc": {"pmid": "41275875"}}, ("B.html", 7): {"muc": {"pmid": "41275875"}}}
+    d1 = {"dashboard": "A.html", "_khoa": ["A.html", 1]}
+    d2 = {"dashboard": "B.html", "_khoa": ["B.html", 7]}
+    assert D.tap_dot_bien(hat, d1, goc) == D.tap_dot_bien(hat, d2, goc)
+    assert D.tap_dot_bien(hat, d1, goc, "muc") == D.tap_cua(hat, "A.html", 1)
+    assert D.CHIA_THEO == "pmid"
