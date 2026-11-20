@@ -45,6 +45,7 @@ from __future__ import annotations
 import argparse
 import datetime as dt
 import hashlib
+import html as _html
 import importlib.util
 import json
 import os
@@ -772,7 +773,9 @@ def kiem_dashboard_api(dash: Path, *, cau_noi, goi_api: bool, online: bool, clie
         for t in sai:
             nghi[t] += 1
         ly = kq.get("ly_do") or {}
-        chi_tiet = "; ".join(f"{TEN_TRUC[t]}: {str(ly.get(KHOA_LY_DO[t]) or '').strip()[:160] or '—'}" for t in sai)
+        # Lý do của mô hình có thể mang thực thể HTML chép từ tóm tắt efetch («&lt;50%») ⇒ giải mã trước khi in (20/11/2026).
+        chi_tiet = "; ".join(f"{TEN_TRUC[t]}: {_html.unescape(str(ly.get(KHOA_LY_DO[t]) or '')).strip()[:160] or '—'}"
+                             for t in sai)
         dau = "🟡" if sai == ["du_dieu_kien"] else "🟠"     # chỉ trục điều kiện ⇒ mức gợi ý (trục báo nhiều nhất)
         print(f"   {dau} [{m['id']}] PMID {m['pmid']} — API nghi lệch {', '.join(TEN_TRUC[t] for t in sai)} · {chi_tiet}")
     for x in loi:

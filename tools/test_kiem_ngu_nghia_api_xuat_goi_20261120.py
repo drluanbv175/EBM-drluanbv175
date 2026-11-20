@@ -207,3 +207,10 @@ def test_buoc_xuat_thieu_bo_vang_thi_khong_goi(tmp_path, capsys):
     ma = A.kiem_dashboard_api(dash, cau_noi=cn, goi_api=True, online=True, bv=None, tep_dem=tmp_path / "d.json",
                               tep_tt=tmp_path / "t.json", tep_dem_bv=tmp_path / "bv.json", kqtc=_kqtc(), bvk=bvk_thieu)
     assert ma == 2 and cn._goi == [] and "fail-closed" in capsys.readouterr().out
+
+
+def test_ly_do_giai_ma_thuc_the_html(tmp_path, capsys):
+    """20/11/2026: lý do «&lt;50%» (thực thể HTML chép từ tóm tắt) phải in thành «<50%»."""
+    tl = '{"dung_quan_the": true, "dung_chieu": true, "du_dieu_kien": false, "ly_do": {"dieu_kien": "bỏ ngưỡng FEV1 &lt;50%"}}'
+    _, out = _chay(tmp_path, _cau_noi(tl), capsys)
+    assert "FEV1 <50%" in out and "&lt;" not in out
