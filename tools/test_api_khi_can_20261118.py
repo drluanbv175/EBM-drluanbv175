@@ -443,3 +443,30 @@ def test_giac_quan_lau_khong_xet_la_chet(tmp_path, tdx, akc):
     truoc = len(tdx._GIAC_QUAN_CHET)
     assert tdx.giac_quan_api_khi_can(tmp_path, bay_gio=dt.datetime(2026, 11, 18)) == []
     assert len(tdx._GIAC_QUAN_CHET) == truoc + 1 and "16 ngày" in tdx._GIAC_QUAN_CHET[-1]
+
+
+# 20/11/2026: lượt 04:30 lỗi vì NCBI chặn IP (công cụ A12 tra PubMed) mà hòm việc bảo «kiểm khoá/tín dụng/trần ở console».
+_DUOI_NCBI = ("MÁY CHỦ NCBI, KHÔNG phải lỗi mạng tạm thời, retry không giúp ích. Nhờ quản trị mạng liên hệ "
+              "info@ncbi.nlm.nih.gov để xin gỡ chặn, hoặc chờ nhãn misuse tự hết sau một khoảng thời gian không hoạt động.")
+
+
+@pytest.mark.parametrize("r, uu, chu", [
+    ({"so_loi": 1, "chi_tiet": [{"ok": False, "duoi": _DUOI_NCBI}, {"ok": True, "duoi": "HTTP 200 OK"}]}, 3, "NCBI chặn IP"),
+    ({"dung": "HetNganSach: chạm trần chi phí tháng", "chi_tiet": []}, 2, "console.anthropic.com"),
+    ({"so_loi": 1, "chi_tiet": [{"ok": False, "duoi": "anthropic.AuthenticationError: 401 invalid x-api-key"}]}, 2, "console"),
+    ({"so_loi": 1, "chi_tiet": [{"ok": False, "duoi": "httpx.ConnectError: [Errno 8] nodename nor servname provided"}]}, 3,
+     "lỗi mạng"),
+    ({"so_loi": 1, "chi_tiet": [{"ok": False, "duoi": "Traceback … KeyError: 'x'"}]}, 2, "chưa rõ"),
+    ({"so_loi": 1, "chi_tiet": [{"ok": True, "duoi": _DUOI_NCBI}, {"ok": False, "duoi": "KeyError"}]}, 2, "chưa rõ"),
+])
+def test_chan_doan_loi_theo_duoi_nhat_ky(tdx, r, uu, chu):
+    u, goi_y = tdx.chan_doan_loi_api_khi_can(r)
+    assert u == uu and chu in goi_y
+
+
+def test_giac_quan_luot_loi_ncbi_khong_bao_kiem_console(tmp_path, tdx, akc):
+    akc.ghi_so({"lan_xet_cuoi": "2026-11-20T04:30:40", "luot": [
+        {"luc": "2026-11-20T04:30:40", "viec": {"de_cuong": {"ket_qua": "loi", "da_chay": 3, "so_loi": 1, "dung": "",
+                                                              "chi_tiet": [{"ok": False, "duoi": _DUOI_NCBI}]}}}]})
+    (uu, ai, dong, lenh), = tdx.giac_quan_api_khi_can(tmp_path, bay_gio=dt.datetime(2026, 11, 20, 6))
+    assert (uu, ai) == (3, "👤") and "NCBI chặn IP" in dong and "console.anthropic.com" not in dong
