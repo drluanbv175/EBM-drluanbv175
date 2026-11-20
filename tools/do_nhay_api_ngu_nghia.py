@@ -16,7 +16,7 @@ CÁCH LÀM
 1. Sinh đột biến bằng chính `do_nhay_kiem_ngu_nghia` (không đổi bộ sinh): mục `apply` của dashboard ĐÃ PASS + tóm tắt
    PubMed trong bộ đệm ngoài git; luật cứng chấm từng đột biến như báo cáo 14/11.
 2. Lớp trong tầm API và trục phải chuyển false (`LOP_API`): K1 đổi quần thể → quần thể · K2 đổi ngưỡng trong quần thể →
-   quần thể · K2 đổi ngưỡng trong HÀNH ĐỘNG → điều kiện (ngoài phạm vi luật cứng) · K3b rụng điều kiện trong mục → điều kiện
+   quần thể · K2 đổi ngưỡng trong HÀNH ĐỘNG → điều kiện (luật cứng đọc từ 20/11/2026) · K3b rụng điều kiện trong mục → điều kiện
    · K4 nguồn nói ngược → chiều · K4b mục đảo sang «không làm» → chiều. Ngoài tầm API (không đo): K2 cỡ mẫu n=, K3 rụng ở
    bản xuất (API không đọc bản xuất).
 3. Mẫu PHÂN TẦNG tất định: tối đa `--so-mau` đột biến mỗi lớp (thứ tự theo sha256 của hạt giống + mục + lớp). Đối chứng

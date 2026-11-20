@@ -18,7 +18,8 @@ CÁCH LÀM (không đổi hành vi `kiem_cheo_ngu_nghia.py` / `kiem_quan_the_chi
    (bộ đệm ngoài git; `--online` mới tải phần thiếu).
 3. Sinh ĐỘT BIẾN có NHÃN THEO CẤU TRÚC — mỗi đột biến biết trước nó PHẢI bị phép nào bắt, ở trường nào:
      K1  đổi quần thể      — thay/chèn nhãn quần thể loại trừ nhau (HFrEF↔HFpEF, típ 1↔típ 2, …) ⇒ `k1_cap`
-     K2  đổi con số        — ngưỡng EF/eGFR/tuổi/HbA1c/BMI/LDL ⇒ `k1_nguong` (audit/16: phần ngưỡng của K2 nằm
+     K2  đổi con số        — ngưỡng EF/eGFR/tuổi/HbA1c/BMI/LDL ⇒ `k1_nguong` (ngưỡng trong HÀNH ĐỘNG ⇒ `k2_nguong_hd`, từ
+                             20/11/2026) (audit/16: phần ngưỡng của K2 nằm
                              trong K1) · cỡ mẫu n= ⇒ `k2_co_mau`
      K3  rụng điều kiện    — ở BẢN XUẤT (phạm vi K3) · NGAY TRONG MỤC so với nguồn (phạm vi K3b, từ 14/11/2026c)
      K4  đảo chiều         — NGUỒN nói ngược chiều với mục apply (phạm vi K4) · MỤC đảo sang «không làm» khi nguồn
@@ -79,7 +80,7 @@ Z95 = 1.959963984540054
 PHEP = ("K1", "K2", "K3", "K3b", "K4", "K4b")
 # Trường phán quyết của kiem_quan_the_chieu.kiem_muc thuộc về phép nào (audit/16: ngưỡng của K2 nằm trong K1).
 # K3b/K4b (14/11/2026c) đọc NGUỒN như K1/K2/K4 nên dùng chung đường chấm cham_k124.
-TRUONG_CUA_PHEP = {"K1": ("k1_cap",), "K2": ("k1_nguong", "k2_co_mau"), "K3b": ("k3b",), "K4": ("k4",), "K4b": ("k4b",)}
+TRUONG_CUA_PHEP = {"K1": ("k1_cap",), "K2": ("k1_nguong", "k2_co_mau", "k2_nguong_hd"), "K3b": ("k3b",), "K4": ("k4",), "K4b": ("k4b",)}
 PHEP_NGUON = ("K1", "K2", "K3b", "K4", "K4b")
 KQ = ("bat", "bat_lech", "lot_xanh", "lot_trang", "lot_im")
 
@@ -488,7 +489,8 @@ def _dinh_dang_so(goc: str, gia_tri: float) -> str:
 
 def sinh_k2_nguong(rec: dict, nguon: str, hat: int, *, truong_hanh_dong: bool = False) -> dict | None:
     """Đổi MỘT ngưỡng số mà nguồn ủng hộ thành giá trị nguồn KHÔNG nêu. truong_hanh_dong=True ⇒ đổi ngưỡng
-    nằm trong `action` (K1/K2 không đọc action ⇒ ngoài phạm vi thiết kế)."""
+    nằm trong `action` ⇒ chấm ở trường `k2_nguong_hd` (từ 20/11/2026 kiem_muc đối chiếu ngưỡng trong hành động với nguồn;
+    trước đó K1/K2 không đọc action ⇒ lớp này nằm NGOÀI phạm vi)."""
     it = rec["muc"]
     than = chuan_hoa(van_ban_than(nguon))
     toan_bo = chuan_hoa(nguon)
@@ -510,7 +512,7 @@ def sinh_k2_nguong(rec: dict, nguon: str, hat: int, *, truong_hanh_dong: bool = 
     moi = _sao(it)
     _ghi_truong(moi, t, _thay_so(_doc_truong(it, t), x["span"], _dinh_dang_so(x["so"], v)))
     lop = "K2_nguong_hanh_dong" if truong_hanh_dong else "K2_nguong"
-    return {"lop": lop, "phep": "K2", "truong": "k1_nguong", "trong_pham_vi": not truong_hanh_dong,
+    return {"lop": lop, "phep": "K2", "truong": "k2_nguong_hd" if truong_hanh_dong else "k1_nguong", "trong_pham_vi": True,
             "bien_the": f"{x['chi_so']}:{x['dang']}", "dich": {"chi_so": x["chi_so"], "so": f"{v:g}"},
             "mo_ta": f"{t}: {x['chi_so']} {x['so']} → {_dinh_dang_so(x['so'], v)}", "muc_dot_bien": moi,
             "nguon_dot_bien": nguon}
@@ -848,7 +850,7 @@ def ly_do_lot(db: dict, r: dict | None, nguon_goc: str | None) -> str | None:
         if cd["cum_k3_bi_cat_con_cho_khac"]:
             return "cum_con_o_cho_khac_trong_ban_xuat"
         return "khac"
-    if db["lop"] in ("K2_nguong", "K2_co_mau"):
+    if db["lop"] in ("K2_nguong", "K2_nguong_hanh_dong", "K2_co_mau"):
         return "nguon_khong_neu" if db["ket_qua"] == "lot_trang" else ("ngoai_tu_dien" if db["ket_qua"] == "lot_im" else "khac")
     if db["lop"] == "K3_rung_trong_muc":
         return {"lot_trang": "khong_co_nguon", "lot_im": "k3b_khong_co_cau_khuyen_cao_neo",
@@ -869,6 +871,7 @@ def chu_ky_bao(r: dict, phep: str) -> set[str]:
     elif phep == "K2":
         ra |= {f"nguong:{x['chi_so']}:{x['so']}" for x in r.get("k1_nguong") or [] if x["muc"] == "can_doc"}
         ra |= {f"n:{x['so']}" for x in r.get("k2_co_mau") or [] if x["muc"] == "can_doc"}
+        ra |= {f"nguong_hd:{x['chi_so']}:{x['so']}" for x in r.get("k2_nguong_hd") or [] if x["muc"] == "can_doc"}
     elif phep == "K4":
         if (r.get("k4") or {}).get("muc") == "can_doc":
             ra.add("k4")
@@ -885,8 +888,8 @@ def _muc_dich(db: dict, r: dict) -> str | None:
     tr, dich = db["truong"], db["dich"]
     if tr == "k1_cap":
         ds = [x["muc"] for x in r.get("k1_cap") or [] if x["ve_muc"] == dich["ve_muc"]]
-    elif tr == "k1_nguong":
-        ds = [x["muc"] for x in r.get("k1_nguong") or [] if x["chi_so"] == dich["chi_so"]
+    elif tr in ("k1_nguong", "k2_nguong_hd"):
+        ds = [x["muc"] for x in r.get(tr) or [] if x["chi_so"] == dich["chi_so"]
               and x["so"].replace(",", ".") == dich["so"]]
     elif tr == "k2_co_mau":
         ds = [x["muc"] for x in r.get("k2_co_mau") or [] if x["so"] == dich["so"]]
@@ -1201,9 +1204,7 @@ _TEN_LOP = {
     "K4_nguon_nguoc": "K4 · nguồn nói NGƯỢC chiều mục apply",
     "K4_muc_dao": "K4 · MỤC đảo sang «không làm» khi nguồn ủng hộ",
 }
-_LY_DO_NGOAI = {
-    "K2_nguong_hanh_dong": "K1/K2 chỉ đọc population/pico.P/title — không đọc action.",
-}
+_LY_DO_NGOAI: dict[str, str] = {}   # K2_nguong_hanh_dong vào phạm vi từ 20/11/2026 (kiem_muc đọc ngưỡng trong action)
 
 
 _TEN_LY_DO = {
@@ -1425,7 +1426,7 @@ def so_sanh(cu: dict, moi: dict, tep: str) -> dict:
     hang["K3b · rụng điều kiện NGAY TRONG MỤC (trước: ngoài phạm vi)"] = (_bo(lc.get("K3_rung_trong_muc")),
                                                                         _bo(pm.get("K3b")))
     hang["K4b · MỤC đảo sang «không làm» (trước: ngoài phạm vi)"] = (_bo(lc.get("K4_muc_dao")), _bo(pm.get("K4b")))
-    hang["K2 · ngưỡng trong HÀNH ĐỘNG (vẫn ngoài phạm vi)"] = (_bo(lc.get("K2_nguong_hanh_dong")),
+    hang["K2 · ngưỡng trong HÀNH ĐỘNG (trước 20/11/2026: ngoài phạm vi)"] = (_bo(lc.get("K2_nguong_hanh_dong")),
                                                             _bo(lm.get("K2_nguong_hanh_dong")))
     dc, dm = cu.get("doi_chung") or {}, moi.get("doi_chung") or {}
     dch = {f"{p} · mục có 🟠 / mục có nguồn": (_bao((dc.get("muc") or {}).get(p)), _bao((dm.get("muc") or {}).get(p)))
