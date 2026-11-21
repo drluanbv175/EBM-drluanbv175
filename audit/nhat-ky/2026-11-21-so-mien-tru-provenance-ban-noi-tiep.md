@@ -41,7 +41,7 @@ giờ commit nên không tính. Sau mốc: 20 tệp vẫn khai miễn trừ (13 
 - `tools/do_dai_hoan_thien.py`: thước đo E-TAILAP «chủ đề có bản hiện hành khai hợp đồng nguồn» n/N.
 - Skill `cap-nhat-chung-cu-y-khoa`: một đoạn dạy cách làm bản nối tiếp của gói mang cờ (lớp «kế thừa có ghi lượt mới»).
 
-**Đề xuất cho bác sĩ (máy không tự làm).** «Chặn có sổ nợ» theo khuôn cổng nguồn chính thức 20/11: sổ nợ ghi các lát cắt
+**Đề xuất cho bác sĩ (đã quyết — xem mục cuối).** «Chặn có sổ nợ» theo khuôn cổng nguồn chính thức 20/11: sổ nợ ghi các lát cắt
 đang mang cờ (chỉ giảm, gia hạn cần lời bác sĩ); cổng chặn gói dựng sau ngày áp dụng khai `provenanceUnknown` mà KHÔNG có
 `searchSources`/`currency` — mục kế thừa vẫn được miễn.
 
@@ -53,3 +53,24 @@ sổ hỏng, marker không cần `#`, bỏ ngưỡng 7 ngày, `main()` không tr
 **Bắt được trong lúc làm.** Bản đầu để giác quan tự dò EBM-Dashboards ⇒ `test_tu_de_xuat_gradeby_thong_tin` (gọi
 `main()` với `DASH` trỏ thư mục tạm) vẫn đọc dữ liệu thật và GHI `state/so-mien-tru.json` thật. Vá: `main()` truyền
 `dash=DASH` như mọi giác quan khác; tái hiện bằng gốc tạm có liên kết tới dashboard thật — trước vá có ghi, sau vá không.
+
+**Bác sĩ quyết 21/11/2026: «chặn có sổ nợ».** Triển khai cùng PR:
+- `verify_dashboard.kiem_provenance_goi_moi` (chạy dưới `--strict-sources`, hai bản git trùng byte): gói dựng từ 15/08/2026
+  (ngày trong tên tệp; vắng thì `meta.updated`; vắng cả hai ⇒ coi là gói mới) mang cờ mà thiếu `searchSources` ≥ 1 hoặc
+  `currency` có ngày ⇒ LỖI; tệp trong sổ nợ còn hạn ⇒ cảnh báo; quá hạn ⇒ lỗi; sổ hỏng ⇒ coi như vắng. Gói CŨ giữ miễn trừ
+  chỉ-cảnh-báo. `phan_loai_provenance` là định nghĩa duy nhất — `so_mien_tru.py` gọi chính hàm này (BH20). Định nghĩa
+  «có ghi lượt mới» chặt hơn bản đo đầu (cần CẢ nguồn lẫn ngày); trên kho thật số không đổi (13 chỉ có cờ · 7 kế thừa).
+- `so_mien_tru.py --so-no [--tao|--gia-han]`: khuôn `doc_nguon_chinh_thuc.py so-no` (lập MỘT lần, nguyên văn lời bác sĩ
+  ≥ 20 ký tự, hạn ≤ 90 ngày, chạy khô mặc định). Sổ thật đã lập: `EBM-Dashboards/no-provenance-goi-moi.json` — 13 tệp (5 bản
+  hiện hành: COPD_TimMachNoiTiet, CAP_ATS2025, LaoKhoa_Deprescribing, DaLieu_HS, SuyTim_NoiTiet), hạn **21/12/2026** (30
+  ngày, theo sổ nguồn chính thức 20/11 — bác sĩ không nêu hạn; gia hạn bằng `--gia-han`). Bản đã bị thay không cần trả nợ.
+- Hòm việc: 🟠 cổng ĐANG CHẶN bản hiện hành · NỢ trong hạn (🟡, ≤ 7 ngày ⇒ 🟠) · 🟡 chủ đề còn mục kế thừa mang cờ — mỗi dòng
+  một lệnh orchestrator.
+- Dạy: skill `cap-nhat-chung-cu-y-khoa`, agent `thu-thu-tai-lieu` + `tong-quan-y-van` (PR cặp sang repo y khoa), câu §6.3 CLAUDE.md
+  (viết lại gọn, 59997/60000 ký tự).
+- Bản chạy ngoài git (`EBM-Dashboards/tools/`, `EBM_MASTER/skill_assets/verify_dashboard.py`) phải chép sau khi gộp.
+- Kiểm: 19 test cổng + 37 test sổ miễn trừ; đột biến 24/24 (17 sổ miễn trừ/sổ nợ + 7 cổng: bỏ miễn trừ gói cũ, bỏ qua hạn, nguồn
+  HOẶC ngày, `main()` không gọi luật, sổ hỏng thành miễn, tệp không ngày bỏ qua luật, lệch mốc); canary 12/12; bộ chốt bài
+  học 146 ✓; thử đầu–cuối trên dashboard thật: bản nợ → cảnh báo kèm hạn, bản kế thừa → đạt, bản cũ → không đổi, bản mới
+  giả lập 22/11 ngoài sổ → CHẶN.
+

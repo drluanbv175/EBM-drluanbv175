@@ -503,8 +503,10 @@ Cổng liêm chính LUÔN chạy — thiếu `--online` thì chạy phần ngo�
 - **Bản NỐI TIẾP của gói mang `provenanceUnknown: true`** (21/11/2026): giữ cờ cho mục KẾ THỪA, nhưng ghi lượt tìm của
   CHÍNH bản vào `searchSources` · `currency` · `searchStrategy` (PRISMA-S: CSDL + ngày + truy vấn nguyên văn) và viết lại
   `provenanceUnknownLyDo` cho đúng («N mục kế thừa ITEM-… không dựng lại được; lượt tìm <ngày> ghi ở các trường dưới»).
-  KHÔNG chép nguyên câu «bản sinh trước khi khối DATA.standards thành bắt buộc…», KHÔNG viết chiến lược vào lý do. Bản
-  dựng từ 15/08/2026 chỉ có cờ lên 🟠 hòm việc (`python3 tools/so_mien_tru.py`).
+  KHÔNG chép nguyên câu «bản sinh trước khi khối DATA.standards thành bắt buộc…», KHÔNG viết chiến lược vào lý do.
+  **Cổng `--strict-sources` CHẶN** (bác sĩ 21/11/2026 «chặn có sổ nợ») gói dựng từ 15/08/2026 mang cờ mà thiếu
+  `searchSources` ≥ 1 hoặc `currency` có ngày YYYY-MM-DD; chỉ 13 tệp tồn trong sổ nợ `no-provenance-goi-moi.json` (hạn
+  21/12/2026) được cảnh báo — xem `python3 tools/so_mien_tru.py --so-no`; agent không tự lập/gia hạn sổ.
 
 ⚠️ **Bài học 12/08/2026 — đọc kết quả cổng phải hỏi "cổng đã chạy tới luật nào", không chỉ đếm số lỗi.**
 Bản cũ của `verify_dashboard.py` `return` NGAY khi thiếu `DATA.standards`, nên toàn bộ luật an toàn cấp

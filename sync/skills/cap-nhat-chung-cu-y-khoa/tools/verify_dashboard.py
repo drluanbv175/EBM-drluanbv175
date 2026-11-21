@@ -1130,6 +1130,96 @@ def kiem_doc_nguon_chinh_thuc_apply(items, kho, errors, warns, oks, *, ten_dashb
     if tong:
         oks.append("Đọc nguồn chính thức (mục apply không PMID): %d/%d có bằng chứng đã đọc." % (da_doc, tong))
 
+
+# ── PROVENANCE GÓI MỚI — CHẶN CÓ SỔ NỢ (21/11/2026) ──────────────────────────
+# Miễn trừ `provenanceUnknown` (14/08/2026) sinh ra cho gói CŨ chưa từng ghi chiến lược tìm; cùng ngày luật PRISMA-S đòi
+# «mọi gói MỚI phải khai đủ» (BH42, commit 8c469c1f). Đo 21/11/2026 (`tools/so_mien_tru.py`): bản nối tiếp dựng sau mốc chép
+# nguyên khối `standards` của bản cũ — 13 tệp CHỈ CÓ CỜ, lượt tìm của chính bản (kể cả lượt thêm mục mới) không nằm trong
+# trường hợp đồng nào; 2 bản viết chiến lược bằng văn xuôi trong `provenanceUnknownLyDo`. MỨC: CHẶN (bác sĩ 21/11/2026 «chặn
+# có sổ nợ»; trước đó chỉ cảnh báo). Gói dựng TỪ MOC_PROVENANCE_GOI_MOI (ngày trong tên tệp; vắng thì `meta.updated`; vắng cả
+# hai ⇒ coi là gói mới — fail-closed) mà khai `provenanceUnknown: true` thì PHẢI ghi lượt tìm của chính bản: `searchSources`
+# ≥ 1 phần tử VÀ `currency` có ngày YYYY-MM-DD (cờ vẫn được giữ cho mục KẾ THỪA — «không hồi tố»). Thiếu ⇒ LỖI, trừ tệp có
+# trong SỔ NỢ `no-provenance-goi-moi.json` cạnh dashboard (khoá = tên tệp không đuôi), lập MỘT lần bằng
+# `tools/so_mien_tru.py --so-no --tao` với nguyên văn lời bác sĩ ⇒ cảnh báo tới «han», quá hạn ⇒ lỗi. Sổ hỏng ⇒ coi như vắng.
+# `phan_loai_provenance` là định nghĩa DUY NHẤT — `tools/so_mien_tru.py` gọi chính hàm này (hai parser cùng dữ liệu, BH20).
+MOC_PROVENANCE_GOI_MOI = date(2026, 8, 15)
+TEN_SO_NO_PROVENANCE = "no-provenance-goi-moi.json"
+CO_PROVENANCE_RE = re.compile(r"\bprovenanceUnknown\s*:\s*true\b")
+PROV_DU, PROV_CO_GHI, PROV_CHI_CO, PROV_THIEU = "du", "mien_tru_co_ghi_luot_moi", "mien_tru_chi_co", "thieu_standards"
+
+
+def phan_loai_provenance(data_block):
+    """Lớp hợp đồng nguồn của một khối DATA: `du` (có standards, không cờ) · `mien_tru_co_ghi_luot_moi` (cờ + lượt tìm của
+    chính bản: searchSources ≥ 1 và currency có ngày) · `mien_tru_chi_co` · `thieu_standards`."""
+    st = object_after_key(data_block or "", "standards")
+    if not st:
+        return PROV_THIEU
+    if not CO_PROVENANCE_RE.search(st):
+        return PROV_DU
+    if array_field(st, "searchSources") and _parse_exact_date(field(st, "currency") or ""):
+        return PROV_CO_GHI
+    return PROV_CHI_CO
+
+
+def ngay_dung_goi(ten_tep, data_block):
+    """Ngày dựng gói: hậu tố _YYYYMMDD của tên tệp; vắng thì ngày trong `meta.updated`; vắng cả hai ⇒ None."""
+    m = re.search(r"_(20\d{2})(\d{2})(\d{2})$", Path(ten_tep or "").stem)
+    if m:
+        try:
+            return date(int(m.group(1)), int(m.group(2)), int(m.group(3)))
+        except ValueError:
+            pass
+    meta = object_after_key(data_block or "", "meta") or ""
+    return _parse_exact_date(field(meta, "updated") or "")
+
+
+def doc_so_no_provenance(duong_so):
+    """(hạn: date | None, tập tên tệp nợ, cảnh báo | None). Vắng ⇒ (None, ∅, None); hỏng ⇒ coi như vắng (fail-closed)."""
+    p = Path(duong_so)
+    if not p.exists():
+        return None, set(), None
+    try:
+        d = json.loads(p.read_text(encoding="utf-8"))
+        han = date.fromisoformat(d["han"])
+        no = {str(x.get("dashboard")) for x in d["muc"] if isinstance(x, dict)}
+        return han, no, None
+    except (OSError, ValueError, KeyError, TypeError, AttributeError) as e:
+        return None, set(), ("sổ nợ provenance %s KHÔNG đọc được (%s) — coi như không có sổ: mọi gói mới chỉ có cờ "
+                             "provenanceUnknown đều bị chặn" % (p.name, type(e).__name__))
+
+
+def kiem_provenance_goi_moi(data_block, errors, warns, oks, *, ten_tep, duong_so_no=None, hom_nay=None):
+    """Gói dựng từ MOC_PROVENANCE_GOI_MOI khai provenanceUnknown mà KHÔNG ghi lượt tìm của chính bản ⇒ CHẶN, trừ tệp trong
+    sổ nợ còn hạn (cảnh báo). Xem khối chú thích phía trên."""
+    loai = phan_loai_provenance(data_block)
+    if loai == PROV_CO_GHI:
+        oks.append("Provenance: cờ provenanceUnknown chỉ cho mục kế thừa — lượt tìm của chính bản ĐÃ ghi (searchSources + "
+                   "currency).")
+        return
+    if loai != PROV_CHI_CO:
+        return
+    ngay = ngay_dung_goi(ten_tep, data_block)
+    if ngay is not None and ngay < MOC_PROVENANCE_GOI_MOI:
+        return  # gói CŨ: miễn trừ hợp lệ (chỉ cảnh báo của strict_source_checks)
+    hom_nay = hom_nay or date.today()
+    ten = Path(ten_tep).stem
+    han, no, loi_so = doc_so_no_provenance(duong_so_no or (Path(ten_tep).resolve().parent / TEN_SO_NO_PROVENANCE))
+    if loi_so:
+        warns.append(loi_so)
+    cach = ("ghi lượt tìm của CHÍNH bản vào DATA.standards — searchSources:[\"<CSDL> — <truy vấn nguyên văn> (<ngày>)\"] + "
+            "currency:\"YYYY-MM-DD — …\" (+ searchStrategy); giữ provenanceUnknown cho mục KẾ THỪA và viết lại lý do cho "
+            "đúng; KHÔNG chép câu «bản sinh trước khi…», KHÔNG bịa chiến lược cho lần tìm đã qua")
+    nhan_ngay = ngay.isoformat() if ngay else "không xác định (fail-closed)"
+    if ten in no and han and hom_nay <= han:
+        warns.append("NỢ PROVENANCE GÓI MỚI: gói dựng %s khai provenanceUnknown mà KHÔNG ghi lượt tìm của chính bản — hạn "
+                     "%s (còn %d ngày; quá hạn cổng CHẶN). Trả nợ bằng bản nối tiếp: %s." % (
+                         nhan_ngay, han.isoformat(), (han - hom_nay).days, cach))
+    else:
+        ly_do = ("NỢ QUÁ HẠN %s" % han.isoformat()) if ten in no else "tệp KHÔNG có trong sổ nợ"
+        errors.append("PROVENANCE GÓI MỚI: gói dựng %s (từ %s luật PRISMA-S đòi gói mới khai đủ) khai provenanceUnknown "
+                      "mà KHÔNG ghi lượt tìm của chính bản (%s) — chặn: %s." % (
+                          nhan_ngay, MOC_PROVENANCE_GOI_MOI.isoformat(), ly_do, cach))
+
 # Khoá cấp 1 HỢP LỆ của DATA.summary — phải khớp ĐÚNG thứ mà template và ba bộ
 # sinh phái sinh đọc: evidence-workbench-template.html (s.dontDo),
 # tools/build_ban_doc_chung_cu.py, EBM-Dashboards/tools/build_dashboard_docx.py và
@@ -1983,6 +2073,7 @@ def main():
                             ten_dashboard=Path(a.file).stem)
         kiem_doc_nguon_chinh_thuc_apply(items, Path(a.file).resolve().parent / "toan_van_oa", errors, warns, oks,
                                         ten_dashboard=Path(a.file).stem)
+        kiem_provenance_goi_moi(data, errors, warns, oks, ten_tep=a.file)
 
     # 2) PII (heuristic — chỉ cảnh báo)
     pii = []

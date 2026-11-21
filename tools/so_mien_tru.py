@@ -25,8 +25,16 @@ nói gì về bản nối tiếp của một gói đã mang cờ. Hai cách phi�
     một tệp dựng 25/10 hay 07/11), lượt tìm mới hoặc không ghi đâu cả (CAP_ATS2025, LaoKhoa_Deprescribing 26/10 thêm
     mục mới mà không một dòng chiến lược) hoặc chỉ viết văn xuôi trong `provenanceUnknownLyDo` (DaLieu_HS,
     SuyTim_NoiTiet 07/11) — trường mà cổng không đọc như hợp đồng nguồn.
-Vì vậy (b) tách hai lớp: 🟠 chỉ dành cho lớp CHỈ CÓ CỜ ở bản HIỆN HÀNH (sửa được bằng một bản nối tiếp ghi đúng
+Vì vậy (b) tách hai lớp: hòm việc chỉ nhắc lớp CHỈ CÓ CỜ ở bản HIỆN HÀNH (sửa được bằng một bản nối tiếp ghi đúng
 trường); lớp kế thừa và bản đã bị thay chỉ là THÔNG TIN — báo động không bao giờ gỡ được dạy người đọc bỏ qua màu.
+
+CỔNG CHẶN CÓ SỔ NỢ (bác sĩ 21/11/2026 «chặn có sổ nợ»)
+------------------------------------------------------
+`verify_dashboard.kiem_provenance_goi_moi` (--strict-sources) CHẶN gói dựng từ 15/08/2026 lớp CHỈ CÓ CỜ; tệp đã tồn lúc
+chuyển sang chặn nằm trong SỔ NỢ `EBM-Dashboards/no-provenance-goi-moi.json` ⇒ cảnh báo tới «han», quá hạn ⇒ chặn. Phân lớp
+dùng CHÍNH `verify_dashboard.phan_loai_provenance` (một định nghĩa — hai parser cùng dữ liệu phải trùng, BH20). Công cụ này
+lập/gia hạn sổ (MỘT lần, nguyên văn lời bác sĩ ≥ 20 ký tự, hạn ≤ 90 ngày, chạy khô mặc định — khuôn
+`doc_nguon_chinh_thuc.py so-no` của cổng nguồn chính thức 20/11) và báo nợ; agent KHÔNG tự lập/gia hạn sổ.
 
 BỐN SỐ ĐO
   (a) bản MỚI NHẤT của mỗi lát cắt còn `provenanceUnknown` — nhóm lát cắt bằng ĐÚNG `dang_ky_chu_de.tach_ten`, loại bản
@@ -51,6 +59,9 @@ Dùng:
     python3 tools/so_mien_tru.py              # báo cáo + ghi ảnh chụp khi số đổi
     python3 tools/so_mien_tru.py --json       # máy đọc (Đài hoàn thiện)
     python3 tools/so_mien_tru.py --khong-ghi  # chỉ đo, không đụng state/
+    python3 tools/so_mien_tru.py --so-no      # sổ nợ cổng provenance gói mới (mọi bản dashboard)
+    python3 tools/so_mien_tru.py --so-no --tao --han YYYY-MM-DD --can-cu "<nguyên văn lời bác sĩ>" [--ghi]
+    python3 tools/so_mien_tru.py --so-no --gia-han YYYY-MM-DD --can-cu "<nguyên văn lời bác sĩ>" [--ghi]
 Chạy từ worktree ngoài OneDrive: đặt EBM_WORKSPACE_ROOT về gốc «Claude AI».
 
 Mã thoát: 0 = đo được, không bản hiện hành nào mang miễn trừ · 1 = có miễn trừ cần chú ý · 2 = KHÔNG ĐO ĐƯỢC.
@@ -77,11 +88,15 @@ for _luong in (sys.stdout, sys.stderr):
 REPO = Path(__file__).resolve().parents[1]
 TOOLS = Path(__file__).resolve().parent
 
-MOC_PRISMA_S = "20260815"          # xem docstring: luật PRISMA-S gói mới 14/08/2026 (8c469c1f · 18b878d0)
+MOC_PRISMA_S = "20260815"          # = verify_dashboard.MOC_PROVENANCE_GOI_MOI (test chốt); xem docstring
 NGAY_SO_MARKER = 7                 # ⓘ khi marker tăng so với ảnh chụp cũ ≥ 7 ngày
 TRAN_LICH_SU = 400                 # số dòng ảnh chụp giữ lại (mỗi ngày tối đa một dòng)
-# Cùng regex với cổng verify_dashboard.strict_source_checks — đọc cờ đúng như cổng đọc.
-CO_PROVENANCE = re.compile(r"\bprovenanceUnknown\s*:\s*true\b")
+# Cổng nguồn chuẩn trong GIT (luôn có trên mọi checkout); bản chạy EBM-Dashboards/tools chỉ được chép sau khi gộp nên có
+# thể cũ hơn — sổ miễn trừ phải đo đúng luật đang nằm trong mã.
+CONG_GIT = REPO / "sync" / "skills" / "cap-nhat-chung-cu-y-khoa" / "tools" / "verify_dashboard.py"
+TEN_SO_NO = "no-provenance-goi-moi.json"   # = verify_dashboard.TEN_SO_NO_PROVENANCE (test chốt)
+CAN_CU_MIN = 20
+HAN_TOI_DA_NGAY = 90
 # Marker THẬT: đứng ngay sau dấu chú thích và có lý do (khuôn bimat-mien của kiem_bi_mat_truoc_commit.MIEN).
 MAU_MARKER = {"bh10-mien": re.compile(r"#\s*bh10-mien:\s*\S"),
               "bimat-mien": re.compile(r"#\s*bimat-mien:\s*\S")}
@@ -125,20 +140,19 @@ def tep_state_mac_dinh() -> Path:
 
 # ───────────────────────── (a)(b) dashboard ─────────────────────────
 
+def nap_cong():
+    """Cổng verify_dashboard: bản GIT nếu có, nếu không thì bản `dang_ky_chu_de.nap_vd()` chọn (bản chạy/vendor)."""
+    if CONG_GIT.exists():
+        return _nap("_smt_vd", CONG_GIT)
+    return _nap("_smt_dkcd_vd", TOOLS / "dang_ky_chu_de.py").nap_vd()
+
+
 def phan_loai(vd, html: str) -> str:
-    """Lớp hợp đồng nguồn của MỘT dashboard, đọc bằng parser của chính cổng (`vd` = verify_dashboard)."""
+    """Lớp hợp đồng nguồn của MỘT dashboard — CHÍNH `verify_dashboard.phan_loai_provenance` (một định nghĩa với cổng)."""
     db = vd.extract_data_block(html)
     if not db:
         return KHONG_DOC
-    st = vd.object_after_key(db, "standards")
-    if not st:
-        return THIEU
-    if not CO_PROVENANCE.search(st):
-        return DU
-    if vd.array_field(st, "searchSources") or (vd.field(st, "currency") or "").strip() \
-            or (vd.field(st, "searchStrategy") or "").strip():
-        return CO_GHI
-    return CHI_CO
+    return vd.phan_loai_provenance(db)
 
 
 def quet(dash: Path, vd, tach_ten, la_khong_can, khong_can: dict) -> dict:
@@ -238,6 +252,8 @@ def dong_anh_chup(kq: dict, ngay: dt.date) -> dict:
             "lat_cat_lam_moi_duoc": kq["lat_cat_lam_moi_duoc"], "tai_lap_duoc": kq["tai_lap_duoc"],
             "a": len(kq["a"]), "a_lat_cat": [b["lat_cat"] for b in kq["a"]],
             "b_tong": kq["b_tong"], "b_chi_co_hien_hanh": [b["lat_cat"] for b in kq["b_chi_co_hien_hanh"]],
+            "cong_chan": len(kq["so_no"]["ngoai_so"]) + len(kq["so_no"]["qua_han"]),
+            "no_trong_han": len(kq["so_no"]["trong_han"]),
             "marker": {ten: (m["dem"] if m else None) for ten, m in kq["marker"].items()}}
 
 
@@ -292,16 +308,91 @@ def marker_tang(lich_su: list[dict] | None, hien_tai: dict, hom_nay: dt.date,
     return (str(goc["ngay"]), tang) if tang else None
 
 
+# ───────────────────────── (e) sổ nợ cổng provenance gói mới ─────────────────────────
+
+def doc_so_no(dash: Path) -> dict | None:
+    """Sổ nợ provenance; vắng ⇒ None; hỏng ⇒ {"hong": lý do} (cổng coi như vắng — fail-closed)."""
+    tep = Path(dash) / TEN_SO_NO
+    if not tep.exists():
+        return None
+    try:
+        d = json.loads(tep.read_text(encoding="utf-8"))
+        dt.date.fromisoformat(d["han"])
+        if not isinstance(d.get("muc"), list):
+            raise ValueError("muc không phải danh sách")
+        return d
+    except (OSError, ValueError, KeyError, TypeError) as e:
+        return {"hong": f"{type(e).__name__}: {e}"}
+
+
+def phan_loai_no(ban: list[dict], so_no: dict | None, hom_nay: dt.date, moc: str = MOC_PRISMA_S) -> dict:
+    """Bản CHỈ CÓ CỜ dựng từ mốc mà cổng CHẶN («ngoai_so», «qua_han») hoặc chỉ cảnh báo («trong_han»). Cùng định nghĩa
+    với `verify_dashboard.kiem_provenance_goi_moi` (khoá sổ = tên tệp không đuôi)."""
+    no, han = set(), None
+    if so_no and "hong" not in so_no:
+        han = dt.date.fromisoformat(so_no["han"])
+        no = {str(x.get("dashboard")) for x in so_no["muc"] if isinstance(x, dict)}
+    ra = {"ngoai_so": [], "qua_han": [], "trong_han": [], "han": han.isoformat() if han else None,
+          "hong": (so_no or {}).get("hong"), "co_so": bool(so_no) and "hong" not in so_no}
+    for b in ban:
+        if b["loai"] != CHI_CO or b["ngay"] < moc:
+            continue
+        if Path(b["ten"]).stem in no:
+            ra["trong_han" if hom_nay <= han else "qua_han"].append(b)
+        else:
+            ra["ngoai_so"].append(b)
+    return ra
+
+
+def ghi_so_no(dash: Path, muc_no: list[dict], han: str, can_cu: str, *, ghi: bool, cu: dict | None,
+              hom_nay: dt.date) -> tuple[int, str]:
+    """Lập sổ nợ (CHỈ khi chưa có) hoặc gia hạn (giữ nguyên danh sách — bánh cóc). Mặc định chạy khô."""
+    if len((can_cu or "").strip()) < CAN_CU_MIN:
+        return 3, f"✗ phải ghi NGUYÊN VĂN lời bác sĩ (≥ {CAN_CU_MIN} ký tự) — agent không tự lập/gia hạn sổ nợ"
+    try:
+        h = dt.date.fromisoformat(han or "")
+    except ValueError:
+        return 3, f"✗ hạn «{han}» sai dạng YYYY-MM-DD"
+    if not (hom_nay < h <= hom_nay + dt.timedelta(days=HAN_TOI_DA_NGAY)):
+        return 3, f"✗ hạn phải sau hôm nay và không quá {HAN_TOI_DA_NGAY} ngày"
+    luc = dt.datetime.now().isoformat(timespec="seconds")
+    if cu is None:
+        so = {"_about": "Sổ NỢ provenance gói mới (bánh cóc): dashboard dựng từ 15/08/2026 khai provenanceUnknown mà KHÔNG "
+                        "ghi lượt tìm của chính bản (searchSources + currency), đã tồn lúc cổng chuyển sang CHẶN "
+                        "(21/11/2026). Cổng chỉ cảnh báo các tệp này tới «han»; quá hạn ⇒ CHẶN. Trả nợ bằng bản nối tiếp ghi "
+                        "lượt tìm. Tệp mới KHÔNG bao giờ được thêm vào. Sinh bằng tools/so_mien_tru.py --so-no — không sửa tay.",
+              "tao_luc": luc, "han": h.isoformat(), "can_cu": can_cu.strip(),
+              "muc": [{"dashboard": Path(b["ten"]).stem, "lat_cat": b["lat_cat"], "hien_hanh": b["hien_hanh"]}
+                      for b in muc_no], "lich_su": []}
+        viec = (f"lập sổ nợ {len(muc_no)} tệp ({sum(1 for b in muc_no if b['hien_hanh'])} bản hiện hành), "
+                f"hạn {h.isoformat()}")
+    else:
+        if "hong" in cu:
+            return 3, "✗ sổ nợ hiện có KHÔNG đọc được — không gia hạn đè lên sổ hỏng; bác sĩ xem tệp trước"
+        so = dict(cu)
+        so.setdefault("lich_su", []).append({"luc": luc, "han_cu": cu["han"], "han_moi": h.isoformat(),
+                                             "can_cu": can_cu.strip()})
+        so["han"] = h.isoformat()
+        viec = f"gia hạn {cu['han']} → {h.isoformat()} (danh sách giữ nguyên {len(cu['muc'])} tệp)"
+    if not ghi:
+        return 0, f"(chạy khô) sẽ {viec} — thêm --ghi để ghi {TEN_SO_NO}"
+    (Path(dash) / TEN_SO_NO).write_text(json.dumps(so, ensure_ascii=False, indent=1) + "\n", encoding="utf-8",
+                                        newline="\n")
+    return 0, f"✓ đã {viec} → {Path(dash) / TEN_SO_NO}"
+
+
 # ───────────────────────── gom ─────────────────────────
 
-def _lenh_orchestrator(dash: Path, ung_vien: list[dict]) -> tuple[str, str]:
+def _lenh_orchestrator(dash: Path, ung_vien: list[dict], _bo_nho: dict | None = None) -> tuple[str, str]:
     """(lát cắt, ghi chú) — lát cắt CŨ NHẤT có ánh xạ watchlist (orchestrator mới chạy A2 được); không lát cắt nào có
     ánh xạ thì lấy cũ nhất kèm ghi chú. Phân giải bằng chính `chu_de_resolver` mà orchestrator dùng."""
+    bo_nho = _bo_nho if _bo_nho is not None else {}
     try:
-        res = _nap("_smt_res", TOOLS / "chu_de_resolver.py")
-        du_lieu = res.nap_du_lieu(dash)
+        if "res" not in bo_nho:
+            bo_nho["res"] = _nap("_smt_res", TOOLS / "chu_de_resolver.py")
+            bo_nho["du_lieu"] = bo_nho["res"].nap_du_lieu(dash)
         for b in ung_vien:
-            if res.resolve(b["lat_cat"], du_lieu).get("loai") == "watchlist":
+            if bo_nho["res"].resolve(b["lat_cat"], bo_nho["du_lieu"]).get("loai") == "watchlist":
                 return b["lat_cat"], ""
     except Exception:  # noqa: BLE001 — chỉ là gợi ý lệnh; không làm sập phép đo
         return ung_vien[0]["lat_cat"], " (chưa kiểm được ánh xạ watchlist)"
@@ -333,11 +424,16 @@ def do(dash: Path | None = None, cac_repo: dict[str, Path | None] | None = None,
     kq["dash"] = str(dash)
     try:
         dk = _nap("_smt_dkcd", TOOLS / "dang_ky_chu_de.py")
-        vd = dk.nap_vd()
+        vd = nap_cong()
         kdt = _nap("_smt_kdtcc", TOOLS / "kiem_do_tuoi_chung_cu.py")
     except Exception as exc:  # noqa: BLE001 — cảm biến hỏng phải hiện ra, không im như xanh
         kq["ly_do"] = f"không nạp được cổng/đăng ký chủ đề ({type(exc).__name__}: {str(exc)[:120]})"
         return kq
+    if not hasattr(vd, "phan_loai_provenance") or not hasattr(vd, "MOC_PROVENANCE_GOI_MOI"):
+        kq["ly_do"] = "cổng verify_dashboard nạp được không có phan_loai_provenance (bản cũ) — không đo theo đúng luật cổng"
+        return kq
+    moc = vd.MOC_PROVENANCE_GOI_MOI.strftime("%Y%m%d")
+    kq["moc_prisma_s"] = moc
     try:
         khong_can = dict(json.loads((dash / "giam-sat-chu-de.json").read_text(encoding="utf-8")).get("khong_can")
                          or {})
@@ -348,13 +444,26 @@ def do(dash: Path | None = None, cac_repo: dict[str, Path | None] | None = None,
     if not q["ban"]:
         kq["ly_do"] = f"0 dashboard tách được tên trong {dash} — không phải «0 miễn trừ»"
         return kq
-    kq.update(tong_hop(q["ban"]))
+    kq.update(tong_hop(q["ban"], moc))
+    kq["ban"] = q["ban"]
     kq["khong_tach"] = q["khong_tach"]
     if kq["khong_doc_hien_hanh"]:
         kq["chua_do"].append(f"{len(kq['khong_doc_hien_hanh'])} bản hiện hành không đọc được khối DATA")
+    sn = phan_loai_no(q["ban"], doc_so_no(dash), hom_nay, moc)
+    kq["so_no"] = sn
+    if sn["hong"]:
+        kq["chua_do"].append(f"sổ nợ {TEN_SO_NO} KHÔNG đọc được ({sn['hong']}) — cổng coi như không có sổ: mọi gói mới "
+                             "chỉ có cờ đều bị chặn")
     kq["do_duoc"] = True
-    if kq["a"]:
-        kq["goi_y_lat_cat"], kq["goi_y_ghi_chu"] = _lenh_orchestrator(dash, kq["a"])
+    # Ba nhóm cho hòm việc: cổng CHẶN (bản hiện hành) · NỢ còn hạn (bản hiện hành) · chủ đề còn mục kế thừa mang cờ.
+    da_noi = {b["lat_cat"] for b in sn["ngoai_so"] + sn["qua_han"] + sn["trong_han"] if b["hien_hanh"]}
+    nhom = {"chan": sorted((b for b in sn["ngoai_so"] + sn["qua_han"] if b["hien_hanh"]),
+                           key=lambda b: (b["ngay"], b["lat_cat"])),
+            "no": sorted((b for b in sn["trong_han"] if b["hien_hanh"]), key=lambda b: (b["ngay"], b["lat_cat"])),
+            "a_con_lai": [b for b in kq["a"] if b["lat_cat"] not in da_noi]}
+    bo_nho: dict = {}
+    kq["goi_y"] = {k: _lenh_orchestrator(dash, v, bo_nho) for k, v in nhom.items() if v}
+    kq["nhom"] = nhom
     if ghi:
         kq["anh_chup"] = ghi_anh_chup(tep_state, dong_anh_chup(kq, hom_nay), lich_su)
     return kq
@@ -372,9 +481,11 @@ def _ds(ban: list[dict], toi_da: int = 4) -> str:
 def giac_quan(**kw) -> tuple[list[tuple[int, str, str, str]], list[str], list[str], list[str]]:
     """(việc [(ưu tiên, 👤, việc, lệnh)], dòng ⓘ, lý do giác quan chết ⚪, mục chưa đo ⚪) cho `tu_de_xuat_viec.py`.
 
-    🟠 (b): bản HIỆN HÀNH dựng sau mốc PRISMA-S mà CHỈ CÓ CỜ (lượt tìm của chính bản không ghi vào hợp đồng nguồn).
-    🟡 (a): lát cắt đang dùng bản mang cờ — kèm lệnh orchestrator cho lát cắt cũ nhất.
-    ⓘ (c): marker miễn trừ trong mã tăng so với ảnh chụp ≥ 7 ngày."""
+    🟠 cổng provenance gói mới ĐANG CHẶN bản hiện hành (CHỈ CÓ CỜ, ngoài sổ nợ hoặc nợ quá hạn).
+    🟠/🟡 bản hiện hành còn NỢ trong hạn (≤ 7 ngày ⇒ 🟠) — trả nợ bằng bản nối tiếp ghi lượt tìm.
+    🟡 chủ đề còn mục kế thừa mang cờ (lượt mới đã ghi) — làm mới khi tới lượt.
+    Mỗi dòng kèm lệnh orchestrator cho lát cắt cũ nhất có ánh xạ watchlist.
+    ⓘ marker miễn trừ trong mã tăng so với ảnh chụp ≥ 7 ngày."""
     try:
         kq = do(**kw)
     except Exception as exc:  # noqa: BLE001 — cảm biến hỏng phải hiện ra
@@ -382,21 +493,30 @@ def giac_quan(**kw) -> tuple[list[tuple[int, str, str, str]], list[str], list[st
     viec: list[tuple[int, str, str, str]] = []
     tt: list[str] = []
     chet: list[str] = [] if kq["do_duoc"] else [kq["ly_do"]]
+
+    def _lenh(k: str) -> tuple[str, str]:
+        lat, ghi_chu = kq["goi_y"][k]
+        return ghi_chu, f'python3 ops/orchestrator.py --topic "{lat}" --online'
+
     if kq["do_duoc"]:
-        bh = kq["b_chi_co_hien_hanh"]
-        if bh:
-            viec.append((1, "👤", f"{len(bh)} bản hiện hành dựng sau mốc PRISMA-S ({_ngay(MOC_PRISMA_S)}) CHỈ CÓ CỜ "
-                                  f"provenanceUnknown — lượt tìm của chính bản không ghi vào DATA.standards ({_ds(bh)}); "
-                                  "bác sĩ quyết: giữ cảnh báo hay «chặn có sổ nợ» cho gói mới",
-                         "python3 tools/so_mien_tru.py"))
-        a = kq["a"]
-        if a:
-            cu = next((b for b in a if b["lat_cat"] == kq.get("goi_y_lat_cat")), a[0])
-            viec.append((3, "👤", f"{len(a)}/{kq['lat_cat_lam_moi_duoc']} chủ đề đang dùng bản mang provenanceUnknown "
-                                  f"(chiến lược tìm không tái lập được) — gợi ý {cu['lat_cat']} ({_ngay(cu['ngay'])}); "
-                                  "bản nối tiếp ghi lượt tìm vào searchSources/currency, mục kế thừa vẫn mang cờ tới "
-                                  f"khi được tìm lại{kq.get('goi_y_ghi_chu', '')}",
-                         f'python3 ops/orchestrator.py --topic "{cu["lat_cat"]}" --online'))
+        nhom, sn = kq["nhom"], kq["so_no"]
+        if nhom["chan"]:
+            gc, lenh = _lenh("chan")
+            viec.append((1, "👤", f"Cổng provenance gói mới ĐANG CHẶN {len(nhom['chan'])} bản hiện hành CHỈ CÓ CỜ "
+                                  f"provenanceUnknown (ngoài sổ nợ hoặc nợ quá hạn): {_ds(nhom['chan'])} — bản nối tiếp "
+                                  f"phải ghi lượt tìm vào searchSources + currency{gc}", lenh))
+        if nhom["no"]:
+            gc, lenh = _lenh("no")
+            con = (dt.date.fromisoformat(sn["han"]) - dt.date.fromisoformat(kq["ngay"])).days
+            viec.append((1 if con <= 7 else 2, "👤",
+                         f"{len(nhom['no'])} bản hiện hành NỢ provenance gói mới (hạn {_ngay(sn['han'].replace('-', ''))}, "
+                         f"còn {con} ngày; quá hạn cổng CHẶN): {_ds(nhom['no'])} — trả nợ bằng bản nối tiếp ghi lượt tìm "
+                         f"vào searchSources + currency (≈ 0,5–0,8 triệu token/chủ đề){gc}", lenh))
+        if nhom["a_con_lai"]:
+            gc, lenh = _lenh("a_con_lai")
+            viec.append((3, "👤", f"{len(nhom['a_con_lai'])}/{kq['lat_cat_lam_moi_duoc']} chủ đề còn mục KẾ THỪA mang "
+                                  f"provenanceUnknown (lượt mới đã ghi; cờ gỡ được khi mục cũ được tìm lại): "
+                                  f"{_ds(nhom['a_con_lai'])}{gc}", lenh))
     mt = kq.get("marker_tang")
     if mt:
         ngay, tang = mt
@@ -420,8 +540,8 @@ def in_bao_cao(kq: dict) -> None:
             print(f"    · {b['ngay']} {b['lat_cat']} — {NHAN_LOAI[b['loai']]}")
         if kq["thieu_hien_hanh"]:
             print(f"    ({len(kq['thieu_hien_hanh'])} bản hiện hành THIẾU standards: {_ds(kq['thieu_hien_hanh'], 8)})")
-        print(f"\n(b) Gói dựng từ {_ngay(MOC_PRISMA_S)} (mốc luật PRISMA-S gói mới) vẫn khai miễn trừ: {kq['b_tong']} tệp "
-              f"({kq['b_chi_co_tong']} chỉ có cờ · {kq['b_co_ghi_tong']} kế thừa có ghi lượt mới)")
+        print(f"\n(b) Gói dựng từ {_ngay(kq['moc_prisma_s'])} (mốc luật PRISMA-S gói mới) vẫn khai miễn trừ: "
+              f"{kq['b_tong']} tệp ({kq['b_chi_co_tong']} chỉ có cờ · {kq['b_co_ghi_tong']} kế thừa có ghi lượt mới)")
         print(f"    🟠 bản HIỆN HÀNH chỉ có cờ: {len(kq['b_chi_co_hien_hanh'])}"
               + (f" — {_ds(kq['b_chi_co_hien_hanh'], 8)}" if kq["b_chi_co_hien_hanh"] else ""))
         print(f"    ⓘ bản hiện hành kế thừa (đã ghi lượt mới, cờ còn vì mục cũ): {len(kq['b_co_ghi_hien_hanh'])}"
@@ -441,20 +561,36 @@ def in_bao_cao(kq: dict) -> None:
         ngay, tang = kq["marker_tang"]
         print(f"    ⓘ TĂNG so với ảnh chụp {ngay}: " + " · ".join(f"{k} {c}→{v}" for k, (c, v) in tang.items()))
     print(f"\n(d) Ảnh chụp {kq['tep_state']}: {kq['anh_chup']}")
+    if kq["do_duoc"]:
+        print()
+        print("\n".join(bao_cao_so_no(kq)))
     for c in kq["chua_do"]:
         print(f"⚪ {c}")
-    if kq["do_duoc"] and (kq["a"] or kq["b_chi_co_hien_hanh"]):
-        print("\nĐỀ XUẤT (bác sĩ quyết — máy KHÔNG đổi cổng verify_dashboard.py):")
-        print("  1. Doctrine: bản nối tiếp của gói mang cờ giữ cờ cho mục kế thừa nhưng ghi lượt tìm của CHÍNH bản vào")
-        print("     searchSources/currency/searchStrategy — không chép câu «bản sinh trước khi…», không viết chiến lược")
-        print("     vào provenanceUnknownLyDo.")
-        print("  2. «Chặn có sổ nợ» (khuôn cổng nguồn chính thức 20/11): sổ nợ ghi các lát cắt đang mang cờ (chỉ giảm,")
-        print("     gia hạn cần lời bác sĩ); cổng chặn gói dựng sau ngày áp dụng khai provenanceUnknown mà KHÔNG có")
-        print("     searchSources/currency — mục kế thừa vẫn được miễn (đúng «không hồi tố»).")
-        if kq["a"]:
-            print(f'  3. Làm mới chủ đề cũ nhất: python3 ops/orchestrator.py --topic "{kq["goi_y_lat_cat"]}" --online'
-                  f"{kq.get('goi_y_ghi_chu', '')}")
     print("\nCần bác sĩ kiểm chứng — số đo hỗ trợ, không thay phán đoán.")
+
+
+def bao_cao_so_no(kq: dict) -> list[str]:
+    """Các dòng (e) — cổng provenance gói mới và sổ nợ, trên MỌI bản dashboard (cổng chạy trên bất kỳ bản nào xuất lại)."""
+    sn = kq["so_no"]
+    hh = lambda b: " (hiện hành)" if b["hien_hanh"] else ""  # noqa: E731
+    trang = (f"hạn {sn['han']}" if sn["co_so"] else ("HỎNG — coi như không có sổ" if sn["hong"] else "CHƯA lập"))
+    dong = [f"(e) Cổng provenance gói mới (CHẶN có sổ nợ từ 21/11/2026) — sổ nợ {TEN_SO_NO}: {trang}"]
+    chan = sn["ngoai_so"] + sn["qua_han"]
+    if chan:
+        dong.append(f"    🔴 cổng ĐANG CHẶN {len(chan)} tệp (ngoài sổ {len(sn['ngoai_so'])} · nợ quá hạn "
+                    f"{len(sn['qua_han'])}):")
+        dong += [f"       · {b['ngay']} {b['lat_cat']}{hh(b)}" for b in sorted(chan, key=lambda b: b["ngay"])]
+    if sn["trong_han"]:
+        con = (dt.date.fromisoformat(sn["han"]) - dt.date.fromisoformat(kq["ngay"])).days
+        dong.append(f"    🟠 nợ trong hạn {len(sn['trong_han'])} tệp (còn {con} ngày — sau hạn cổng CHẶN):")
+        dong += [f"       · {b['ngay']} {b['lat_cat']}{hh(b)}" for b in sorted(sn["trong_han"], key=lambda b: b["ngay"])]
+    if not chan and not sn["trong_han"]:
+        dong.append("    🟢 Không gói nào dựng từ mốc chỉ có cờ provenanceUnknown.")
+    else:
+        dong += ["    Trả nợ: bản nối tiếp ghi lượt tìm của CHÍNH bản vào searchSources + currency (giữ cờ cho mục kế "
+                 "thừa) —", "    lệnh mỗi chủ đề: python3 ops/orchestrator.py --topic \"<lát cắt>\" --online, rồi dựng bản "
+                 "nối tiếp theo skill.", "    Bản đã bị thay không cần trả nợ (không xuất lại). Agent KHÔNG tự lập/gia hạn sổ."]
+    return dong
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -463,15 +599,52 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--khong-ghi", action="store_true", help="không ghi ảnh chụp state/so-mien-tru.json")
     ap.add_argument("--dash", type=Path, help="thư mục EBM-Dashboards (mặc định: tự dò / EBM_WORKSPACE_ROOT)")
     ap.add_argument("--tep-state", type=Path, help="tệp ảnh chụp (mặc định state/so-mien-tru.json)")
+    ap.add_argument("--so-no", action="store_true", help="sổ nợ cổng provenance gói mới")
+    ap.add_argument("--tao", action="store_true", help="(--so-no) lập sổ nợ MỘT lần cho tệp đang vi phạm")
+    ap.add_argument("--gia-han", metavar="YYYY-MM-DD", help="(--so-no) dời hạn, giữ nguyên danh sách")
+    ap.add_argument("--han", metavar="YYYY-MM-DD", help="(--so-no --tao) hạn trả nợ, ≤ 90 ngày")
+    ap.add_argument("--can-cu", help="NGUYÊN VĂN lời bác sĩ (≥ 20 ký tự) — bắt buộc khi lập/gia hạn")
+    ap.add_argument("--ghi", action="store_true", help="(--so-no) ghi thật; mặc định chạy khô")
     a = ap.parse_args(argv)
+    if a.so_no:
+        return lenh_so_no(a)
     kq = do(dash=a.dash, tep_state=a.tep_state, ghi=not a.khong_ghi)
     if a.json:
-        print(json.dumps(kq, ensure_ascii=False, indent=1))
+        print(json.dumps({k: v for k, v in kq.items() if k != "ban"}, ensure_ascii=False, indent=1))
     else:
         in_bao_cao(kq)
     if not kq["do_duoc"]:
         return 2
     return 1 if (kq["a"] or kq["b_chi_co_hien_hanh"]) else 0
+
+
+def lenh_so_no(a, hom_nay: dt.date | None = None) -> int:
+    """Báo nợ / lập / gia hạn sổ nợ provenance. Mã: 0 sạch hoặc lập/gia hạn xong · 1 cổng đang chặn · 2 không đo được ·
+    3 từ chối (đã có sổ, thiếu nguyên văn, hạn sai)."""
+    hom_nay = hom_nay or dt.date.today()
+    kq = do(dash=a.dash, cac_repo={}, tep_state=a.tep_state, hom_nay=hom_nay, ghi=False)
+    if not kq["do_duoc"]:
+        print(f"⚪ KHÔNG ĐO ĐƯỢC: {kq['ly_do']}")
+        return 2
+    dash = Path(kq["dash"])
+    so_no = doc_so_no(dash)
+    if a.tao or a.gia_han:
+        if a.tao and so_no is not None:
+            print("✗ ĐÃ có sổ nợ — sổ chỉ được lập MỘT lần (bánh cóc: tệp mới không vào nợ). Gia hạn: --gia-han.")
+            return 3
+        if a.gia_han and so_no is None:
+            print("✗ chưa có sổ nợ để gia hạn — lập bằng --tao trước")
+            return 3
+        muc_no = sorted((b for b in kq["ban"] if b["loai"] == CHI_CO and b["ngay"] >= kq["moc_prisma_s"]),
+                        key=lambda b: (b["ngay"], b["lat_cat"]))
+        ma, tb = ghi_so_no(dash, muc_no, a.han if a.tao else a.gia_han, a.can_cu or "", ghi=a.ghi,
+                           cu=so_no if a.gia_han else None, hom_nay=hom_nay)
+        print(tb)
+        return ma
+    print("\n".join(bao_cao_so_no(kq)))
+    print("Cần bác sĩ kiểm chứng.")
+    sn = kq["so_no"]
+    return 1 if (sn["ngoai_so"] or sn["qua_han"] or sn["hong"]) else 0
 
 
 if __name__ == "__main__":
