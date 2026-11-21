@@ -545,3 +545,32 @@ def test_duoi_pytest_khong_ghi_cau_hinh_that(tmp_path, monkeypatch):
     with pytest.raises(NE.KhongChayDuoc, match="dưới pytest"):
         T._ghi_nho_nhom("DE-TAI_X", "NC · X", None)
     assert goi == [], "tệp cấu hình thật không bao giờ bị ghi khi chạy test"
+
+
+def test_main_gom_toan_van_khi_khong_thay_kho_bao_khong_do_duoc_va_khong_chay_bo_gom(tmp_path, monkeypatch, capsys):
+    """21/11/2026 — chạy từ worktree (EBM-Dashboards vắng ở cây đang chạy): làn theo PMID không chạy, báo ⚪ KHÔNG ĐO ĐƯỢC
+    (trước bản vá: bộ gom vẫn được gọi, trả mã 2, và biên nhận ghi «không có bản truy cập mở hợp lệ»)."""
+    thu_muc, _ = _de_tai(tmp_path)
+    monkeypatch.setattr(NE, "_la_mac", lambda: False)
+    monkeypatch.setattr(NE, "_tim_dash_goc", lambda: None)
+    monkeypatch.setattr(NE, "doc_loai_tru", lambda *a: {"doi": {}, "pmid": {}})
+    monkeypatch.setattr(T, "_goi_y_cay_chinh", lambda: "")
+    goc = T.chay
+
+    def boom(*_a, **_k):
+        raise AssertionError("không được gọi bộ gom/bộ in PDF khi không thấy kho")
+
+    def upw_gia(_ds, _tv):
+        return {"luu": [], "khong_luu": [], "loi": "giả: thiếu email", "da_do_doi": [], "khong_do_duoc": []}
+
+    def chay_gia(*a, **k):
+        k.update(lay_pm=lambda pmids: {p: META[p] for p in pmids if p in META}, lay_cr=lambda d: META_CR.get(d),
+                 lay_ep=lambda p: {}, tim_pmid=_tim,
+                 gom_tv=lambda ds, tv, kho: T.gom_toan_van(ds, tv, kho, chay=boom, gom_doi=upw_gia))
+        return goc(*a, **k)
+    monkeypatch.setattr(T, "chay", chay_gia)
+    ma = T.main(["--study", "NC-THU", "--thu-muc-de-tai", str(thu_muc), "--gom-toan-van"])
+    ra = capsys.readouterr().out
+    assert ma == T.MA_MOT_PHAN
+    assert "⚪ làn OA KHÔNG ĐO ĐƯỢC — làn theo PMID" in ra and "không thấy kho" in ra
+    assert "biên nhận KHÔNG ghi lượt «truy_cap_mo»" in ra

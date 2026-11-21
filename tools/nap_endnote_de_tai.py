@@ -35,8 +35,9 @@ toàn văn và không thể lấy được toàn văn thì loại bỏ»): đo T
 THẬT (rồi kho toàn văn / `toan_van_tltk/`) và ghi biên nhận `exports/<đề tài>/TOAN_VAN_TLTK_<đề tài>.json` mà cổng
 G10-AUTO-12 của repo y khoa đọc (`tools/toan_van_trich_dan.py` — khoá TLTK và khuôn biên nhận lấy từ CHÍNH mô-đun đó).
 Ghi được cả khi chạy khô (chỉ ghi tệp đo, không đụng EndNote); EndNote chưa mở thư viện ⇒ KHÔNG ghi (giữ biên nhận cũ —
-không đo được ≠ thiếu toàn văn). Làn đã thử: `--gom-toan-van` cùng lượt ⇒ «truy_cap_mo»; sổ «không truy cập» của làn
-trình duyệt (`trinh_duyet/khong-truy-cap.jsonl`) ⇒ «trinh_duyet»; làn cũ ở biên nhận trước được giữ.
+không đo được ≠ thiếu toàn văn). Làn đã thử: `--gom-toan-van` cùng lượt ⇒ «truy_cap_mo» CHỈ cho định danh làn đã kết
+luận (21/11/2026: kho vắng — chạy từ worktree —, bộ gom/bộ in mã ≠ 0, lỗi mạng ⇒ ⚪ KHÔNG ĐO ĐƯỢC, không ghi); sổ «không
+truy cập» của làn trình duyệt (`trinh_duyet/khong-truy-cap.jsonl`) ⇒ «trinh_duyet»; làn cũ ở biên nhận trước được giữ.
 Mã thoát: 0 đủ (mọi TLTK trong EndNote, đủ toàn văn, không lệch) · 1 còn việc (thiếu toàn văn/lệch/chưa nhập được) ·
 2 không chạy được · 3 tham số sai. Cần bác sĩ kiểm chứng.
 """
@@ -336,9 +337,13 @@ def co_toan_van(truong: str) -> bool:
 
 def gom_doi_unpaywall(ds: list[dict], thu_muc_tv: Path, gom_mod=None, tai=None) -> dict:
     """Unpaywall theo DOI cho TLTK không PMID — CÙNG cổng điều khoản với tầng 2 của bộ gom (`vi_tri_oa_duoc_luu`): chỉ bản mang
-    giấy phép mở được lưu tự động; chỉ nhận PDF thật (`%PDF-`). Ghi `DOI-<…>_UPW.pdf` vào thư mục toàn văn của đề tài."""
+    giấy phép mở được lưu tự động; chỉ nhận PDF thật (`%PDF-`). Ghi `DOI-<…>_UPW.pdf` vào thư mục toàn văn của đề tài.
+
+    `da_do_doi` (21/11/2026): DOI (chữ thường) mà làn ra KẾT LUẬN được — đã lưu PDF · Unpaywall nói không có bản mở/cổng điều
+    khoản chặn · vị trí mở chỉ trả trang HTML. Lỗi mạng/bố cục lạ (ngoại lệ ở lượt tra, hoặc MỌI vị trí đều ngoại lệ) ⇒
+    `khong_do_duoc`, KHÔNG vào `da_do_doi`: biên nhận chỉ ghi lượt «truy_cap_mo» cho DOI trong `da_do_doi`."""
     gom_mod = gom_mod or _nap("gom_toan_van_dashboard.py", "_gtvd_de_tai")
-    bc: dict = {"luu": [], "khong_luu": []}
+    bc: dict = {"luu": [], "khong_luu": [], "da_do_doi": [], "khong_do_duoc": []}
     email = gom_mod._email_lich_su()
     if not email:
         bc["loi"] = "Unpaywall cần email định danh (NCBI_EMAIL trong ~/.ebm-secrets)"
@@ -357,38 +362,111 @@ def gom_doi_unpaywall(ds: list[dict], thu_muc_tv: Path, gom_mod=None, tai=None) 
             ds_url, ly_do = gom_mod.vi_tri_oa_duoc_luu(uj, r["doi"])
         except Exception as e:  # noqa: BLE001 — lỗi một bài không giết cả lượt
             bc["khong_luu"].append(f"{nhan}: {type(e).__name__}")
+            bc["khong_do_duoc"].append(f"{nhan}: {type(e).__name__} khi tra Unpaywall — chưa kết luận")
             continue
         if not ds_url:
             bc["khong_luu"].append(f"{nhan}: {ly_do or 'Unpaywall không có bản truy cập mở'}")
+            bc["da_do_doi"].append(r["doi"].lower())
             continue
+        tra_loi = False  # ít nhất một vị trí trả nội dung — mọi vị trí ngoại lệ là lỗi mạng, không phải «trang HTML»
         for url in ds_url:
             try:
                 du_lieu = tai(url)
             except Exception:  # noqa: BLE001 — vị trí này hỏng thì thử vị trí kế
                 continue
+            tra_loi = True
             if du_lieu[:5] == b"%PDF-":
                 thu_muc_tv.mkdir(parents=True, exist_ok=True)
                 gom_mod._ghi_nguyen_tu(thu_muc_tv / f"{ten_doi(r['doi'])}_UPW.pdf", du_lieu)
                 bc["luu"].append(nhan)
+                bc["da_do_doi"].append(r["doi"].lower())
                 break
         else:
-            bc["khong_luu"].append(f"{nhan}: vị trí truy cập mở không trả PDF (trang HTML) — làn trình duyệt/bác sĩ")
+            if tra_loi:
+                bc["khong_luu"].append(f"{nhan}: vị trí truy cập mở không trả PDF (trang HTML) — làn trình duyệt/bác sĩ")
+                bc["da_do_doi"].append(r["doi"].lower())
+            else:
+                bc["khong_luu"].append(f"{nhan}: mọi vị trí truy cập mở đều lỗi khi tải")
+                bc["khong_do_duoc"].append(f"{nhan}: mọi vị trí truy cập mở đều lỗi khi tải — chưa kết luận")
     return bc
 
 
-def gom_toan_van(ds: list[dict], thu_muc_tv: Path, kho: Path | None, chay=subprocess.run, gom_doi=gom_doi_unpaywall) -> dict:
+# Dòng bộ gom IN RA khi lượt trả mã 0 mà vẫn có bài CHƯA kết luận (lỗi mạng từng bài, tầng Unpaywall bị bỏ vì thiếu email,
+# XML lệch md5): thấy một dòng ⇒ cả làn theo PMID của lượt là «không đo được». Test khoá từng chuỗi vào dòng `print` THI HÀNH
+# của `gom_toan_van_dashboard.py` — bộ gom đổi câu chữ thì test đỏ, không lặng lẽ thành «đã thử» (21/11/2026).
+DAU_HIEU_GOM_CHUA_TRON = ("bài lỗi mạng lượt này", "Unpaywall cần email định danh", "chưa lấy được, lần sau thử lại",
+                          "thử vị trí kế", "lượt sau thử lại")
+
+
+def _kho_lan_oa() -> Path | None:
+    """Kho mà làn truy cập mở theo PMID GHI vào: `toan_van_oa` của EBM-Dashboards gốc — bộ gom và bộ in PDF định vị bằng CÙNG
+    `ban_sao_tran.duong_goc` từ cây này. None ở worktree/bản sao trần (không tự tạo kho — TT-05/W9)."""
+    dash = NE._tim_dash_goc()
+    kho = dash / "toan_van_oa" if dash else None
+    return kho if kho is not None and kho.is_dir() else None
+
+
+def _goi_y_cay_chinh() -> str:
+    """Cây này là worktree của git mà cây chính có kho ⇒ chỉ đường chạy lại từ cây chính (chỉ GỢI Ý, không tự đọc/ghi kho
+    của cây khác: bộ gom, bộ in PDF và engine y khoa đều định vị từ cây của chính chúng)."""
+    try:
+        kq = subprocess.run(["git", "-C", str(ROOT), "rev-parse", "--path-format=absolute", "--git-common-dir"],
+                            capture_output=True, text=True, encoding="utf-8", timeout=15)
+        chung = Path(kq.stdout.strip())
+        chinh = chung.parent
+        if (kq.returncode == 0 and chung.name == ".git" and chinh.resolve() != ROOT.resolve()
+                and (chinh / "EBM-Dashboards" / "toan_van_oa").is_dir()):
+            return f" Cây này là worktree — chạy lại lệnh từ cây chính {chinh}."
+    except (OSError, ValueError, subprocess.SubprocessError):
+        pass
+    return ""
+
+
+def gom_toan_van(ds: list[dict], thu_muc_tv: Path, kho: Path | None, chay=subprocess.run, gom_doi=gom_doi_unpaywall,
+                 tim_kho_oa=_kho_lan_oa) -> dict:
     """Làn truy cập mở cho TLTK còn thiếu PDF: PMID ⇒ bộ gom kho chung (PMC + Unpaywall) rồi in PDF từ toàn văn XML; DOI không
-    PMID ⇒ Unpaywall theo DOI vào thư mục đề tài. Không bao giờ tải bài thuê bao."""
-    bc: dict = {}
+    PMID ⇒ Unpaywall theo DOI vào thư mục đề tài. Không bao giờ tải bài thuê bao.
+
+    21/11/2026: `do_duoc` = định danh mà làn ra KẾT LUẬN được ở lượt này (`pmid`, `doi`) — biên nhận chỉ ghi lượt
+    «truy_cap_mo» cho các định danh đó. Làn theo PMID chỉ tính là đo được khi kho làn ghi vào CÓ THẬT và TRÙNG kho lượt này
+    đọc, cả bộ gom lẫn bộ in PDF trả mã 0 và bộ gom không in dấu hiệu chưa trọn (`DAU_HIEU_GOM_CHUA_TRON`). Kho vắng/lệch ⇒
+    không chạy làn PMID (bộ gom sẽ chỉ trả «KHÔNG ĐO ĐƯỢC»), ghi lý do vào `khong_do_duoc`. Trước bản vá: chạy từ worktree,
+    bộ gom trả mã 2 «không thấy kho» mà biên nhận vẫn ghi «không có bản truy cập mở hợp lệ» cho 17 TLTK của C1a."""
+    bc: dict = {"do_duoc": {"pmid": [], "doi": []}, "khong_do_duoc": []}
     pmids = [r["pmid"] for r in ds if r.get("pmid") and not chon_toan_van(r, kho, thu_muc_tv)]
     if pmids:
-        for ten, doi_so in (("gom", ["tools/gom_toan_van_dashboard.py", "--pmid", *pmids, "--unpaywall"]),
-                            ("in_pdf", ["tools/in_pdf_toan_van_kho.py", "--pmid", *pmids, "--ap-dung"])):
-            kq = chay([sys.executable, *doi_so], cwd=ROOT, capture_output=True, text=True, encoding="utf-8")
-            bc[ten] = {"ma": kq.returncode, "duoi": (kq.stdout or "").strip().splitlines()[-3:]}
+        bc["pmid_gui"] = pmids
+        kho_oa = tim_kho_oa()
+        if kho_oa is None:
+            bc["khong_do_duoc"].append(f"làn theo PMID ({len(pmids)} TLTK): không thấy kho EBM-Dashboards/toan_van_oa ở "
+                                       f"cây {ROOT} — KHÔNG chạy.{_goi_y_cay_chinh()}")
+        elif kho is None or not Path(kho).is_dir() or Path(kho).resolve() != kho_oa.resolve():
+            bc["khong_do_duoc"].append(f"làn theo PMID ({len(pmids)} TLTK) ghi vào {kho_oa} nhưng lượt này đọc kho {kho} "
+                                       "— kết quả không đo được trên kho đang đọc — KHÔNG chạy")
+        else:
+            loi = []
+            for ten, doi_so in (("gom", ["tools/gom_toan_van_dashboard.py", "--pmid", *pmids, "--unpaywall"]),
+                                ("in_pdf", ["tools/in_pdf_toan_van_kho.py", "--kho", str(kho_oa), "--pmid", *pmids,
+                                            "--ap-dung"])):
+                kq = chay([sys.executable, *doi_so], cwd=ROOT, capture_output=True, text=True, encoding="utf-8")
+                ra = (kq.stdout or "").strip()
+                bc[ten] = {"ma": kq.returncode, "duoi": ra.splitlines()[-3:]}
+                if kq.returncode != 0:
+                    loi.append(f"{ten} mã {kq.returncode}")
+                if ten == "gom":
+                    loi += [f"gom in «{d}»" for d in DAU_HIEU_GOM_CHUA_TRON if d in ra]
+            if loi:
+                bc["khong_do_duoc"].append(f"làn theo PMID ({len(pmids)} TLTK) chưa trọn: {'; '.join(loi)}")
+            else:
+                bc["do_duoc"]["pmid"] = list(pmids)
     thieu_doi = [r for r in ds if r.get("doi") and not r.get("pmid") and not chon_toan_van(r, kho, thu_muc_tv)]
     if thieu_doi:
-        bc["unpaywall_doi"] = gom_doi(thieu_doi, thu_muc_tv)
+        u = gom_doi(thieu_doi, thu_muc_tv)
+        bc["unpaywall_doi"] = u
+        bc["do_duoc"]["doi"] = list(u.get("da_do_doi") or [])
+        if u.get("loi"):
+            bc["khong_do_duoc"].append(f"Unpaywall theo DOI ({len(thieu_doi)} TLTK): {u['loi']}")
+        bc["khong_do_duoc"] += [f"Unpaywall theo DOI — {x}" for x in u.get("khong_do_duoc") or []]
     return bc
 
 
@@ -656,7 +734,12 @@ def bien_nhan_toan_van(study: str, thu_muc: Path, *, endnote, kho: Path | None, 
         if not (r["pmid"] or r["doi"]) and r["tai_lieu"].startswith("DE_CUONG_NOP") and ids_kdd.get(str(r["so_tltk"])):
             ma[r["so"]] = ids_kdd[str(r["so_tltk"])]
     phu = do_phu_toan_van(endnote, ma) if endnote is not None else {}
-    gom = bool(bc.get("gom_toan_van"))
+    # 21/11/2026: làn truy cập mở chỉ ghi cho định danh làn ĐÃ KẾT LUẬN ở lượt này (`do_duoc` của `gom_toan_van`). Trước bản
+    # vá: có báo cáo gom (kể cả bộ gom trả mã 2 «không thấy kho» khi chạy từ worktree) là MỌI TLTK thiếu PDF — cả TLTK chỉ có
+    # trong bản thảo G7 chưa từng được gửi đi gom — nhận «không có bản truy cập mở hợp lệ».
+    do_duoc = (bc.get("gom_toan_van") or {}).get("do_duoc") or {}
+    da_do_pmid = {str(p) for p in do_duoc.get("pmid") or []}
+    da_do_doi = {str(d).lower() for d in do_duoc.get("doi") or []}
     khong_tc = khong_truy_cap or {}
     # 18/11/2026: TLTK chỉ ghi DOI mà lượt nạp đã tra ra PMID («TLTK n: DOI d → PMID p») ⇒ tra sổ «không truy cập» theo
     # cả PMID đó (C1a TLTK 35: sổ ghi theo PMID 16943232, đề cương chỉ có DOI ⇒ trước đây không bao giờ khớp).
@@ -675,9 +758,13 @@ def bien_nhan_toan_van(study: str, thu_muc: Path, *, endnote, kho: Path | None, 
                 nguon = "toan_van_tltk" if pdf[0].parent.resolve() == thu_muc_tv.resolve() else "kho_toan_van"
         lan = list((tvt._tim_muc(r["khoa"], cu) or {}).get("lan_da_thu") or []) if cu else []
         if tv is False:
-            if gom and (r["pmid"] or r["doi"]):
+            pm_do = next((p for p in (r["pmid"], doi_ra_pmid.get(str(r["doi"] or "").lower())) if p in da_do_pmid), None)
+            if pm_do:
                 _gop_lan(lan, {"lan": "truy_cap_mo", "ngay": hom_nay.isoformat(),
-                               "ket_qua": "--gom-toan-van (PMC + Unpaywall): không có bản truy cập mở hợp lệ"})
+                               "ket_qua": "--gom-toan-van (PMC + Unpaywall theo PMID): không có bản truy cập mở hợp lệ"})
+            elif r["doi"] and r["doi"].lower() in da_do_doi:
+                _gop_lan(lan, {"lan": "truy_cap_mo", "ngay": hom_nay.isoformat(),
+                               "ket_qua": "--gom-toan-van (Unpaywall theo DOI): không có bản truy cập mở hợp lệ"})
             khoa_ktc = [k for k in (r["pmid"], doi_ra_pmid.get(str(r["doi"] or "").lower()),
                                     f"doi:{str(r['doi']).lower()}" if r["doi"] else None) if k and k in khong_tc]
             if khoa_ktc:
@@ -725,7 +812,8 @@ def ma_thoat(bc: dict) -> int:
         return MA_KHONG_CHAY
     con_viec = (bc["thieu_toan_van"] or bc["lech"] or bc["danh_muc"] or bc["khong_tach_duoc"]
                 or bc["khong_lay_duoc_metadata"] or bc.get("chua_trong_endnote") or not bc["kiem_trung"]
-                or bc.get("khong_do_duoc_toan_van") or bc["khong_dinh_danh"].get("loai_sai"))
+                or bc.get("khong_do_duoc_toan_van") or bc["khong_dinh_danh"].get("loai_sai")
+                or (bc.get("gom_toan_van") or {}).get("khong_do_duoc"))
     return MA_MOT_PHAN if con_viec else MA_OK
 
 
@@ -777,6 +865,8 @@ def in_bao_cao(bc: dict) -> None:
         if u:
             print(f"   Unpaywall theo DOI: lưu {len(u['luu'])} · không lưu {len(u['khong_luu'])}"
                   + (f" · {u['loi']}" if u.get("loi") else ""))
+        for c in g.get("khong_do_duoc") or []:
+            print(f"   ⚪ làn OA KHÔNG ĐO ĐƯỢC — {c} ⇒ biên nhận KHÔNG ghi lượt «truy_cap_mo» cho phần này")
     if bc["kiem_trung"]:
         print(f"   📄 TOÀN VĂN trong EndNote: {bc.get('co_toan_van', 0)}/{bc['so_tltk']} TLTK"
               + (f" · thêm lượt này {len(bc['them_toan_van'])}" if bc["them_toan_van"] else "")
