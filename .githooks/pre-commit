@@ -141,4 +141,11 @@ if [ -n "$KHONG_CHAY" ]; then
   exit 1
 fi
 
+# 21/11/2026: agent .claude/agents/*.md sua o goc ma ban sao trong repo y khoa (origin da fetch) con khac => NHAC PR CAP.
+# Su co 20/11: #454 + #456 gop khong co PR cap, agent y khoa day luat cu, BH107 chi bat sau vai gio. CHI NHAC, khong chan
+# (PR cap di sau PR goc la binh thuong); khong goi mang. Dung PR cap mot lenh: python3 tools/dong_bo_agent_y_khoa.py --ap-dung --mo-pr
+if [ -f tools/dong_bo_agent_y_khoa.py ]; then
+  python3 tools/dong_bo_agent_y_khoa.py --staged || true
+fi
+
 exit 0
