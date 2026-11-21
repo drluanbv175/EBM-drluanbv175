@@ -263,6 +263,16 @@ def test_nhan_dien_het_tran_khong_phan_biet_hoa_thuong(tmp_path, akc, thong_diep
     assert "trần" in r["dung"] and len(dem) == 1
 
 
+def test_het_tin_dung_cua_cau_noi_la_dung_ca_luot(tmp_path, akc):
+    """21/11/2026: cầu nối dùng theo tín dụng; tài khoản hết tín dụng ⇒ HetTinDung — lượt dừng, nêu đúng lý do."""
+    dem = []
+    thong_diep = ("⛔ Tài khoản Claude API HẾT TÍN DỤNG hoặc chạm giới hạn chi tiêu trên Claude Console — dừng, không gọi "
+                  "tiếp (BadRequestError: Your credit balance is too low…).")
+    r = akc.chay_de_cuong([{"study": "a", "loai": "A12"}, {"study": "b", "loai": "PHAN_BIEN"}], tmp_path,
+                          lambda lenh, c, t: dem.append(lenh) or (2, thong_diep))
+    assert "hết tín dụng" in r["dung"] and len(dem) == 1
+
+
 def test_duoi_pytest_khong_chay_cong_cu_de_cuong_that(tmp_path, akc):
     """★ RÀO TIỀN."""
     assert akc.chay_de_cuong([{"study": "a", "loai": "A12"}], tmp_path)["ket_qua"] == "bo_qua"

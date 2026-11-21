@@ -20,7 +20,8 @@ BA VIỆC
             để bác sĩ rà. Máy KHÔNG gỡ mục nào.
   de_cuong  KIỂM ĐỀ CƯƠNG KHI ĐỔI. Báo cáo A12 / phản biện máy mà `duyet_kiem_may_api.tinh_trang_tat_ca` (repo y khoa,
             PR #306 của phiên khác) KHẲNG ĐỊNH là cũ (đề cương đổi sau lượt kiểm) ⇒ chạy lại công cụ đó `--goi-api`.
-            «Không khẳng định được» KHÔNG tự chạy. Cầu nối y khoa còn trần chi phí tháng riêng; chạm trần ⇒ dừng.
+            «Không khẳng định được» KHÔNG tự chạy. Cầu nối y khoa dùng THEO TÍN DỤNG tài khoản (bác sĩ 21/11/2026 — không trần
+            tháng tự đặt); tài khoản hết tín dụng / chạm giới hạn Console ⇒ cầu nối tự dừng và lượt này dừng theo.
   cafes     CAFÉ-S KHI AGENT AN TOÀN ĐỔI. Vân tay agent khác lượt đo gần nhất VÀ lượt đó cách ≥ N ngày (mặc định 30).
 
 KHÔNG có ở đây (cố ý): hội đồng cổng (triệu tập phải hỏi bác sĩ — CLAUDE.md §1); ambient scribe / đọc ảnh (dữ liệu
@@ -72,8 +73,10 @@ HAN_KHOA_GIO = 3
 GIAY_DE_CUONG = 1800
 GIAY_CAFES = 3600
 CONG_CU_DE_CUONG = {"A12": "kiem_noi_dung_trich_dan.py", "PHAN_BIEN": "phan_bien_may_de_cuong.py"}
-# Dấu hiệu cầu nối y khoa từ chối gọi vì trần chi phí tháng (`api_claude_nc.HetNganSach`) — so CHỮ THƯỜNG.
-DAU_HIEU_HET_TRAN = ("trần chi phí", "kiểm được trần", "ngân sách", "hetngansach")
+# Dấu hiệu cầu nối y khoa từ chối gọi — so CHỮ THƯỜNG. 21/11/2026: cầu nối dùng theo tín dụng tài khoản; hết tín dụng ⇒
+# `api_claude_nc.HetTinDung` («HẾT TÍN DỤNG»). Trần tháng chỉ còn khi biến môi trường OS đặt (kiểm thử/khoá khẩn cấp).
+DAU_HIEU_HET_TIN_DUNG = ("hết tín dụng", "hettindung")
+DAU_HIEU_HET_TRAN = ("trần chi phí", "kiểm được trần", "ngân sách", "hetngansach") + DAU_HIEU_HET_TIN_DUNG
 MAC_DINH = {"chu_de_toi_da_moi_luot": 60, "cafes_cach_ngay_toi_thieu": 30, "nen_cach_gio_toi_thieu": 6}
 GIA_SONNET = (2.0, 10.0)   # USD / triệu token vào · ra (Sonnet 5.5) — chỉ để IN ước tính, không dùng chặn
 
@@ -350,7 +353,9 @@ def chay_de_cuong(can: List[Dict[str, Any]], goc_mea: Path = GOC_MEA,
         # Không phân biệt hoa thường: thông điệp vượt trần chính của cầu nối mở đầu «Trần chi phí Claude API tháng…»
         # (viết hoa) — so khớp phân biệt hoa thường từng bỏ sót nó (đo 18/11/2026 sau khi y khoa #306 gộp).
         if ma not in (0, 1) and any(s in duoi.lower() for s in DAU_HIEU_HET_TRAN):
-            dung = "dừng: chạm trần chi phí tháng của cầu nối y khoa"
+            dung = ("dừng: tài khoản Claude API hết tín dụng (cầu nối y khoa tự dừng) — nạp thêm ở Claude Console"
+                    if any(s in duoi.lower() for s in DAU_HIEU_HET_TIN_DUNG)
+                    else "dừng: chạm trần chi phí tháng của cầu nối y khoa")
             break
     so_loi = sum(1 for k in ket if not k["ok"])
     return {"ket_qua": "loi" if so_loi else "ok", "da_chay": len(ket), "so_loi": so_loi, "dung": dung, "chi_tiet": ket}
