@@ -1765,12 +1765,32 @@ def giac_quan_api_khi_can(goc: Path | None = None, bay_gio: dt.datetime | None =
     return viec
 
 
-def giac_quan_agent_lech(goc_agents: Path, mea_agents: Path) -> list[tuple[int, str, str]]:
+NHANH_Y_KHOA = "feat/r1-1-2-design-gap-remediation"
+
+
+def _doc_agent_origin_y_khoa(ten: str) -> bytes | None:
+    """Bản `.claude/agents/<ten>` trên origin của nhánh y khoa (đã fetch — không gọi mạng). Lỗi/vắng ⇒ None."""
+    try:
+        r = subprocess.run(["git", "-C", str(_GOC_MEA), "show", f"origin/{NHANH_Y_KHOA}:.claude/agents/{ten}"],
+                           capture_output=True, timeout=30)
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    return r.stdout if r.returncode == 0 else None
+
+
+def giac_quan_agent_lech(goc_agents: Path, mea_agents: Path,
+                         doc_origin=None) -> list[tuple[int, str, str]]:
     """Agent `.claude/agents/*.md` của repo GỐC phải trùng từng byte bản ở repo Y KHOA (PM-15, kiểm toàn diện 02/10/2026).
 
     Chỉ một tệp doctrine (`_CONNECTOR-CHUNG-CU.md`, BH107) từng được so; cặp PR #77↔#61 cho thấy gộp một bên là hai bản lệch mà không
     chốt nào đỏ — vd agent kê đơn sửa ở một repo, quên repo kia. Không chặn commit (hai PR cặp có thể lệch pha vài giờ) — chỉ nhắc 🤖.
-    Vắng repo y khoa ⇒ giác quan chết (⚪)."""
+    Vắng repo y khoa ⇒ giác quan chết (⚪).
+
+    VÁ 21/11/2026 — `doc_origin(tên) -> bytes | None` (bản trên origin của nhánh y khoa, đã fetch): tệp lệch mà origin ĐÃ trùng gốc
+    là «cây y khoa trên máy chưa kéo», KHÔNG phải «thiếu PR cặp». Đo 21/11: PR cặp y khoa #351 đã gộp mà hòm việc vẫn báo «2 lệch
+    nội dung — đồng bộ bằng PR CẶP» vì cây chính sau origin 5 commit (phiên khác giữ thay đổi chồng lấn) — làm theo sẽ mở PR TRÙNG.
+    Nay tách hai dòng: cần PR cặp ⇒ `tools/dong_bo_agent_y_khoa.py --ap-dung --mo-pr`; chỉ cần kéo cây ⇒ `git pull --ff-only`.
+    Không có `doc_origin` (hoặc đọc origin lỗi cho một tệp) ⇒ coi tệp đó như cần PR cặp — hành vi cũ, không giấu lệch."""
     _SO_GIAC_QUAN["chay"] += 1
     if not (goc_agents.is_dir() and mea_agents.is_dir()):
         _ghi_chet(["", "agent gốc ↔ y khoa"], "thiếu một trong hai thư mục .claude/agents")
@@ -1781,13 +1801,30 @@ def giac_quan_agent_lech(goc_agents: Path, mea_agents: Path) -> list[tuple[int, 
     chi_mot = sorted(goc.keys() ^ mea.keys())
     if not lech and not chi_mot:
         return []
+    keo_cay = []
+    if doc_origin is not None:
+        for n in lech:
+            try:
+                if doc_origin(n) == goc[n].read_bytes():
+                    keo_cay.append(n)
+            except Exception:  # noqa: BLE001 — đọc origin lỗi ⇒ giữ ở nhóm «cần PR cặp» (không giấu lệch)
+                pass
+    lech_pr = [n for n in lech if n not in keo_cay]
+    ra = []
     mo_ta = []
-    if lech:
-        mo_ta.append(f"{len(lech)} lệch nội dung ({', '.join(lech[:4])}{'…' if len(lech) > 4 else ''})")
+    if lech_pr:
+        mo_ta.append(f"{len(lech_pr)} lệch nội dung ({', '.join(lech_pr[:4])}{'…' if len(lech_pr) > 4 else ''})")
     if chi_mot:
         mo_ta.append(f"{len(chi_mot)} chỉ có ở một bên ({', '.join(chi_mot[:4])}{'…' if len(chi_mot) > 4 else ''})")
-    return [(2, "Agent gốc ↔ y khoa: " + "; ".join(mo_ta) + " — đồng bộ bằng PR CẶP (cùng nội dung ở cả hai repo)",
-             "diff -rq .claude/agents medical-ebm-automation/.claude/agents")]
+    if mo_ta:
+        ra.append((2, "Agent gốc ↔ y khoa: " + "; ".join(mo_ta) + " — đồng bộ bằng PR CẶP (cùng nội dung ở cả hai repo)",
+                   "python3 tools/dong_bo_agent_y_khoa.py  # rồi --ap-dung --mo-pr" if lech_pr
+                   else "diff -rq .claude/agents medical-ebm-automation/.claude/agents"))
+    if keo_cay:
+        ra.append((3, f"Agent: origin y khoa ĐÃ trùng gốc nhưng cây y khoa trên máy chưa kéo ({len(keo_cay)}: "
+                      f"{', '.join(keo_cay[:4])}{'…' if len(keo_cay) > 4 else ''}) — không mở PR cặp trùng",
+                   "git -C medical-ebm-automation pull --ff-only  # khi phiên khác không giữ thay đổi chồng lấn"))
+    return ra
 
 
 # ── BÌNH DUYỆT ĐỘC LẬP TRƯỚC MỐC NỘP/KHOÁ (14/11/2026) ──────────────────────────────────────────────────────────────────
@@ -2678,7 +2715,8 @@ def main() -> int:
         de_xuat.append((uu, "👤", dong, lenh))
     for uu, dong, lenh in giac_quan_the_tuan_chua_quyet(_bst_mea.duong_goc("queue", REPO) or (REPO / "queue")):
         de_xuat.append((uu, "👤", dong, lenh))
-    for uu, dong, lenh in giac_quan_agent_lech(REPO / ".claude" / "agents", _GOC_MEA / ".claude" / "agents"):
+    for uu, dong, lenh in giac_quan_agent_lech(REPO / ".claude" / "agents", _GOC_MEA / ".claude" / "agents",
+                                               doc_origin=_doc_agent_origin_y_khoa):
         de_xuat.append((uu, "🤖", dong, lenh))
     if a.json:
         de_xuat.sort(key=lambda x: x[0])
