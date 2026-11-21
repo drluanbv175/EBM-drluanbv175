@@ -166,19 +166,20 @@ def _read(path: Path) -> str:
 
 
 def _run_real_g6(study: str, exports_root: Path) -> None:
-    """Sau khi G5 khoá, sinh bộ phân tích G6 bằng CHÍNH `run_g6_auto.main()` rồi thống kê viên bật dòng mô hình chính.
+    """Sau khi G5 khoá, sinh bộ phân tích G6 bằng CHÍNH `run_g6_auto.main()` (bước người thật làm ngay sau khoá dữ liệu).
 
     21/11/2026 — thay scaffold viết tay (checkpoint `{"guardrail": {"passed": true}}` + tệp `G6_A7_..._AUTO.md`): từ
     06/10/2026 audit CHẤM SỐNG G6, thiếu `G6_A7_ANALYSIS_SCRIPTS_<study>.md` thật ⇒ G6-AUTO-00 BLOCKED ⇒ GUARDRAIL_FAIL;
     tệp `_AUTO` giả lại được audit đếm như artifact G6. Đúng mẫu `tests/test_g6_quality_gate_20260815.py` của repo y
     khoa. `run_g6_auto` lấy thư mục đề tài từ biến module `BASE` ⇒ trỏ tạm vào gốc tạm của verifier, trả lại sau khi chạy.
+    Không mô phỏng thống kê viên hoàn thiện script (`bat_mo_hinh_chinh_g6`): kiểm đột biến cho thấy audit G6 không phụ
+    thuộc bước đó — verifier chỉ khẳng định G6 thấy data-lock, không khẳng định phân tích G6 đã xong.
     """
     import contextlib  # noqa: PLC0415
     import io  # noqa: PLC0415
 
     import cong_song as CS  # noqa: PLC0415
     import run_g6_auto as G6A  # noqa: PLC0415
-    from tests.g5_test_helpers import bat_mo_hinh_chinh_g6  # noqa: PLC0415
 
     base_cu, argv_cu = G6A.BASE, sys.argv
     G6A.BASE = exports_root.parent
@@ -189,8 +190,8 @@ def _run_real_g6(study: str, exports_root: Path) -> None:
             G6A.main()
     finally:
         G6A.BASE, sys.argv = base_cu, argv_cu
-    _assert(bat_mo_hinh_chinh_g6(exports_root / study),
-            "Script G6 thật phải có dòng mô hình chính để thống kê viên bật")
+    _assert((exports_root / study / f"G6_A7_ANALYSIS_SCRIPTS_{study}.md").is_file(),
+            "Bộ sinh G6 thật phải ghi G6_A7_ANALYSIS_SCRIPTS_<study>.md sau khi G5 khoá")
     CS.xoa_dem()
 
 
