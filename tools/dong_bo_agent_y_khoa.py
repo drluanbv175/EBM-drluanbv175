@@ -43,6 +43,7 @@ import re
 import shutil
 import subprocess
 import sys
+import textwrap
 from pathlib import Path
 from typing import Callable
 
@@ -109,15 +110,21 @@ def phan_loai(ten_ds: list[str], doc_goc: Callable[[str], bytes | None], doc_ori
     return ra
 
 
+GIOI_HAN_DONG = 120   # ruff line-length của repo y khoa
+
+
 def cap_nhat_sha(van_ban: str, sha_moi: str, ghi_chu: str) -> str:
-    """Thay SHA trong `MANIFEST_SELF_CHECK_SHA256 = (\\n    "<hex>"\\n)` và chèn MỘT dòng chú thích ngay trước hằng.
+    """Thay SHA trong `MANIFEST_SELF_CHECK_SHA256 = (\\n    "<hex>"\\n)` và chèn chú thích ngay trước hằng — NGẮT ở
+    ≤ 120 ký tự mỗi dòng (21/11/2026: PR cặp 7 agent sinh dòng 233 ký tự ⇒ ruff E501 của repo y khoa chặn commit).
     Mẫu không khớp đúng một lần ⇒ ValueError (không đoán chỗ sửa)."""
     if not re.fullmatch(r"[0-9a-f]{64}", sha_moi):
         raise ValueError("SHA mới không phải 64 ký tự hex")
     if len(MAU_HANG_SHA.findall(van_ban)) != 1:
         raise ValueError("không thấy đúng MỘT hằng MANIFEST_SELF_CHECK_SHA256 dạng chuẩn")
     moi = MAU_HANG_SHA.sub(lambda m: m.group(1) + sha_moi + m.group(3), van_ban)
-    return moi.replace("MANIFEST_SELF_CHECK_SHA256 = (", f"# {ghi_chu}\nMANIFEST_SELF_CHECK_SHA256 = (", 1)
+    chu_thich = "\n".join(textwrap.wrap(ghi_chu, width=GIOI_HAN_DONG, initial_indent="# ", subsequent_indent="# ",
+                                        break_on_hyphens=False, break_long_words=False)) or "#"
+    return moi.replace("MANIFEST_SELF_CHECK_SHA256 = (", f"{chu_thich}\nMANIFEST_SELF_CHECK_SHA256 = (", 1)
 
 
 def ten_agent_hai_ben(repo: Path, mea: Path, nhanh: str) -> list[str]:
