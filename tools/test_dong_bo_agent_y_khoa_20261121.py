@@ -96,6 +96,17 @@ def test_cap_nhat_sha_mot_hang_va_chu_thich():
         raise AssertionError("phải từ chối SHA sai / mẫu không khớp đúng một lần")
 
 
+def test_cap_nhat_sha_ngat_chu_thich_dai_duoi_120_ky_tu():
+    ten = ["cong-cu-do-luong.md", "kinh-te-y-te.md", "meta-phan-tich.md", "mo-hinh-tien-luong.md",
+           "phan-tich-thong-ke.md", "tham-dinh-do-chinh-xac-chan-doan.md", "viet-ban-thao.md"]
+    ghi = f"21/11/2026: đồng bộ bản sao {', '.join(ten)} với nguồn gốc (tools/dong_bo_agent_y_khoa.py)."
+    moi = D.cap_nhat_sha(REGISTRY, SHA_MOI, ghi)
+    dau = moi.index("# 21/11/2026: đồng bộ bản sao")
+    khoi = moi[dau:moi.index("MANIFEST_SELF_CHECK_SHA256 = (")].rstrip("\n").split("\n")
+    assert len(khoi) >= 2 and all(len(d) <= 120 and d.startswith("# ") for d in khoi)
+    assert " ".join(d[2:] for d in khoi) == ghi, "ngắt dòng không được mất/đổi chữ (tên agent có gạch nối giữ nguyên)"
+
+
 def test_staged_chi_nhac_khi_khac_origin(tmp_path):
     # HEAD gốc «Z» ≠ origin «A»: stage «A» là thay đổi THẬT so với HEAD mà trùng origin ⇒ phải im lặng (không trả về sớm vì rỗng)
     goc, mea = _hai_repo(tmp_path, goc={"ke-don.md": "Z\n", "khac.md": "K\n"}, mea_origin={"ke-don.md": "A\n", "khac.md": "K\n"})
