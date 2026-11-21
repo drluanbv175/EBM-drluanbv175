@@ -73,6 +73,13 @@ HAN_KHOA_GIO = 3
 GIAY_DE_CUONG = 1800
 GIAY_CAFES = 3600
 CONG_CU_DE_CUONG = {"A12": "kiem_noi_dung_trich_dan.py", "PHAN_BIEN": "phan_bien_may_de_cuong.py"}
+# 21/11/2026 (bác sĩ: tối ưu Claude API): A12 chạy NỀN ⇒ qua Batch BẤT ĐỒNG BỘ của y khoa #389 (−50% mọi token).
+# `--batch`: chưa có batch chờ ⇒ nộp (mã 4); có ⇒ lấy kết quả (xong ⇒ ghi báo cáo, mã 0/1; chưa xong ⇒ mã 4). Mã 4 là
+# «đang chờ batch», KHÔNG phải lỗi — lượt nền sau báo cáo vẫn cũ nên tự gọi lại và lấy kết quả. Đề cương đổi sau khi
+# nộp ⇒ công cụ từ chối ghép (mã 3) và GIỮ sổ batch (batch đã trả phí) ⇒ lượt này chạy lại THƯỜNG để vẫn có báo cáo
+# đúng bản hiện hành; không bao giờ tự xoá sổ batch. Chỉ bật khi công cụ y khoa đã có `--chi-lay` (đọc mã nguồn).
+MA_DANG_CHO_BATCH = 4
+CO_BATCH_BAT_DONG_BO = {"A12"}
 # Dấu hiệu cầu nối y khoa từ chối gọi — so CHỮ THƯỜNG. 21/11/2026: cầu nối dùng theo tín dụng tài khoản; hết tín dụng ⇒
 # `api_claude_nc.HetTinDung` («HẾT TÍN DỤNG»). Trần tháng chỉ còn khi biến môi trường OS đặt (kiểm thử/khoá khẩn cấp).
 DAU_HIEU_HET_TIN_DUNG = ("hết tín dụng", "hettindung")
@@ -336,6 +343,15 @@ def can_de_cuong(goc_mea: Path = GOC_MEA) -> Tuple[List[Dict[str, Any]], str]:
     return ra, ""
 
 
+def _co_batch_bat_dong_bo(tep: Path) -> bool:
+    """Công cụ y khoa đã có Batch bất đồng bộ (`--batch` + `--chi-lay`, y khoa #389) chưa — đọc mã nguồn."""
+    try:
+        van = tep.read_text(encoding="utf-8")
+    except OSError:
+        return False
+    return '"--batch"' in van and '"--chi-lay"' in van
+
+
 def chay_de_cuong(can: List[Dict[str, Any]], goc_mea: Path = GOC_MEA,
                   chay: Optional[Callable[[List[str], Path, int], Tuple[int, str]]] = None) -> Dict[str, Any]:
     """Chạy lại công cụ kiểm có báo cáo cũ. Mã 0/1 = chạy xong (1 = có phát hiện cần duyệt); khác = lỗi. Chạm trần ⇒ dừng."""
@@ -346,10 +362,17 @@ def chay_de_cuong(can: List[Dict[str, Any]], goc_mea: Path = GOC_MEA,
     py = python_venv() or sys.executable
     ket, dung = [], ""
     for x in can:
-        lenh = [py, str(goc_mea / "tools" / CONG_CU_DE_CUONG[x["loai"]]), "--study", x["study"], "--goi-api"]
-        ma, duoi = chay(lenh, goc_mea, GIAY_DE_CUONG)
-        ket.append({"study": x["study"], "loai": x["loai"], "ma_thoat": ma, "ok": ma in (0, 1),
-                    "co_phat_hien": ma == 1, "duoi": duoi[-200:]})
+        tep = goc_mea / "tools" / CONG_CU_DE_CUONG[x["loai"]]
+        lenh = [py, str(tep), "--study", x["study"], "--goi-api"]
+        batch = x["loai"] in CO_BATCH_BAT_DONG_BO and _co_batch_bat_dong_bo(tep)
+        ma, duoi = chay(lenh + (["--batch"] if batch else []), goc_mea, GIAY_DE_CUONG)
+        ghi_chu = ""
+        if batch and ma == 3:  # đề cương/lời dặn đổi sau khi nộp ⇒ sổ batch cũ lệch bản: chạy thường lượt này
+            ghi_chu = "batch cũ lệch bản hiện hành (sổ batch giữ nguyên — xem Claude Console) ⇒ đã chạy thường"
+            ma, duoi = chay(lenh, goc_mea, GIAY_DE_CUONG)
+        cho = batch and ma == MA_DANG_CHO_BATCH
+        ket.append({"study": x["study"], "loai": x["loai"], "ma_thoat": ma, "ok": ma in (0, 1) or cho,
+                    "co_phat_hien": ma == 1, "dang_cho_batch": cho, "ghi_chu": ghi_chu, "duoi": duoi[-200:]})
         # Không phân biệt hoa thường: thông điệp vượt trần chính của cầu nối mở đầu «Trần chi phí Claude API tháng…»
         # (viết hoa) — so khớp phân biệt hoa thường từng bỏ sót nó (đo 18/11/2026 sau khi y khoa #306 gộp).
         if ma not in (0, 1) and any(s in duoi.lower() for s in DAU_HIEU_HET_TRAN):
@@ -358,7 +381,8 @@ def chay_de_cuong(can: List[Dict[str, Any]], goc_mea: Path = GOC_MEA,
                     else "dừng: chạm trần chi phí tháng của cầu nối y khoa")
             break
     so_loi = sum(1 for k in ket if not k["ok"])
-    return {"ket_qua": "loi" if so_loi else "ok", "da_chay": len(ket), "so_loi": so_loi, "dung": dung, "chi_tiet": ket}
+    return {"ket_qua": "loi" if so_loi else "ok", "da_chay": len(ket), "so_loi": so_loi, "dung": dung,
+            "dang_cho_batch": sum(1 for k in ket if k.get("dang_cho_batch")), "chi_tiet": ket}
 
 
 # ─────────────────────────── việc 3 — CAFÉ-S khi agent an toàn đổi ───────────────────────────

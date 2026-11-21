@@ -241,6 +241,51 @@ def test_chay_de_cuong_goi_that_va_doc_ma_thoat_dung(tmp_path, akc):
     assert all(lenh[-1] == "--goi-api" and lenh[-3:-1] == ["--study", "btm"] for lenh in lenh_da_chay)
 
 
+def _cong_cu_a12(tmp_path, co_batch=True):
+    (tmp_path / "tools").mkdir(exist_ok=True)
+    noi = 'ap.add_argument("--batch")\nap.add_argument("--chi-lay")\n' if co_batch else "ap = 1\n"
+    for ten in ("kiem_noi_dung_trich_dan.py", "phan_bien_may_de_cuong.py"):  # phản biện có cờ cũng KHÔNG chạy batch
+        (tmp_path / "tools" / ten).write_text(noi, encoding="utf-8", newline="\n")
+
+
+def test_a12_nen_qua_batch_bat_dong_bo_ma_4_la_dang_cho(tmp_path, akc):
+    """21/11/2026 (tối ưu chi phí): A12 chạy nền ⇒ `--batch` (y khoa #389); mã 4 = đang chờ batch — KHÔNG phải lỗi;
+    phản biện máy vẫn gọi thường."""
+    _cong_cu_a12(tmp_path)
+    da_chay = []
+
+    def chay(lenh, cwd, timeout):
+        da_chay.append(lenh)
+        return (4, "📤 Đã nộp batch msgbatch_1") if "kiem_noi_dung_trich_dan.py" in lenh[1] else (0, "sạch")
+
+    r = akc.chay_de_cuong([{"study": "btm", "loai": "A12"}, {"study": "btm", "loai": "PHAN_BIEN"}], tmp_path, chay)
+    assert da_chay[0][-2:] == ["--goi-api", "--batch"] and da_chay[1][-1] == "--goi-api"
+    assert r["ket_qua"] == "ok" and r["so_loi"] == 0 and r["dang_cho_batch"] == 1
+    assert r["chi_tiet"][0]["dang_cho_batch"] is True and r["chi_tiet"][0]["co_phat_hien"] is False
+
+
+def test_a12_batch_lech_ban_thi_chay_thuong_khong_xoa_so(tmp_path, akc):
+    _cong_cu_a12(tmp_path)
+    da_chay = []
+
+    def chay(lenh, cwd, timeout):
+        da_chay.append(lenh)
+        return (3, "⛔ Tệp đã ĐỔI sau khi nộp batch") if "--batch" in lenh else (1, "có 2 phát hiện")
+
+    r = akc.chay_de_cuong([{"study": "btm", "loai": "A12"}], tmp_path, chay)
+    assert [lenh[-1] for lenh in da_chay] == ["--batch", "--goi-api"]  # lượt hai chạy thường
+    k = r["chi_tiet"][0]
+    assert k["ok"] and k["co_phat_hien"] and "lệch bản" in k["ghi_chu"] and r["dang_cho_batch"] == 0
+
+
+def test_a12_cong_cu_chua_co_batch_giu_lenh_cu_va_ma_4_van_la_loi(tmp_path, akc):
+    _cong_cu_a12(tmp_path, co_batch=False)
+    da_chay = []
+    r = akc.chay_de_cuong([{"study": "btm", "loai": "A12"}], tmp_path,
+                          lambda lenh, c, t: da_chay.append(lenh) or (4, "?"))
+    assert da_chay[0][-1] == "--goi-api" and r["so_loi"] == 1  # không bật batch thì mã 4 không được coi là «chờ»
+
+
 def test_cham_tran_chi_phi_thi_dung_cac_viec_con_lai(tmp_path, akc):
     dem = []
     r = akc.chay_de_cuong([{"study": "a", "loai": "A12"}, {"study": "b", "loai": "A12"}], tmp_path,
