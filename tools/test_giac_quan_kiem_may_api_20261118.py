@@ -43,13 +43,14 @@ def _tool(tt) -> str:
 
 
 def test_bao_cao_cu_la_viec_uu_tien_2_lenh_chay_kho(tmp_path, tdx, monkeypatch):
-    # 18/11: ghim chính sách «không tự chạy» (repo nay có sync/api-khi-can.json) ⇒ vẫn là việc bác sĩ quyết.
+    # 18/11: ghim chính sách «không tự chạy». 21/11/2026 — bác sĩ: phát hiện máy không còn là việc của bác sĩ ⇒ 🛎 (hệ
+    # chạy lại ~0,15 USD, dưới ngưỡng xin phép); lệnh in ra vẫn là chạy khô.
     monkeypatch.setattr(tdx, "_chinh_sach_api_khi_can", lambda: None)
     tt = [{"study": "btm", "do_duoc": True, "bao_cao": [_bc(cu=True, ly_do="đề cương đổi", chua_duyet=9)]}]
     viec = tdx.giac_quan_kiem_may_api(_mea(tmp_path, _tool(tt)))
     assert len(viec) == 1
     uu, nhan, mo_ta, lenh = viec[0]
-    assert (uu, nhan) == (2, "👤") and "CŨ" in mo_ta and "btm" in mo_ta
+    assert (uu, nhan) == (2, "🛎") and "CŨ" in mo_ta and "btm" in mo_ta
     assert "kiem_noi_dung_trich_dan.py --study btm" in lenh and "--goi-api" not in lenh  # chỉ chạy khô
 
 
@@ -75,7 +76,19 @@ def test_chua_duyet_la_uu_tien_3_kem_lenh_phieu(tmp_path, tdx):
     tt = [{"study": "btm", "do_duoc": True,
            "bao_cao": [_bc(loai="PHAN_BIEN", ten="phản biện máy đề cương", can_duyet=24, chua_duyet=24)]}]
     (uu, nhan, mo_ta, lenh), = tdx.giac_quan_kiem_may_api(_mea(tmp_path, _tool(tt)))
-    assert (uu, nhan) == (3, "👤") and "24/24" in mo_ta and "duyet_kiem_may_api.py phieu --study btm" in lenh
+    assert (uu, nhan) == (3, "🛎") and "24/24" in mo_ta and "duyet_kiem_may_api.py phieu --study btm" in lenh
+    assert "chưa được hệ phân xử" in mo_ta and "bác sĩ không phải duyệt" in mo_ta and "phan-xu" in lenh
+
+
+def test_khong_viec_kiem_may_nao_la_cua_bac_si(tmp_path, tdx, monkeypatch):
+    """21/11/2026 — bác sĩ: «không phải tìm và bắt tôi phải đi tìm lại chứng cứ và duyệt lại» ⇒ không mục 👤 nào."""
+    monkeypatch.setattr(tdx, "_chinh_sach_api_khi_can", lambda: None)
+    tt = [{"study": "btm", "do_duoc": True, "bao_cao": [
+        _bc(cu=True, ly_do="đề cương đổi", chua_duyet=9),
+        _bc(loai="PHAN_BIEN", ten="phản biện máy đề cương", can_duyet=3, chua_duyet=3),
+        {"loai": "G0", "hong": True, "tep_bao_cao": "G0_X.json"}]}]
+    viec = tdx.giac_quan_kiem_may_api(_mea(tmp_path, _tool(tt)))
+    assert len(viec) == 3 and all(v[1] != "👤" for v in viec)
 
 
 def test_bao_cao_hong_bao_ra(tmp_path, tdx):

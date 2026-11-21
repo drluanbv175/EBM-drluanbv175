@@ -1642,10 +1642,13 @@ def giac_quan_kiem_may_api(goc_mea: Path | None = None) -> list[tuple[int, str, 
     Đo BTM 17/11: lượt kiểm A12 + phản biện máy chạy 17:59, đề cương sinh lại 20:14 ⇒ cả hai báo cáo đã CŨ mà không ai biết;
     24 + 9 phát hiện chưa ai duyệt ⇒ không biết máy đúng bao nhiêu phần. Giác quan nạp `medical-ebm-automation/tools/
     duyet_kiem_may_api.py` (chỉ thư viện chuẩn, chỉ ĐỌC báo cáo — không gọi API, chi phí bằng 0):
-      • báo cáo CŨ (đề cương đổi sau lượt kiểm) ⇒ 👤 ưu tiên 2 — chạy lại tốn tiền nên là quyết định của bác sĩ (lệnh in ra
-        chạy KHÔ, chỉ ước chi phí);
-      • báo cáo hỏng ⇒ 👤 ưu tiên 2;
-      • báo cáo còn hiệu lực mà còn mục chưa duyệt ⇒ 👤 ưu tiên 3 — tỷ lệ đúng của máy chưa đo (máy không tự gắn nhãn).
+      • báo cáo CŨ (đề cương đổi sau lượt kiểm) ⇒ 🛎 ưu tiên 2 — hệ chạy lại (~0,15 USD/lượt, dưới ngưỡng ~1 USD phải xin
+        phép của luật dùng API theo tín dụng);
+      • báo cáo hỏng ⇒ 🛎 ưu tiên 2 — lỗi của hệ, hệ chạy lại;
+      • báo cáo còn hiệu lực mà còn mục CHƯA PHÂN XỬ ⇒ 🛎 ưu tiên 3 — agent đối chiếu toàn văn rồi ghi `phan-xu`.
+    21/11/2026 — bác sĩ: «không phải tìm và bắt tôi phải đi tìm lại chứng cứ và duyệt lại»; «việc chính của tôi là lấy
+    số liệu và cung cấp số liệu thật». Phát hiện máy không còn là việc 👤: máy đúng ⇒ agent sửa đề cương; máy sai ⇒ sửa
+    công cụ. Phân xử của agent không bao giờ ghi thành nhãn bác sĩ (`duyet_kiem_may_api.py`).
     Đề tài giả lập ZZCANARY bị bỏ. Công cụ vắng/lỗi ⇒ giác quan chết (⚪), không bao giờ là «kiểm máy ổn»."""
     _SO_GIAC_QUAN["chay"] += 1
     nhan = ["", "kiểm máy Claude API"]
@@ -1670,7 +1673,7 @@ def giac_quan_kiem_may_api(goc_mea: Path | None = None) -> list[tuple[int, str, 
         s = t["study"]
         for b in t["bao_cao"]:
             if b.get("hong"):
-                viec.append((2, "👤", f"Kiểm máy API {s}: báo cáo {b['tep_bao_cao']} hỏng — không đọc được",
+                viec.append((2, "🛎", f"Kiểm máy API {s}: báo cáo {b['tep_bao_cao']} hỏng — không đọc được; hệ chạy lại",
                              f"cd medical-ebm-automation && python3 tools/duyet_kiem_may_api.py tinh-trang --study {s}"))
             elif b.get("cu") is True and tu_chay_de_cuong:
                 # 18/11/2026: bác sĩ cho TỰ CHẠY «Kiểm đề cương khi đổi» (sync/api-khi-can.json) ⇒ máy chạy lại.
@@ -1678,13 +1681,15 @@ def giac_quan_kiem_may_api(goc_mea: Path | None = None) -> list[tuple[int, str, 
                                       "TỰ CHẠY LẠI (bác sĩ đã duyệt; ~0,15 USD)",
                              "python3 tools/api_khi_can.py --chay --chi de_cuong"))
             elif b.get("cu"):
-                viec.append((2, "👤", f"Kiểm máy API {s}: báo cáo {b['ten']} đã CŨ ({b['ly_do']}) — {b['chua_duyet']} mục "
-                                      "của bản cũ không còn nói về đề cương hiện hành; ước chi phí rồi quyết có chạy lại",
+                viec.append((2, "🛎", f"Kiểm máy API {s}: báo cáo {b['ten']} đã CŨ ({b['ly_do']}) — hệ chạy lại trên đề "
+                                      "cương hiện hành (~0,15 USD) rồi phân xử phần còn lại",
                              f"cd medical-ebm-automation && python3 tools/{lenh_kiem[b['loai']]} --study {s}  # chạy khô"))
             elif b.get("chua_duyet"):
-                viec.append((3, "👤", f"Kiểm máy API {s}: {b['chua_duyet']}/{b['can_duyet']} phát hiện {b['ten']} chưa duyệt — "
-                                      "tỷ lệ đúng của máy chưa đo",
-                             f"cd medical-ebm-automation && python3 tools/duyet_kiem_may_api.py phieu --study {s}"))
+                viec.append((3, "🛎", f"Kiểm máy API {s}: {b['chua_duyet']}/{b['can_duyet']} phát hiện {b['ten']} chưa được "
+                                      "hệ phân xử — agent đối chiếu toàn văn, máy đúng thì sửa đề cương, máy sai thì sửa "
+                                      "công cụ (bác sĩ không phải duyệt)",
+                             f"cd medical-ebm-automation && python3 tools/duyet_kiem_may_api.py phieu --study {s}"
+                             "  # phiếu cho agent → phan-xu --tu <tệp> --ap-dung"))
     return viec
 
 
