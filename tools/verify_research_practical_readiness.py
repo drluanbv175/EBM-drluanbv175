@@ -68,7 +68,7 @@ import import_real_dataset as INTAKE  # noqa: E402
 import lock_analysis_dataset as LOCK  # noqa: E402
 import pseudonymize_research_dataset as PSEUDO  # noqa: E402
 
-from tests.g5_test_helpers import prepare_locked_g5_study  # noqa: E402
+from tests.g5_test_helpers import prepare_locked_g5_study, prepare_upstream_approvals  # noqa: E402
 
 
 def _configure_utf8_stdio() -> None:
@@ -85,14 +85,18 @@ def _configure_utf8_stdio() -> None:
 _configure_utf8_stdio()
 
 
+# 21/11/2026 — tên cột lâm sàng TRÙNG biến cùng kiểu đã khai trong từ điển REDCap G5 do `write_g5_toolkit()` sinh
+# (luật cột ↔ dictionary, 05/10/2026: cột không khai là truy vấn mở `undeclared_column`, dữ liệu không khoá được):
+# `outcome_cont` (number) = huyết áp tâm thu, kết cục liên tục (trước là `sbp`); `outcome_bin` (radio 0/1) = kết cục nhị
+# phân (trước là `outcome`). Hai cột văn bản (`visit_date` sau khi bị che, `note`) khai thêm qua `extra_text_columns`.
 RAW_ROWS = [
     {
         "ho_ten": "Nguyen Van A",
         "phone": "0912345678",
         "email": "a@example.com",
         "age": "61",
-        "sbp": "142",
-        "outcome": "1",
+        "outcome_cont": "142",
+        "outcome_bin": "1",
         "visit_date": "2026-07-01",
         "note": "call 0912345678 before visit",
     },
@@ -101,8 +105,8 @@ RAW_ROWS = [
         "phone": "0987654321",
         "email": "b@example.com",
         "age": "58",
-        "sbp": "136",
-        "outcome": "0",
+        "outcome_cont": "136",
+        "outcome_bin": "0",
         "visit_date": "2026-07-02",
         "note": "stable",
     },
@@ -111,22 +115,12 @@ RAW_ROWS = [
         "phone": "0900000000",
         "email": "c@example.com",
         "age": "66",
-        "sbp": "151",
-        "outcome": "1",
+        "outcome_cont": "151",
+        "outcome_bin": "1",
         "visit_date": "2026-07-03",
         "note": "email c@example.com",
     },
 ]
-
-REQUIRED_GATE_ARTIFACTS = {
-    "G0": ["G0_A1_PICO_FINER_AUTO.md"],
-    "G1": ["G1_A2_PROTOCOL_DESIGN_AUTO.md"],
-    "G2": ["G2_A3_ETHICS_PACKAGE_AUTO.md"],
-    "G3": ["G3_A4_SAMPLE_SIZE_AUTO.md"],
-    "G4": ["G4_A5_SAP_FINAL_AUTO.md"],
-    "G5": ["G5_A6_DATA_MGMT_AUTO.md", "G5_REDCap_dictionary_AUTO.csv"],
-    "G6": ["G6_A7_ANALYSIS_SCRIPTS_AUTO.md"],
-}
 
 
 def _assert(ok: bool, message: str) -> None:
@@ -157,8 +151,8 @@ def _write_dictionary(path: Path, visit_date_type: str = "text") -> Path:
         "variables": [
             {"name": "study_subject_id", "type": "text", "required": True},
             {"name": "age", "type": "integer", "required": True, "min": 18, "max": 110},
-            {"name": "sbp", "type": "number", "required": True, "min": 60, "max": 260},
-            {"name": "outcome", "type": "category", "required": True, "allowed": ["0", "1"]},
+            {"name": "outcome_cont", "type": "number", "required": True, "min": 60, "max": 260},
+            {"name": "outcome_bin", "type": "category", "required": True, "allowed": ["0", "1"]},
             {"name": "visit_date", "type": visit_date_type, "required": True},
             {"name": "note", "type": "text", "required": False},
         ],
@@ -171,37 +165,34 @@ def _read(path: Path) -> str:
     return path.read_text(encoding="utf-8", errors="ignore")
 
 
-def _load_meta(out_dir: Path) -> Dict[str, Any]:
-    return json.loads((out_dir / "study_meta.json").read_text(encoding="utf-8"))
+def _run_real_g6(study: str, exports_root: Path) -> None:
+    """Sau khi G5 khoá, sinh bộ phân tích G6 bằng CHÍNH `run_g6_auto.main()` (bước người thật làm ngay sau khoá dữ liệu).
 
+    21/11/2026 — thay scaffold viết tay (checkpoint `{"guardrail": {"passed": true}}` + tệp `G6_A7_..._AUTO.md`): từ
+    06/10/2026 audit CHẤM SỐNG G6, thiếu `G6_A7_ANALYSIS_SCRIPTS_<study>.md` thật ⇒ G6-AUTO-00 BLOCKED ⇒ GUARDRAIL_FAIL;
+    tệp `_AUTO` giả lại được audit đếm như artifact G6. Đúng mẫu `tests/test_g6_quality_gate_20260815.py` của repo y
+    khoa. `run_g6_auto` lấy thư mục đề tài từ biến module `BASE` ⇒ trỏ tạm vào gốc tạm của verifier, trả lại sau khi chạy.
+    Không mô phỏng thống kê viên hoàn thiện script (`bat_mo_hinh_chinh_g6`): kiểm đột biến cho thấy audit G6 không phụ
+    thuộc bước đó — verifier chỉ khẳng định G6 thấy data-lock, không khẳng định phân tích G6 đã xong.
+    """
+    import contextlib  # noqa: PLC0415
+    import io  # noqa: PLC0415
 
-def _save_meta(out_dir: Path, meta: Dict[str, Any]) -> None:
-    (out_dir / "study_meta.json").write_text(
-        json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
+    import cong_song as CS  # noqa: PLC0415
+    import run_g6_auto as G6A  # noqa: PLC0415
 
-
-def _write_checkpoint(out_dir: Path, gate: str) -> None:
-    (out_dir / f"{gate}_checkpoint.json").write_text(
-        json.dumps({"gate": gate, "guardrail": {"passed": True}}, ensure_ascii=False),
-        encoding="utf-8",
-    )
-
-
-def _write_gate_scaffold(out_dir: Path, gates: list[str]) -> None:
-    """Dựng checkpoint/artifact tối thiểu để audit không coi G6 là mồ côi."""
-    for gate in gates:
-        checkpoint = out_dir / f"{gate}_checkpoint.json"
-        if not checkpoint.exists():
-            _write_checkpoint(out_dir, gate)
-        for artifact in REQUIRED_GATE_ARTIFACTS.get(gate, []):
-            target = out_dir / artifact
-            if target.exists():
-                continue
-            suffix = "\n" if artifact.endswith(".md") else ""
-            target.write_text(
-                f"Synthetic {gate} artifact for practical readiness verification.{suffix}",
-                encoding="utf-8",
-            )
+    base_cu, argv_cu = G6A.BASE, sys.argv
+    G6A.BASE = exports_root.parent
+    sys.argv = ["run_g6_auto.py", "--study", study]
+    try:
+        CS.xoa_dem()
+        with contextlib.redirect_stdout(io.StringIO()):
+            G6A.main()
+    finally:
+        G6A.BASE, sys.argv = base_cu, argv_cu
+    _assert((exports_root / study / f"G6_A7_ANALYSIS_SCRIPTS_{study}.md").is_file(),
+            "Bộ sinh G6 thật phải ghi G6_A7_ANALYSIS_SCRIPTS_<study>.md sau khi G5 khoá")
+    CS.xoa_dem()
 
 
 def _restore_temp_cleanup_access(path: Path) -> None:
@@ -236,8 +227,17 @@ def _verify_deidentification_path(exports_root: Path, raw_path: Path) -> Dict[st
     study = "VERIFY-PRACTICAL-DEID"
     raw_sha_before = INTAKE._sha256_file(raw_path)
 
+    # 21/11/2026 — trình tự người thật: G2 (IRB) + G4 (SAP) KHOÁ TRƯỚC khi nạp dữ liệu (luật G5-02 của
+    # import_real_dataset.py, 04/10/2026, chống HARKing). Không dùng cờ study_kind=synthetic_test để lách: cờ đó miễn cả
+    # ledger_approved, làm phép kiểm «G6 nhận data-lock thật» mất nghĩa.
+    prepare_upstream_approvals(study, exports_root / study, repo_root=exports_root.parent)
+
     blocked = INTAKE.import_dataset(study, raw_path, exports_root=exports_root)
     _assert(blocked["status"] == INTAKE.BLOCKED_STATUS, "Raw CSV còn PII phải bị intake chặn")
+    # SAP đã khoá ⇒ lý do chặn phải là PII; chặn chỉ vì `sap_chua_khoa` thì phép kiểm PII ở trên rỗng nghĩa.
+    blocked_types = {str(item.get("type")) for item in blocked["pii_scan"]["issues"]}
+    _assert("sap_chua_khoa" not in blocked_types and bool(blocked_types),
+            f"Raw CSV phải bị chặn VÌ PII (SAP đã khoá trước khi nạp), không vì SAP: {sorted(blocked_types)}")
     _assert(blocked["raw_readonly_path"] is None, "Không được copy raw có PII vào 02_raw_readonly")
 
     report = DEID.deidentify_dataset(
@@ -305,6 +305,8 @@ def _verify_pseudonymized_lock_path(exports_root: Path, mapping_root: Path,
     out_dir = exports_root / study
     out_dir.mkdir(parents=True, exist_ok=True)
     dictionary = _write_dictionary(out_dir / "data_dictionary.json")
+    # 21/11/2026 — G2/G4 khoá TRƯỚC khi pseudonymize --then-import nạp dữ liệu (luật G5-02, xem bước de-identify).
+    prepare_upstream_approvals(study, out_dir, repo_root=exports_root.parent)
 
     report = PSEUDO.pseudonymize_dataset(
         study,
@@ -384,10 +386,20 @@ def _verify_pseudonymized_lock_path(exports_root: Path, mapping_root: Path,
     _assert(any(item.startswith("missing_confirmation:") for item in blocked_lock["blockers"]),
             "Data lock phải nêu rõ thiếu xác nhận")
 
+    dictionary_rules = [
+        rule for rule in (CLEAN._load_dictionary(dictionary).get("variables") or [])
+        if isinstance(rule, dict) and rule.get("name")
+    ]
     dictionary_dates = frozenset(
         INTAKE._normalize_header(str(rule["name"]))
-        for rule in (CLEAN._load_dictionary(dictionary).get("variables") or [])
-        if isinstance(rule, dict) and rule.get("type") == "date" and rule.get("name")
+        for rule in dictionary_rules if rule.get("type") == "date"
+    )
+    # 21/11/2026 — cột văn bản của từ điển nghiên cứu (visit_date đã bị che, note) khai vào CHÍNH từ điển REDCap G5
+    # canonical, cùng kiểu "text" — cột không khai là truy vấn mở (luật cột ↔ dictionary 05/10/2026). Cột đã có sẵn
+    # trong từ điển G5 (study_subject_id) được helper bỏ qua, không khai trùng.
+    dictionary_texts = frozenset(
+        INTAKE._normalize_header(str(rule["name"]))
+        for rule in dictionary_rules if rule.get("type") == "text"
     )
     locked_path, quality = prepare_locked_g5_study(
         study,
@@ -395,6 +407,7 @@ def _verify_pseudonymized_lock_path(exports_root: Path, mapping_root: Path,
         exports_root=exports_root,
         repo_root=exports_root.parent,
         extra_date_columns=dictionary_dates,
+        extra_text_columns=dictionary_texts,
     )
     locked = json.loads(
         (out_dir / "DATA_LOCK_manifest.json").read_text(encoding="utf-8")
@@ -404,12 +417,11 @@ def _verify_pseudonymized_lock_path(exports_root: Path, mapping_root: Path,
     _assert(quality["status"] == "PASS_G5_DATA_LOCKED", "G5 quality phải PASS sau approval")
     _assert(locked_path.exists(), "Dataset khóa phải tồn tại")
 
-    meta = _load_meta(out_dir)
-    meta["irb_approved"] = True
-    meta["sap_lock_date"] = "2026-07-13"
-    meta.setdefault("gate_params", {}).setdefault("G3", {})["effect_size"] = 0.5
-    _save_meta(out_dir, meta)
-    _write_gate_scaffold(out_dir, ["G0", "G1", "G2", "G3", "G4", "G5", "G6"])
+    # 21/11/2026 — bỏ ba dòng sửa tay study_meta trước audit: `irb_approved`/`sap_lock_date` là cờ TỰ KHAI (audit nay
+    # đọc tín hiệu SỐNG: chữ ký G2/G4 trên sổ cái + bộ chấm từng cổng), còn ghi đè `gate_params.G3.effect_size = 0.5`
+    # làm lệch giá trị G3 đã chốt (G3-AUTO-18) ⇒ G4 hết khoá sống ⇒ G5-AUTO-05 chặn ⇒ G6 mất `db_locked` — tức đổi tham số
+    # SAU khi SAP đã khoá, đúng điều G4 cấm.
+    _run_real_g6(study, exports_root)
 
     gate_report = ARG.audit_gates(study, out_dir=out_dir, write=False)
     g6 = next(row for row in gate_report["pipeline_gates"] if row["gate"] == "G6")
