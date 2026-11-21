@@ -500,6 +500,13 @@ Cổng liêm chính LUÔN chạy — thiếu `--online` thì chạy phần ngo�
   (agent chỉ ĐỀ XUẤT, bác sĩ duyệt). `design` như `Guideline (dựa đồng thuận)` vẫn thuộc họ guideline.
 - Thiếu `DATA.standards` ⇒ chỉ **CẢNH BÁO**, vẫn xuất. Nhưng **dashboard MỚI phải luôn khai
   `DATA.standards`** — bỏ trống là tự đánh mất hợp đồng nguồn của chính lần tìm kiếm vừa làm.
+- **Bản NỐI TIẾP của gói mang `provenanceUnknown: true`** (21/11/2026): giữ cờ cho mục KẾ THỪA, nhưng ghi lượt tìm của
+  CHÍNH bản vào `searchSources` · `currency` · `searchStrategy` (PRISMA-S: CSDL + ngày + truy vấn nguyên văn) và viết lại
+  `provenanceUnknownLyDo` cho đúng («N mục kế thừa ITEM-… không dựng lại được; lượt tìm <ngày> ghi ở các trường dưới»).
+  KHÔNG chép nguyên câu «bản sinh trước khi khối DATA.standards thành bắt buộc…», KHÔNG viết chiến lược vào lý do.
+  **Cổng `--strict-sources` CHẶN** (bác sĩ 21/11/2026 «chặn có sổ nợ») gói dựng từ 15/08/2026 mang cờ mà thiếu
+  `searchSources` ≥ 1 hoặc `currency` có ngày YYYY-MM-DD; chỉ 13 tệp tồn trong sổ nợ `no-provenance-goi-moi.json` (hạn
+  21/12/2026) được cảnh báo — xem `python3 tools/so_mien_tru.py --so-no`; agent không tự lập/gia hạn sổ.
 
 ⚠️ **Bài học 12/08/2026 — đọc kết quả cổng phải hỏi "cổng đã chạy tới luật nào", không chỉ đếm số lỗi.**
 Bản cũ của `verify_dashboard.py` `return` NGAY khi thiếu `DATA.standards`, nên toàn bộ luật an toàn cấp
