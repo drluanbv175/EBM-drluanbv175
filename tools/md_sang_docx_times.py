@@ -45,6 +45,10 @@ giữ nguyên. Không nạp được repo y khoa ⇒ bảng vẫn 11pt nhưng k�
 làm sạch: công cụ vẫn ghi tệp, báo rõ và trả mã 1 (không in dấu xanh giả).
 Chế độ thường không đổi.
 
+ĐỀ CƯƠNG THEO KHUÔN HƯỚNG DẪN CHUNG BVQY175 (thêm 21/11/2026): tệp có đề mục «# CHƯƠNG 1.» được giao
+cho `md2docx_vn.markdown_to_docx(..., khuon_bvqy175=True)` của repo y khoa (14pt, giãn 1,5, ba phần đánh số
+trang) bất kể cờ; repo y khoa vắng hoặc chưa có chế độ khuôn ⇒ KHÔNG ghi, mã 1.
+
 Dùng:
     python3 tools/md_sang_docx_times.py <đầu-vào>.md [--ra <đầu-ra>.docx]
     python3 tools/md_sang_docx_times.py bao-cao.md --co-chu 12
@@ -222,6 +226,60 @@ def _nap_chuan_trinh_bay():
         return _nap_tep("_md_docx_chuan_trinh_bay", tep), tep.as_posix()
     except Exception as e:  # noqa: BLE001 — mọi lỗi nạp đều phải thành lời báo, không sập công cụ
         return None, f"nạp {tep.as_posix()} lỗi ({type(e).__name__}: {e})"
+
+
+# 21/11/2026: đề cương theo khuôn «Hướng dẫn viết đăng ký và báo cáo đề tài KH&CN cấp bệnh viện» (BVQY175, dấu nhận:
+# đề mục «# CHƯƠNG 1.») phải giữ trình bày của khuôn — 14pt, giãn 1,5, lề 3,5/2/3/3 cm, bìa không số trang, phần đầu số
+# La Mã, từ Đặt vấn đề số Ả rập, mục lục tự động. Chế độ đề cương 13pt của công cụ này sẽ phá khuôn ⇒ giao cho
+# `md2docx_vn.markdown_to_docx(..., khuon_bvqy175=True)` của repo y khoa (nguồn duy nhất của khuôn).
+_DAU_KHUON_BVQY175 = re.compile(r"^# CHƯƠNG 1\.", re.M)
+
+
+def la_de_cuong_khuon(md: str) -> bool:
+    return _DAU_KHUON_BVQY175.search(md) is not None
+
+
+def _nap_md2docx_vn():
+    """→ (module md2docx_vn của repo y khoa | None, đường dẫn hoặc lý do). Thư mục tools/ của repo y khoa được đặt
+    tạm vào đầu sys.path để md2docx_vn nạp được module anh em (placeholder_contract, chuan_trinh_bay)."""
+    try:
+        bst = _nap_tep("_md_docx_ban_sao_tran", Path(__file__).resolve().parent / "ban_sao_tran.py")
+        goc = bst.duong_goc("medical-ebm-automation", GOC_REPO)
+    except (OSError, ImportError, AttributeError) as e:
+        return None, f"không dò được repo y khoa ({type(e).__name__}: {e})"
+    if goc is None:
+        return None, "không thấy medical-ebm-automation/ (lồng hoặc anh em với repo gốc)"
+    tep = goc / "tools" / "md2docx_vn.py"
+    if not tep.is_file():
+        return None, f"thiếu {tep.as_posix()}"
+    them = str(tep.parent)
+    sys.path.insert(0, them)
+    try:
+        return _nap_tep("_md_docx_md2docx_vn", tep), tep.as_posix()
+    except Exception as e:  # noqa: BLE001 — mọi lỗi nạp đều phải thành lời báo
+        return None, f"nạp {tep.as_posix()} lỗi ({type(e).__name__}: {e})"
+    finally:
+        if them in sys.path:
+            sys.path.remove(them)
+
+
+def xuat_khuon_bvqy175(md: str, ra: Path) -> int:
+    """Xuất đề cương khuôn bằng chế độ khuôn của repo y khoa. Không có chế độ đó (repo y khoa vắng hoặc chưa cập nhật)
+    ⇒ KHÔNG ghi (bản Word đúng khuôn đang có không bị bản 13pt đè), mã 1."""
+    import inspect  # noqa: PLC0415
+
+    m2d, nguon = _nap_md2docx_vn()
+    co_khuon = m2d is not None and "khuon_bvqy175" in inspect.signature(m2d.markdown_to_docx).parameters
+    if not co_khuon:
+        ly_do = nguon if m2d is None else f"{nguon} chưa có chế độ khuôn (kéo bản mới của repo y khoa)"
+        print(f"🟡 {ra}: đề cương theo khuôn hướng dẫn chung BVQY175 — KHÔNG ghi: {ly_do}. Xuất bằng "
+              "medical-ebm-automation/tools/khuon_de_cuong_bvqy175.py hoặc chạy lại khi có repo y khoa mới.",
+              file=sys.stderr)
+        return 1
+    m2d.markdown_to_docx(md, ra, khuon_bvqy175=True)
+    print(f"✅ {ra}  ({ra.stat().st_size:,} byte · khuôn hướng dẫn chung BVQY175: {FONT} 14pt, giãn dòng 1,5 · "
+          f"{nguon})")
+    return 0
 
 
 def _ap_chuan_trinh_bay(doc, co_chu: float) -> bool:
@@ -491,6 +549,8 @@ def main(argv: list[str] | None = None) -> int:
         return 2
     ra = a.ra or a.nguon.with_suffix(".docx")
     ra.parent.mkdir(parents=True, exist_ok=True)
+    if la_de_cuong_khuon(a.nguon.read_text(encoding="utf-8")):
+        return xuat_khuon_bvqy175(a.nguon.read_text(encoding="utf-8"), ra)
     if a.co_chu is None:
         a.co_chu = co_chu_mac_dinh(ra)
 
