@@ -286,6 +286,18 @@ def test_a12_cong_cu_chua_co_batch_giu_lenh_cu_va_ma_4_van_la_loi(tmp_path, akc)
     assert da_chay[0][-1] == "--goi-api" and r["so_loi"] == 1  # không bật batch thì mã 4 không được coi là «chờ»
 
 
+def test_cong_cu_sap_ma_1_khong_bi_doc_thanh_co_phat_hien(tmp_path, akc):
+    duoi = ("Traceback (most recent call last):\n  File \"argparse.py\", line 1750\n"
+            "ValueError: badly formed help string")
+    r = akc.chay_de_cuong([{"study": "a", "loai": "PHAN_BIEN"}], tmp_path, lambda lenh, c, t: (1, duoi))
+    k = r["chi_tiet"][0]
+    assert k["sap"] and not k["ok"] and not k["co_phat_hien"] and r["so_loi"] == 1
+    r = akc.chay_de_cuong([{"study": "a", "loai": "PHAN_BIEN"}], tmp_path, lambda lenh, c, t: (1, "🟠 2 cần xem"))
+    assert r["chi_tiet"][0]["ok"] and r["chi_tiet"][0]["co_phat_hien"]  # mã 1 thật (có phát hiện) vẫn như cũ
+    cut = '  File "/x/argparse.py", line 1750, in add_argument\nValueError: badly formed help string'  # mất tiêu đề
+    assert akc.chay_de_cuong([{"study": "a", "loai": "PHAN_BIEN"}], tmp_path, lambda lenh, c, t: (1, cut))["so_loi"] == 1
+
+
 def test_cham_tran_chi_phi_thi_dung_cac_viec_con_lai(tmp_path, akc):
     dem = []
     r = akc.chay_de_cuong([{"study": "a", "loai": "A12"}, {"study": "b", "loai": "A12"}], tmp_path,

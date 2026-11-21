@@ -50,6 +50,7 @@ import hashlib
 import importlib.util
 import json
 import os
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -371,8 +372,13 @@ def chay_de_cuong(can: List[Dict[str, Any]], goc_mea: Path = GOC_MEA,
             ghi_chu = "batch cũ lệch bản hiện hành (sổ batch giữ nguyên — xem Claude Console) ⇒ đã chạy thường"
             ma, duoi = chay(lenh, goc_mea, GIAY_DE_CUONG)
         cho = batch and ma == MA_DANG_CHO_BATCH
-        ket.append({"study": x["study"], "loai": x["loai"], "ma_thoat": ma, "ok": ma in (0, 1) or cho,
-                    "co_phat_hien": ma == 1, "dang_cho_batch": cho, "ghi_chu": ghi_chu, "duoi": duoi[-200:]})
+        # 21/11/2026: Python SẬP cũng thoát mã 1 (vd help «50%» làm kiem_noi_dung_trich_dan sập trên Python 3.14) —
+        # trước đây bị đọc thành «chạy xong, có phát hiện». Mã 1 kèm traceback ⇒ LỖI.
+        sap = ma == 1 and ("Traceback (most recent call last)" in duoi  # đuôi chỉ giữ 600 ký tự ⇒ nhận cả dòng File
+                           or re.search(r'File ".+", line \d+', duoi) is not None)
+        ket.append({"study": x["study"], "loai": x["loai"], "ma_thoat": ma, "ok": (ma in (0, 1) and not sap) or cho,
+                    "co_phat_hien": ma == 1 and not sap, "sap": sap, "dang_cho_batch": cho, "ghi_chu": ghi_chu,
+                    "duoi": duoi[-200:]})
         # Không phân biệt hoa thường: thông điệp vượt trần chính của cầu nối mở đầu «Trần chi phí Claude API tháng…»
         # (viết hoa) — so khớp phân biệt hoa thường từng bỏ sót nó (đo 18/11/2026 sau khi y khoa #306 gộp).
         if ma not in (0, 1) and any(s in duoi.lower() for s in DAU_HIEU_HET_TRAN):
