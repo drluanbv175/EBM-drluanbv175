@@ -1389,6 +1389,30 @@ def giac_quan_bo_vang_ngu_nghia() -> list[tuple[int, str, str, str]]:
     return viec
 
 
+def giac_quan_so_mien_tru(**kw) -> list[tuple[int, str, str, str]]:
+    """SỔ MIỄN TRỪ (21/11/2026, bác sĩ: «giải quyết ý 2» — tỷ lệ miễn trừ/vượt cổng theo thời gian). Logic và luật «đo được»
+    ở `tools/so_mien_tru.giac_quan` (một nguồn cho CLI, bảng này và Đài): 🟠 bản HIỆN HÀNH dựng sau mốc PRISMA-S
+    (15/08/2026) CHỈ CÓ CỜ provenanceUnknown; 🟡 lát cắt đang dùng bản mang cờ (kèm lệnh orchestrator cho lát cắt cũ nhất
+    có ánh xạ watchlist); ⓘ marker miễn trừ trong mã tăng so với ảnh chụp ≥ 7 ngày. Ghi ảnh chụp `state/so-mien-tru.json`
+    chỉ khi số đổi (BH153). Ngoại tuyến. Vắng EBM-Dashboards / không nạp được cổng ⇒ giác quan chết (⚪), KHÔNG phải
+    «không còn miễn trừ»; một phần không đo được (sổ hỏng, git lỗi) ⇒ mục ⚪ chưa đo."""
+    _SO_GIAC_QUAN["chay"] += 1
+    nhan = ["", "sổ miễn trừ"]
+    try:
+        sp = _ilu_mea.spec_from_file_location("_smt_tdxv", Path(__file__).resolve().parent / "so_mien_tru.py")
+        smt = _ilu_mea.module_from_spec(sp)
+        sp.loader.exec_module(smt)
+        viec, tt, chet, chua = smt.giac_quan(**kw)
+    except Exception as exc:  # noqa: BLE001 — cảm biến hỏng phải hiện ra
+        _ghi_chet(nhan, f"lỗi {type(exc).__name__}")
+        return []
+    for c in chet:
+        _ghi_chet(nhan, c)
+    _THONG_TIN.extend(tt)
+    _CHUA_DO.extend(f"sổ miễn trừ — {c}" for c in chua)
+    return viec
+
+
 def giac_quan_api_claude(tep: Path | None = None, bay_gio: dt.datetime | None = None) -> list[tuple[int, str, str, str]]:
     """SỨC KHOẺ API CLAUDE (17/11/2026, bác sĩ: «khi API hết hạn báo lại tôi»).
 
@@ -2597,6 +2621,10 @@ def main() -> int:
 
     # ⑦r2 BỘ VÀNG KIỂM CHÉO NGỮ NGHĨA (19/11/2026): đột biến chờ duyệt + mục thật chưa nhãn — xem docstring.
     de_xuat += giac_quan_bo_vang_ngu_nghia()  # đúng khuôn (ưu tiên, nhãn 👤, mô tả, lệnh)
+
+    # ⑦r3 SỔ MIỄN TRỪ (21/11/2026): provenanceUnknown ở bản hiện hành + marker miễn trừ trong mã theo thời gian — xem docstring.
+    # dash=DASH như mọi giác quan khác: test trỏ DASH vào thư mục tạm thì sổ không đọc/ghi dữ liệu thật.
+    de_xuat += giac_quan_so_mien_tru(dash=DASH)  # đúng khuôn (ưu tiên, nhãn 👤, mô tả, lệnh); ⓘ/⚪ do hàm tự nạp
 
     # ⑦s CAFÉ-S AGENT AN TOÀN (17/11/2026): lượt đo thật trượt critical, hoặc agent đã đổi so với vân tay lúc đo — xem docstring.
     de_xuat += giac_quan_cafes_agent_an_toan()  # đúng khuôn (ưu tiên, nhãn 👤, mô tả, lệnh)

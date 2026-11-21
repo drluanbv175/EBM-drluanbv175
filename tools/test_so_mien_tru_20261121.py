@@ -1,0 +1,371 @@
+# -*- coding: utf-8 -*-
+"""Sổ miễn trừ (`tools/so_mien_tru.py`, 21/11/2026) — đo provenanceUnknown theo lát cắt + marker miễn trừ trong mã.
+
+Kiểm HÀNH VI trên kho dashboard GIẢ trong thư mục tạm (ngoại tuyến, không đọc EBM-Dashboards thật):
+  • phân lớp đọc bằng parser của CHÍNH cổng verify_dashboard (bản vendor qua git);
+  • nhóm lát cắt bằng ĐÚNG dang_ky_chu_de.tach_ten (tên nhóm không thuộc lát cắt) và loại bản tin gộp bằng ĐÚNG
+    kiem_do_tuoi_chung_cu.la_khong_can;
+  • (b) tách «chỉ có cờ» khỏi «kế thừa có ghi lượt mới», mốc PRISMA-S tính từ 15/08/2026;
+  • ảnh chụp chỉ ghi khi số đổi (BH153), sổ hỏng không bị ghi đè;
+  • «không đo được» ⇒ do_duoc False / mã 2, không bao giờ xanh giả.
+Marker trong test dựng bằng nối chuỗi để CHÍNH tệp này không thành một marker thật bị đếm.
+"""
+from __future__ import annotations
+
+import datetime as dt
+import importlib.util
+import json
+import subprocess
+from pathlib import Path
+
+import pytest
+
+_TEP = Path(__file__).resolve().parent / "so_mien_tru.py"
+_sp = importlib.util.spec_from_file_location("so_mien_tru_test", _TEP)
+M = importlib.util.module_from_spec(_sp)
+_sp.loader.exec_module(M)
+
+BH10 = "bh10" + "-mien:"
+BIMAT = "bimat" + "-mien:"
+HOM_NAY = dt.date(2026, 11, 21)
+
+
+def _html(standards: str | None, co_data: bool = True) -> str:
+    if not co_data:
+        return "<html><body>không có khối dữ liệu</body></html>"
+    st = f"  standards:{standards},\n" if standards is not None else ""
+    return ("<html><script>\nconst DATA = {\n  meta:{updated:\"2026-11-01\"},\n" + st
+            + "  items:[ {id:'ITEM-01', pmid:'12345678', decision:'consider', gradeLevel:'mod'} ]\n};\n"
+            + "// HẾT KHỐI DATA\n</script></html>")
+
+
+ST_DU = '{ frame:"PICO", searchSources:["PubMed 2026-11-01","NICE"], currency:"2026-11-01" }'
+ST_CHI_CO = '{ provenanceUnknown: true, provenanceUnknownLyDo: "bản sinh trước khi khối DATA.standards thành bắt buộc" }'
+ST_CO_GHI = ('{ provenanceUnknown: true, provenanceUnknownLyDo: "mục kế thừa", '
+             'searchSources:["PubMed E-utilities 4 tầng (2026-11-05)"], currency:"2026-11-05 — lượt quét" }')
+ST_CO_GHI_CHI_CURRENCY = '{ provenanceUnknown: true, provenanceUnknownLyDo: "kế thừa", currency:"2026-11-05" }'
+
+
+def _vd():
+    dk = M._nap("_t_smt_dkcd", M.TOOLS / "dang_ky_chu_de.py")
+    return dk.nap_vd()
+
+
+def _kho(tmp_path: Path, tep: dict[str, str], khong_can: dict | None = None, muc: dict | None = None,
+         watchlist: list[str] | None = None) -> Path:
+    dash = tmp_path / "EBM-Dashboards"
+    dash.mkdir()
+    for ten, noi_dung in tep.items():
+        (dash / ten).write_text(noi_dung, encoding="utf-8")
+    (dash / "giam-sat-chu-de.json").write_text(json.dumps({"muc": muc or {}, "khong_can": khong_can or {}},
+                                                          ensure_ascii=False), encoding="utf-8")
+    (dash / "watchlist.json").write_text(json.dumps({"topics": [{"topic": w, "active": True}
+                                                               for w in (watchlist or [])]}, ensure_ascii=False),
+                                         encoding="utf-8")
+    return dash
+
+
+def _ten(nhom: str, lat: str, ngay: str) -> str:
+    return f"WebDashboard_EBM_{nhom}_{lat}_{ngay}.html"
+
+
+# ───────────── phân lớp bằng parser của cổng ─────────────
+
+@pytest.mark.parametrize("standards, co_data, ky_vong", [
+    (ST_DU, True, M.DU),
+    (ST_CHI_CO, True, M.CHI_CO),
+    (ST_CO_GHI, True, M.CO_GHI),
+    (ST_CO_GHI_CHI_CURRENCY, True, M.CO_GHI),
+    (None, True, M.THIEU),
+    (None, False, M.KHONG_DOC),
+    ('{ provenanceUnknown: false, searchSources:["a","b"] }', True, M.DU),
+])
+def test_phan_loai_doc_bang_parser_cua_cong(standards, co_data, ky_vong):
+    assert M.phan_loai(_vd(), _html(standards, co_data)) == ky_vong
+
+
+def test_chien_luoc_chi_viet_trong_ly_do_van_la_chi_co():
+    """Chiến lược tìm viết VĂN XUÔI trong provenanceUnknownLyDo (kiểu DaLieu_HS 07/11) không phải trường hợp đồng."""
+    st = ('{ provenanceUnknown: true, provenanceUnknownLyDo: "Lượt nối tiếp 07/11: PubMed «x»[ti] (searchStrategy/'
+          'currency) — 73 bản ghi" }')
+    assert M.phan_loai(_vd(), _html(st)) == M.CHI_CO
+
+
+# ───────────── (a)(b) trên kho giả ─────────────
+
+def _kho_mau(tmp_path: Path) -> Path:
+    return _kho(tmp_path, {
+        # lát cắt BenhA_TongHop: bản cũ chỉ cờ (07/2026) → bản mới khai đủ ⇒ KHÔNG vào (a)
+        _ten("VanDeCuThe", "BenhA_TongHop", "20260701"): _html(ST_CHI_CO),
+        _ten("VanDeCuThe", "BenhA_TongHop", "20261101"): _html(ST_DU),
+        # BenhB: bản hiện hành CHỈ CÓ CỜ, dựng sau mốc ⇒ (a) + 🟠
+        _ten("VanDeCuThe", "BenhB_DieuTri", "20261026"): _html(ST_CHI_CO),
+        # BenhC: kế thừa có ghi lượt mới ⇒ (a) nhưng không 🟠
+        _ten("VanDeCuThe", "BenhC_ChanDoan", "20261105"): _html(ST_CO_GHI),
+        # bản tin gộp W30 mang cờ ⇒ không vào (a)
+        _ten("Uptodate", "W30", "20260725"): _html(ST_CHI_CO),
+        # đúng ngày 14/08 (trước mốc) chỉ cờ ⇒ không vào (b)
+        _ten("VanDeCuThe", "BenhD", "20260814"): _html(ST_CHI_CO),
+        # tên không tách được
+        "WebDashboard_Khac.html": _html(ST_DU),
+    }, khong_can={"W30": "bản tin tuần gộp"})
+
+
+def _do(tmp_path: Path, dash: Path, **kw):
+    kw.setdefault("cac_repo", {"goc": None})
+    kw.setdefault("tep_state", tmp_path / "state" / "so-mien-tru.json")
+    kw.setdefault("hom_nay", HOM_NAY)
+    return M.do(dash=dash, **kw)
+
+
+def test_a_b_tren_kho_gia(tmp_path):
+    kq = _do(tmp_path, _kho_mau(tmp_path))
+    assert kq["do_duoc"] is True
+    assert [b["lat_cat"] for b in kq["a"]] == ["BenhD", "BenhB_DieuTri", "BenhC_ChanDoan"]
+    assert kq["lat_cat_tong"] == 5 and kq["lat_cat_lam_moi_duoc"] == 4 and kq["tai_lap_duoc"] == 1
+    assert [b["lat_cat"] for b in kq["b_chi_co_hien_hanh"]] == ["BenhB_DieuTri"]
+    assert [b["lat_cat"] for b in kq["b_co_ghi_hien_hanh"]] == ["BenhC_ChanDoan"]
+    assert kq["b_tong"] == 2 and kq["b_chi_co_tong"] == 1 and kq["b_co_ghi_tong"] == 1
+    assert kq["tong_dashboard"] == 6 and kq["tong_mien"] == 5
+    assert kq["khong_tach"] == ["WebDashboard_Khac.html"]
+    assert kq["theo_thang"]["2026-11"] == {"tong": 2, "mien": 1}
+
+
+def test_nhom_lat_cat_bang_dang_ky_chu_de_ten_nhom_khong_thuoc_lat_cat(tmp_path):
+    """Đúng logic dang_ky_chu_de.tach_ten: CongCuKeDon_X cũ bị VanDeCuThe_X mới thay (đo 21/11: ThuocTamThanKinh)."""
+    dash = _kho(tmp_path, {
+        _ten("CongCuKeDon", "ThuocTamThanKinh", "20260620"): _html(ST_CHI_CO),
+        _ten("VanDeCuThe", "ThuocTamThanKinh", "20261021"): _html(ST_DU),
+    })
+    kq = _do(tmp_path, dash)
+    assert kq["lat_cat_tong"] == 1 and kq["a"] == []
+
+
+def test_ban_tin_gop_loai_theo_goc_cua_lat_cat(tmp_path):
+    """la_khong_can khớp cả lát cắt lẫn phần đầu trước «_» (vd khong_can khai «NgoaiTru»)."""
+    dash = _kho(tmp_path, {_ten("CapNhatTuan", "NgoaiTru_TongHop", "20260609"): _html(ST_CHI_CO)},
+                khong_can={"NgoaiTru": "bản tin gộp"})
+    kq = _do(tmp_path, dash)
+    assert kq["a"] == [] and kq["lat_cat_lam_moi_duoc"] == 0 and kq["lat_cat_tong"] == 1
+
+
+def test_khong_doc_duoc_giam_sat_chu_de_la_chua_do(tmp_path):
+    dash = _kho(tmp_path, {_ten("VanDeCuThe", "BenhB", "20261026"): _html(ST_CHI_CO)})
+    (dash / "giam-sat-chu-de.json").write_text("{hỏng", encoding="utf-8")
+    kq = _do(tmp_path, dash)
+    assert kq["do_duoc"] is True
+    assert any("giam-sat-chu-de.json" in c for c in kq["chua_do"])
+
+
+# ───────────── không đo được ⇒ ⚪ ─────────────
+
+def test_vang_ebm_dashboards_khong_do_duoc_va_khong_ghi_anh_chup(tmp_path, monkeypatch):
+    monkeypatch.setattr(M, "goc_du_lieu", lambda ten: None)
+    tep = tmp_path / "state" / "so-mien-tru.json"
+    kq = M.do(cac_repo={"goc": None}, tep_state=tep, hom_nay=HOM_NAY)
+    assert kq["do_duoc"] is False and "EBM-Dashboards" in kq["ly_do"]
+    assert not tep.exists()
+
+
+def test_kho_rong_khong_phai_0_mien_tru(tmp_path):
+    kq = _do(tmp_path, _kho(tmp_path, {}))
+    assert kq["do_duoc"] is False and "không phải «0 miễn trừ»" in kq["ly_do"]
+
+
+def test_main_ma_thoat(tmp_path, monkeypatch, capsys):
+    tep = tmp_path / "st.json"
+    assert M.main(["--dash", str(_kho_mau(tmp_path)), "--tep-state", str(tep), "--khong-ghi"]) == 1
+    assert not tep.exists()
+    sach = tmp_path / "sach"
+    sach.mkdir()
+    assert M.main(["--dash", str(_kho(sach, {_ten("VanDeCuThe", "BenhA", "20261101"): _html(ST_DU)})),
+                   "--tep-state", str(tep), "--khong-ghi"]) == 0
+    monkeypatch.setattr(M, "goc_du_lieu", lambda ten: None)
+    assert M.main(["--tep-state", str(tep), "--khong-ghi"]) == 2
+    assert "KHÔNG ĐO ĐƯỢC" in capsys.readouterr().out
+
+
+# ───────────── (c) marker trong mã ─────────────
+
+def _repo_git(tmp_path: Path, tep: dict[str, str], chua_track: dict[str, str] | None = None) -> Path:
+    r = tmp_path / "repo"
+    r.mkdir()
+    subprocess.run(["git", "init", "-q", str(r)], check=True)
+    for ten, nd in tep.items():
+        (r / ten).write_text(nd, encoding="utf-8")
+    subprocess.run(["git", "-C", str(r), "add", "-A"], check=True)
+    for ten, nd in (chua_track or {}).items():
+        (r / ten).write_text(nd, encoding="utf-8")
+    return r
+
+
+def test_dem_marker_chi_dem_marker_that_tren_tep_track(tmp_path):
+    r = _repo_git(tmp_path, {
+        "a.py": f"x = ghi(decision)  # {BH10} fixture tạm, không phải dashboard\n"
+                f"# {BH10} lý do khác\n"
+                f"# nhắc tên marker `{BH10}` trong tài liệu\n"     # không đứng ngay sau «#»
+                f"#{BH10}\n",                                       # không có lý do
+        "b.py": f"k = 'gia'  # {BIMAT} khoá giả cho test\n",
+    }, chua_track={"c.py": f"# {BH10} chưa track\n"})
+    m = M.dem_marker(r)
+    assert m["dem"] == {"bh10-mien": 2, "bimat-mien": 1}
+    assert m["vi_tri"]["bimat-mien"] == ["b.py:1"]
+
+
+def test_dem_marker_khong_phai_repo_la_none(tmp_path):
+    assert M.dem_marker(tmp_path) is None
+
+
+# ───────────── (d) ảnh chụp BH153 + ⓘ marker tăng ─────────────
+
+def test_anh_chup_chi_ghi_khi_so_doi_va_moi_ngay_mot_dong(tmp_path):
+    dash = _kho_mau(tmp_path)
+    tep = tmp_path / "state" / "so-mien-tru.json"
+    kq1 = _do(tmp_path, dash, tep_state=tep)
+    assert kq1["anh_chup"] == "ghi"
+    mtime = tep.stat().st_mtime_ns
+    assert _do(tmp_path, dash, tep_state=tep)["anh_chup"] == "khong_doi"
+    assert tep.stat().st_mtime_ns == mtime
+    # ngày khác, số không đổi ⇒ vẫn không ghi
+    assert _do(tmp_path, dash, tep_state=tep, hom_nay=HOM_NAY + dt.timedelta(days=1))["anh_chup"] == "khong_doi"
+    # cùng ngày, số đổi ⇒ thay dòng của ngày đó (không thêm dòng)
+    (dash / _ten("VanDeCuThe", "BenhB_DieuTri", "20261120")).write_text(_html(ST_DU), encoding="utf-8")
+    assert _do(tmp_path, dash, tep_state=tep)["anh_chup"] == "ghi"
+    ls = json.loads(tep.read_text(encoding="utf-8"))["lich_su"]
+    assert [x["ngay"] for x in ls] == ["2026-11-21"] and ls[0]["a_lat_cat"] == ["BenhD", "BenhC_ChanDoan"]
+    # ngày khác, số đổi ⇒ thêm dòng
+    (dash / _ten("VanDeCuThe", "BenhC_ChanDoan", "20261121")).write_text(_html(ST_DU), encoding="utf-8")
+    assert _do(tmp_path, dash, tep_state=tep, hom_nay=HOM_NAY + dt.timedelta(days=2))["anh_chup"] == "ghi"
+    assert [x["ngay"] for x in json.loads(tep.read_text(encoding="utf-8"))["lich_su"]] == ["2026-11-21",
+                                                                                          "2026-11-23"]
+
+
+def test_anh_chup_hong_khong_bi_ghi_de(tmp_path):
+    tep = tmp_path / "state" / "so-mien-tru.json"
+    tep.parent.mkdir()
+    tep.write_text("{không phải json", encoding="utf-8")
+    kq = _do(tmp_path, _kho_mau(tmp_path), tep_state=tep)
+    assert kq["anh_chup"] == "hong"
+    assert tep.read_text(encoding="utf-8") == "{không phải json"
+    assert any("hỏng" in c for c in kq["chua_do"])
+
+
+def _lich_su(ngay: str, bh10: int) -> list[dict]:
+    return [{"ngay": ngay, "marker": {"goc": {"bh10-mien": bh10, "bimat-mien": 1}}}]
+
+
+def test_marker_tang_so_anh_chup_du_7_ngay():
+    hien_tai = {"goc": {"dem": {"bh10-mien": 6, "bimat-mien": 1}}, "y_khoa": None}
+    assert M.marker_tang(_lich_su("2026-11-14", 5), hien_tai, HOM_NAY) == ("2026-11-14", {"goc:bh10-mien": (5, 6)})
+    assert M.marker_tang(_lich_su("2026-11-15", 5), hien_tai, HOM_NAY) is None      # mới 6 ngày
+    assert M.marker_tang(_lich_su("2026-11-01", 6), hien_tai, HOM_NAY) is None      # không tăng
+    assert M.marker_tang([], hien_tai, HOM_NAY) is None
+
+
+# ───────────── giác quan cho tu_de_xuat_viec ─────────────
+
+def test_giac_quan_cam_va_vang_kem_lenh_orchestrator(tmp_path):
+    dash = _kho(tmp_path, {
+        _ten("VanDeCuThe", "BenhB_DieuTri", "20261026"): _html(ST_CHI_CO),
+        _ten("VanDeCuThe", "BenhC_ChanDoan", "20261105"): _html(ST_CO_GHI),
+    }, muc={"BenhC": "Bệnh C"}, watchlist=["Bệnh C"])
+    viec, tt, chet, chua = M.giac_quan(dash=dash, cac_repo={"goc": None}, tep_state=tmp_path / "s.json",
+                                       hom_nay=HOM_NAY)
+    assert chet == [] and tt == []
+    cam = [v for v in viec if v[0] == 1]
+    vang = [v for v in viec if v[0] == 3]
+    assert len(cam) == 1 and "BenhB_DieuTri" in cam[0][2] and "15/08/2026" in cam[0][2]
+    assert "BenhC_ChanDoan" not in cam[0][2], "bản kế thừa đã ghi lượt mới không thuộc 🟠"
+    # BenhB (cũ hơn) chưa ánh xạ watchlist ⇒ gợi ý BenhC (có ánh xạ, orchestrator chạy được A2)
+    assert len(vang) == 1 and vang[0][3] == 'python3 ops/orchestrator.py --topic "BenhC_ChanDoan" --online'
+    assert all(v[1] == "👤" for v in viec)
+
+
+def test_giac_quan_khong_lat_cat_nao_anh_xa_thi_ghi_chu(tmp_path):
+    dash = _kho(tmp_path, {_ten("VanDeCuThe", "BenhB_DieuTri", "20261026"): _html(ST_CHI_CO)})
+    viec, *_ = M.giac_quan(dash=dash, cac_repo={"goc": None}, tep_state=tmp_path / "s.json", hom_nay=HOM_NAY)
+    vang = [v for v in viec if v[0] == 3][0]
+    assert '--topic "BenhB_DieuTri"' in vang[3] and "chưa ánh xạ watchlist" in vang[2]
+
+
+def test_giac_quan_sach_khong_viec(tmp_path):
+    dash = _kho(tmp_path, {_ten("VanDeCuThe", "BenhA", "20261101"): _html(ST_DU)})
+    assert M.giac_quan(dash=dash, cac_repo={"goc": None}, tep_state=tmp_path / "s.json",
+                       hom_nay=HOM_NAY) == ([], [], [], [])
+
+
+def test_giac_quan_khong_do_duoc_la_chet(tmp_path, monkeypatch):
+    monkeypatch.setattr(M, "goc_du_lieu", lambda ten: None)
+    viec, tt, chet, _ = M.giac_quan(cac_repo={"goc": None}, tep_state=tmp_path / "s.json", hom_nay=HOM_NAY)
+    assert viec == [] and len(chet) == 1 and "EBM-Dashboards" in chet[0]
+
+
+def test_giac_quan_marker_tang_la_dong_thong_tin(tmp_path):
+    r = _repo_git(tmp_path, {"a.py": f"# {BH10} một\n# {BH10} hai\n"})
+    tep = tmp_path / "s.json"
+    tep.write_text(json.dumps({"lich_su": _lich_su("2026-11-01", 1)}), encoding="utf-8")
+    dash = _kho(tmp_path, {_ten("VanDeCuThe", "BenhA", "20261101"): _html(ST_DU)})
+    viec, tt, chet, _ = M.giac_quan(dash=dash, cac_repo={"goc": r}, tep_state=tep, hom_nay=HOM_NAY)
+    assert viec == [] and chet == []
+    assert len(tt) == 1 and "goc:bh10-mien 1→2" in tt[0] and "2026-11-01" in tt[0]
+
+
+# ───────────── nối dây: tu_de_xuat_viec + Đài hoàn thiện ─────────────
+
+def _nap_tdxv():
+    sp = importlib.util.spec_from_file_location("tdxv_so_mien_tru", M.TOOLS / "tu_de_xuat_viec.py")
+    T = importlib.util.module_from_spec(sp)
+    sp.loader.exec_module(T)
+    return T
+
+
+def test_tu_de_xuat_viec_noi_giac_quan_va_ghi_chet(tmp_path):
+    T = _nap_tdxv()
+    dash = _kho(tmp_path, {_ten("VanDeCuThe", "BenhB_DieuTri", "20261026"): _html(ST_CHI_CO)})
+    viec = T.giac_quan_so_mien_tru(dash=dash, cac_repo={"goc": None}, tep_state=tmp_path / "s.json", hom_nay=HOM_NAY)
+    assert [v[0] for v in viec] == [1, 3] and T._GIAC_QUAN_CHET == [] and T._SO_GIAC_QUAN["chay"] == 1
+    # không đo được ⇒ giác quan CHẾT (⚪), không phải «không còn việc»
+    T2 = _nap_tdxv()
+    tep_hong = tmp_path / "hong.json"
+    tep_hong.write_text("{", encoding="utf-8")
+    assert T2.giac_quan_so_mien_tru(dash=tmp_path / "khong-co", cac_repo={"goc": None}, tep_state=tep_hong,
+                                    hom_nay=HOM_NAY) == []
+    assert len(T2._GIAC_QUAN_CHET) == 1 and "sổ miễn trừ" in T2._GIAC_QUAN_CHET[0]
+    assert any("hỏng" in c for c in T2._CHUA_DO)
+
+
+def test_main_tu_de_xuat_viec_goi_giac_quan_so_mien_tru():
+    """Công cụ không ai gọi thì không tồn tại: main() phải GỌI giác quan (khớp dòng thi hành, không khớp bình luận)."""
+    nguon = (M.TOOLS / "tu_de_xuat_viec.py").read_text(encoding="utf-8")
+    dong = [d for d in nguon.splitlines() if not d.lstrip().startswith("#") and "giac_quan_so_mien_tru(dash" in d]
+    # dash=DASH: test trỏ DASH vào thư mục tạm thì giác quan không đọc/ghi dữ liệu thật (đo 21/11: test gradeBy
+    # gọi main() đã ghi state/so-mien-tru.json thật khi giác quan tự dò dashboard).
+    assert dong and dong[0].lstrip().startswith("de_xuat += giac_quan_so_mien_tru(dash=DASH)")
+
+
+def test_dash_vang_khong_ghi_anh_chup(tmp_path):
+    """DASH (của main) trỏ thư mục không tồn tại ⇒ giác quan ⚪ và KHÔNG ghi tệp ảnh chụp."""
+    T = _nap_tdxv()
+    tep = tmp_path / "state" / "so-mien-tru.json"
+    assert T.giac_quan_so_mien_tru(dash=tmp_path / "khong-co", cac_repo={"goc": None}, tep_state=tep) == []
+    assert len(T._GIAC_QUAN_CHET) == 1 and not tep.exists()
+
+
+def _nap_dai():
+    sp = importlib.util.spec_from_file_location("dai_so_mien_tru", M.TOOLS / "do_dai_hoan_thien.py")
+    D = importlib.util.module_from_spec(sp)
+    sp.loader.exec_module(D)
+    return D
+
+
+def test_dai_hoan_thien_thuoc_do_tai_lap(tmp_path, monkeypatch):
+    D = _nap_dai()
+    ra = {"do_duoc": True, "tai_lap_duoc": 93, "lat_cat_lam_moi_duoc": 102,
+          "b_chi_co_hien_hanh": [{"lat_cat": "X"}] * 5}
+    monkeypatch.setattr(D, "_chay", lambda cmd, *a, **k: json.dumps(ra) if "tools/so_mien_tru.py" in cmd else None)
+    h = {x["ma"]: x for x in D.thuoc_do(tmp_path, tmp_path, [], [], [])}["E-TAILAP"]
+    assert h["hien_tai"] == "93/102 · 5 bản mới CHỈ CÓ CỜ" and h["so"] == 93 and h["trang_thai"] == "chua"
+    ra.update(tai_lap_duoc=102, b_chi_co_hien_hanh=[])
+    assert {x["ma"]: x for x in D.thuoc_do(tmp_path, tmp_path, [], [], [])}["E-TAILAP"]["trang_thai"] == "dat"
+    ra["do_duoc"] = False
+    assert {x["ma"]: x for x in D.thuoc_do(tmp_path, tmp_path, [], [], [])}["E-TAILAP"]["trang_thai"] == "khong_do"

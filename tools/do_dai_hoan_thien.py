@@ -315,6 +315,18 @@ def thuoc_do(goc: Path, y_khoa: Path, cong: List[Dict[str, Any]], viec: List[Dic
         hang.append(_dong(CC, "E-SL", "Chủ đề đo được sản lượng giám sát",
                           f"{tong_cd - kd}/{tong_cd} (đo {str(sl.get('do_luc'))[:10]})", tong_cd - kd,
                           f"{tong_cd}/{tong_cd}", tt, "kiem_san_luong_giam_sat.py"))
+    # 21/11/2026 — sổ miễn trừ: lát cắt đang dùng bản KHAI hợp đồng nguồn (không mang provenanceUnknown). Chỉ đọc
+    # (--khong-ghi: ảnh chụp do tu_de_xuat_viec/CLI ghi). Không đo được ⇒ khong_do, không bao giờ «đạt».
+    smt = _json(_chay([sys.executable, "tools/so_mien_tru.py", "--json", "--khong-ghi"], goc))
+    ten_tl = "Chủ đề có bản hiện hành khai hợp đồng nguồn (không miễn trừ provenance)"
+    if smt and smt.get("do_duoc") and isinstance(smt.get("tai_lap_duoc"), int):
+        n, tong_tl = smt["tai_lap_duoc"], smt.get("lat_cat_lam_moi_duoc")
+        chi_co = len(smt.get("b_chi_co_hien_hanh") or [])
+        hang.append(_dong(CC, "E-TAILAP", ten_tl,
+                          f"{n}/{tong_tl}" + (f" · {chi_co} bản mới CHỈ CÓ CỜ" if chi_co else ""), n,
+                          f"{tong_tl}/{tong_tl}", "dat" if n == tong_tl else "chua", "so_mien_tru.py"))
+    else:
+        hang.append(_dong(CC, "E-TAILAP", ten_tl, "không đo được", None, "—", "khong_do", "so_mien_tru.py"))
     # --- Nền hệ thống ---
     chot = _json((goc / "state" / "chot-hoi-quy-gan-nhat.json").read_text(encoding="utf-8")
                  if (goc / "state" / "chot-hoi-quy-gan-nhat.json").exists() else None)
