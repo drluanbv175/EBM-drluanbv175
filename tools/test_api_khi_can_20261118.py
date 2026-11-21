@@ -241,6 +241,30 @@ def test_chay_de_cuong_goi_that_va_doc_ma_thoat_dung(tmp_path, akc):
     assert all(lenh[-1] == "--goi-api" and lenh[-3:-1] == ["--study", "btm"] for lenh in lenh_da_chay)
 
 
+def test_a12_chay_nen_qua_batch_khi_cong_cu_da_ho_tro(tmp_path, akc):
+    """21/11/2026 (tối ưu chi phí): A12 chạy nền ⇒ --batch (−50%) với thời gian chờ nằm trong giới hạn lệnh con; công
+    cụ y khoa chưa có cờ ⇒ giữ lệnh cũ (thứ tự gộp hai repo không làm hỏng lượt nền); phản biện máy không đổi."""
+    da_chay = []
+
+    def chay(lenh, cwd, timeout):
+        da_chay.append((lenh, timeout))
+        return 0, "sạch"
+
+    can = [{"study": "btm", "loai": "A12"}, {"study": "btm", "loai": "PHAN_BIEN"}]
+    akc.chay_de_cuong(can, tmp_path, chay)  # chưa có tệp công cụ ⇒ không --batch
+    assert all(lenh[-1] == "--goi-api" and t == akc.GIAY_DE_CUONG for lenh, t in da_chay)
+    (tmp_path / "tools").mkdir()
+    for ten in ("kiem_noi_dung_trich_dan.py", "phan_bien_may_de_cuong.py"):  # phản biện có cờ cũng KHÔNG chạy batch
+        (tmp_path / "tools" / ten).write_text('ap.add_argument("--cho-batch-toi-da")\n', encoding="utf-8",
+                                               newline="\n")
+    da_chay.clear()
+    akc.chay_de_cuong(can, tmp_path, chay)
+    (l_a12, t_a12), (l_pb, t_pb) = da_chay
+    assert l_a12[-4:] == ["--goi-api", "--batch", "--cho-batch-toi-da", str(akc.CHO_BATCH_GIAY)]
+    assert t_a12 == akc.GIAY_DE_CUONG + akc.CHO_BATCH_GIAY and akc.CHO_BATCH_GIAY < t_a12
+    assert l_pb[-1] == "--goi-api" and t_pb == akc.GIAY_DE_CUONG
+
+
 def test_cham_tran_chi_phi_thi_dung_cac_viec_con_lai(tmp_path, akc):
     dem = []
     r = akc.chay_de_cuong([{"study": "a", "loai": "A12"}, {"study": "b", "loai": "A12"}], tmp_path,

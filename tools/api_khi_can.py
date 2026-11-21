@@ -73,6 +73,11 @@ HAN_KHOA_GIO = 3
 GIAY_DE_CUONG = 1800
 GIAY_CAFES = 3600
 CONG_CU_DE_CUONG = {"A12": "kiem_noi_dung_trich_dan.py", "PHAN_BIEN": "phan_bien_may_de_cuong.py"}
+# 21/11/2026 (bác sĩ: «Claude API hãy xử lí để tối ưu cho tôi»): việc chạy NỀN, không ai chờ ⇒ gửi qua Batch API (−50%
+# mọi token; y khoa #387). Công cụ tự gửi lại thường phần batch lỗi/bị từ chối/quá giờ ⇒ kết quả như gọi thường. Chỉ
+# bật khi công cụ y khoa ĐÃ có cờ (đọc mã nguồn) — thứ tự gộp hai repo không làm hỏng lượt nền.
+CHO_BATCH_GIAY = 2700
+CO_BATCH = {"A12": ["--batch", "--cho-batch-toi-da", str(CHO_BATCH_GIAY)]}
 # Dấu hiệu cầu nối y khoa từ chối gọi — so CHỮ THƯỜNG. 21/11/2026: cầu nối dùng theo tín dụng tài khoản; hết tín dụng ⇒
 # `api_claude_nc.HetTinDung` («HẾT TÍN DỤNG»). Trần tháng chỉ còn khi biến môi trường OS đặt (kiểm thử/khoá khẩn cấp).
 DAU_HIEU_HET_TIN_DUNG = ("hết tín dụng", "hettindung")
@@ -336,6 +341,14 @@ def can_de_cuong(goc_mea: Path = GOC_MEA) -> Tuple[List[Dict[str, Any]], str]:
     return ra, ""
 
 
+def _co_co_batch(tep: Path) -> bool:
+    """Công cụ y khoa đã nhận `--batch` + `--cho-batch-toi-da` chưa (đọc mã nguồn; không đọc được ⇒ chưa)."""
+    try:
+        return "--cho-batch-toi-da" in tep.read_text(encoding="utf-8")
+    except OSError:
+        return False
+
+
 def chay_de_cuong(can: List[Dict[str, Any]], goc_mea: Path = GOC_MEA,
                   chay: Optional[Callable[[List[str], Path, int], Tuple[int, str]]] = None) -> Dict[str, Any]:
     """Chạy lại công cụ kiểm có báo cáo cũ. Mã 0/1 = chạy xong (1 = có phát hiện cần duyệt); khác = lỗi. Chạm trần ⇒ dừng."""
@@ -346,8 +359,10 @@ def chay_de_cuong(can: List[Dict[str, Any]], goc_mea: Path = GOC_MEA,
     py = python_venv() or sys.executable
     ket, dung = [], ""
     for x in can:
-        lenh = [py, str(goc_mea / "tools" / CONG_CU_DE_CUONG[x["loai"]]), "--study", x["study"], "--goi-api"]
-        ma, duoi = chay(lenh, goc_mea, GIAY_DE_CUONG)
+        tep = goc_mea / "tools" / CONG_CU_DE_CUONG[x["loai"]]
+        lenh = [py, str(tep), "--study", x["study"], "--goi-api"]
+        them = CO_BATCH.get(x["loai"]) if _co_co_batch(tep) else None
+        ma, duoi = chay(lenh + (them or []), goc_mea, GIAY_DE_CUONG + (CHO_BATCH_GIAY if them else 0))
         ket.append({"study": x["study"], "loai": x["loai"], "ma_thoat": ma, "ok": ma in (0, 1),
                     "co_phat_hien": ma == 1, "duoi": duoi[-200:]})
         # Không phân biệt hoa thường: thông điệp vượt trần chính của cầu nối mở đầu «Trần chi phí Claude API tháng…»
