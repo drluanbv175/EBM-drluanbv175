@@ -381,9 +381,13 @@ def test_duoi_pytest_khong_chay_cafes_that(tmp_path, akc):
 # ════════════════ chính sách ════════════════
 
 def test_chinh_sach_cua_repo_dung_lua_chon_cua_bac_si(akc):
-    """★ Hợp đồng với lời duyệt 18/11: cả ba việc TỰ CHẠY; hội đồng cổng không nằm trong chính sách."""
+    """★ Hợp đồng với lời bác sĩ 22/11/2026 «gọi Claude API khi tôi duyệt» (thay chính sách tự chạy 18/11): KHÔNG việc nào
+    tự chạy; hội đồng cổng không nằm trong chính sách."""
     cs = akc.doc_chinh_sach(REPO / "sync" / "api-khi-can.json")
-    assert cs is not None and cs["tu_chay"] == {"chu_de": True, "de_cuong": True, "cafes": True}
+    assert cs is not None and cs["tu_chay"] == {"chu_de": False, "de_cuong": False, "cafes": False}
+    tho = json.loads((REPO / "sync" / "api-khi-can.json").read_text(encoding="utf-8"))
+    assert tho["tu_chay"].get("ngu_nghia_xuat_goi") is False
+    assert "gọi Claude API khi tôi duyệt" in tho.get("_ghi_chu_22_11", "")
     assert "hoi_dong" not in json.loads((REPO / "sync" / "api-khi-can.json").read_text(encoding="utf-8"))["tu_chay"]
 
 
@@ -537,3 +541,46 @@ def test_giac_quan_luot_loi_ncbi_khong_bao_kiem_console(tmp_path, tdx, akc):
                                                               "chi_tiet": [{"ok": False, "duoi": _DUOI_NCBI}]}}}]})
     (uu, ai, dong, lenh), = tdx.giac_quan_api_khi_can(tmp_path, bay_gio=dt.datetime(2026, 11, 20, 6))
     assert (uu, ai) == (3, "👤") and "NCBI chặn IP" in dong and "console.anthropic.com" not in dong
+
+
+# ════════════════ 22/11/2026 — chỉ gọi API khi bác sĩ duyệt ════════════════
+
+def _xet_co_viec(tmp_path):
+    return lambda cs, chi, goc, goc_mea, bay_gio: {
+        "chu_de": {"can": [{"tep": tmp_path / "WebDashboard_A_20261101.html", "so_muc": 1, "uoc_usd": 0.02}],
+                   "ghi_chu": "", "do_duoc": True, "uoc_usd": 0.02},
+        "de_cuong": {"can": [], "ghi_chu": "", "do_duoc": True, "uoc_usd": 0.0},
+        "cafes": {"can": [], "ghi_chu": "", "do_duoc": True, "uoc_usd": 0.0}}
+
+
+def test_tu_chay_tat_va_khong_duyet_thi_khong_goi_api(tmp_path, akc, monkeypatch):
+    akc.CHINH_SACH.write_text(json.dumps({"tu_chay": {"chu_de": False, "de_cuong": False, "cafes": False}}),
+                              encoding="utf-8", newline="\n")
+    monkeypatch.setattr(akc, "xet", _xet_co_viec(tmp_path))
+    ma = akc.chay(goc=tmp_path, goi_cong=lambda p: pytest.fail("chưa duyệt mà vẫn gọi API"),
+                  bay_gio=dt.datetime(2026, 11, 22, 9))
+    v = akc.doc_so()["luot"][-1]
+    assert ma == 0 and v["viec"]["chu_de"] == {"ket_qua": "tat", "so_can": 1} and "duyet" not in v
+
+
+def test_co_loi_duyet_thi_chay_va_ghi_nguyen_van_loi_duyet(tmp_path, akc, monkeypatch):
+    akc.CHINH_SACH.write_text(json.dumps({"tu_chay": {"chu_de": False, "de_cuong": False, "cafes": False}}),
+                              encoding="utf-8", newline="\n")
+    monkeypatch.setattr(akc, "xet", _xet_co_viec(tmp_path))
+    goi = []
+    ma = akc.chay(chi=("chu_de",), goc=tmp_path,
+                  goi_cong=lambda p: goi.append(p) or {"status": "ok", "off_topic": [], "uncertain": []},
+                  bay_gio=dt.datetime(2026, 11, 22, 9), duyet="Đồng ý chạy quét lạc chủ đề")
+    luot = akc.doc_so()["luot"][-1]
+    assert ma == 0 and len(goi) == 1 and luot["viec"]["chu_de"]["da_cham"] == 1
+    assert luot["duyet"] == {"loi": "Đồng ý chạy quét lạc chủ đề", "chi": ["chu_de"], "uoc_usd": 0.02}
+
+
+def test_loi_duyet_rong_thi_tu_choi_khong_xet(tmp_path, akc, monkeypatch):
+    monkeypatch.setattr(akc, "xet", lambda *a, **k: pytest.fail("lời duyệt rỗng mà vẫn xét/chạy"))
+    assert akc.chay(goc=tmp_path, duyet="  ") == 2
+
+
+def test_duyet_chi_dung_cung_chay(akc):
+    assert akc.main(["--duyet", "đồng ý"]) == 2
+

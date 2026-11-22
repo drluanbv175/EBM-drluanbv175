@@ -479,7 +479,12 @@ def xet(cs: Dict[str, Any], chi: Tuple[str, ...] = VIEC, goc: Path = GOC, goc_me
 
 
 def chay(chi: Tuple[str, ...] = VIEC, goc: Path = GOC, goc_mea: Path = GOC_MEA, goi_cong=None, chay_lenh=None,
-         bay_gio: Optional[dt.datetime] = None) -> int:
+         bay_gio: Optional[dt.datetime] = None, duyet: Optional[str] = None) -> int:
+    """Chạy các việc cần. 22/11/2026 (bác sĩ: «gọi Claude API khi tôi duyệt»): việc có `tu_chay` = false chỉ chạy khi
+    có `duyet` — NGUYÊN VĂN lời duyệt của bác sĩ trong chat — và lời đó được ghi vào sổ cùng ước chi phí."""
+    if duyet is not None and len(duyet.strip()) < 2:
+        print("❌ --duyet phải là nguyên văn lời duyệt của bác sĩ (không rỗng) — không chạy, không chi tiền.")
+        return 2
     cs = doc_chinh_sach()
     if cs is None:
         print("⚪ Chính sách sync/api-khi-can.json vắng/hỏng — cơ chế TẮT, không chạy việc nào (không chi tiền).")
@@ -494,9 +499,12 @@ def chay(chi: Tuple[str, ...] = VIEC, goc: Path = GOC, goc_mea: Path = GOC_MEA, 
         ghi_so(so)
         phat_hien = xet(cs, chi, goc, goc_mea, bay_gio)
         luot: Dict[str, Any] = {"luc": bay_gio.isoformat(timespec="seconds"), "viec": {}}
+        if duyet is not None:
+            luot["duyet"] = {"loi": duyet.strip(), "chi": list(chi),
+                             "uoc_usd": round(sum(float((phat_hien.get(v) or {}).get("uoc_usd") or 0) for v in chi), 2)}
         for v in chi:
             p = phat_hien.get(v) or {"can": [], "ghi_chu": "", "do_duoc": True}
-            if not cs["tu_chay"][v]:
+            if not cs["tu_chay"][v] and duyet is None:
                 luot["viec"][v] = {"ket_qua": "tat", "so_can": len(p["can"])}
                 continue
             if not p["can"]:
@@ -602,6 +610,9 @@ def main(argv: Optional[List[str]] = None) -> int:
     nhom = ap.add_mutually_exclusive_group()
     nhom.add_argument("--chay", action="store_true", help="chạy các việc cần mà chính sách cho phép (TỐN TIỀN API)")
     nhom.add_argument("--nen", action="store_true", help="cho hook: đủ giờ ⇒ phóng --chay ở nền rồi trả lại ngay")
+    ap.add_argument("--duyet", default=None,
+                    help="NGUYÊN VĂN lời duyệt của bác sĩ trong chat (22/11/2026: «gọi Claude API khi tôi duyệt») — chỉ "
+                         "dùng với --chay; thiếu thì việc có tu_chay=false không chạy")
     ap.add_argument("--chi", default=",".join(VIEC), help="giới hạn việc: chu_de,de_cuong,cafes")
     ap.add_argument("--im-khi-on", action="store_true", help="im lặng khi không có gì đáng báo (dùng với --nen)")
     a = ap.parse_args(argv)
@@ -612,8 +623,11 @@ def main(argv: Optional[List[str]] = None) -> int:
         return 2
     if a.nen:
         return phong_nen(a.im_khi_on)
+    if a.duyet is not None and not a.chay:
+        print("❌ --duyet chỉ dùng cùng --chay.")
+        return 2
     if a.chay:
-        return chay(chi)
+        return chay(chi, duyet=a.duyet)
     return chay_kho(chi)
 
 
