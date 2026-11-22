@@ -56,6 +56,34 @@ NEW_KET_THUC = (
     '   là quyết định của người khi có dấu người (ô chỉ người ghi, xác nhận tường minh, nhãn nguồn).\n'
 )
 
+# THÊM 22/11/2026 — chỉ thị của bác sĩ cùng ngày, phủ CẢ đội (lâm sàng + nghiên cứu), nhắc lại ở mọi agent:
+# (5) nguyên tắc tổng «Mỗi quyết định trong nghiên cứu phải dựa trên bằng chứng khoa học, được thực hiện một cách đạo
+#     đức, được kiểm chứng khách quan, và chỉ được chuyển sang bước tiếp theo khi bước hiện tại đã đạt chuẩn xác định
+#     trước.» — triển khai bằng «quay lại bước đó để sửa, kiểm tra lại, sau khi đạt chuẩn thì "khóa" bước đó»;
+# (6) «Khi tôi đã giao nhiệm vụ thì hãy bám vào nguyên tắc xây dựng hệ thống và giao cho tôi sản phẩm đúng; Đừng bao giờ
+#     để nói là phần việc máy, phần của tôi … Hãy tiếp tục nhắc đi nhắc lại nhiều lần»;
+# (7) «ghi nhỏ sổ nợ sẽ không ghi sổ nợ nữa, giải quyết theo nguyên tắc».
+# Cặp (NEW_KET_THUC → NEW_KET_THUC_2211) chỉ NỐI THÊM mục 5–7 sau mục 4 đã cấy; agent mới nhận thẳng bản đủ qua BLOCK.
+NEW_KET_THUC_2211 = NEW_KET_THUC + (
+    '5. NGUYÊN TẮC TỔNG NGHIÊN CỨU (bác sĩ 22/11/2026): «Mỗi quyết định trong nghiên cứu phải dựa trên bằng chứng khoa\n'
+    '   học, được thực hiện một cách đạo đức, được kiểm chứng khách quan, và chỉ được chuyển sang bước tiếp theo khi bước\n'
+    '   hiện tại đã đạt chuẩn xác định trước.» Triển khai — SỬA ĐÚNG KHÂU RỒI KHOÁ: lỗi phát hiện ở khâu nào thì quay\n'
+    '   lại sửa tại NGUỒN của khâu đó (đề tài: `gate_params`, bộ biến G3, SAP G4, bộ sinh của cổng; chứng cứ: dashboard,\n'
+    '   bộ sinh) — không vá văn bản ở khâu sau → kiểm bằng chốt của chính khâu đó → đạt chuẩn thì khoá (dấu vân tay/chữ\n'
+    '   ký của vai có thẩm quyền) → mới sinh lại và làm khâu kế. Đề tài: chạy `python\n'
+    '   medical-ebm-automation/tools/buoc_dang_mo.py --study <mã>` trước khi sửa tài liệu một cổng; không sửa cổng nằm\n'
+    '   sau khâu cần hoàn thiện; trình MỘT gói ký theo thứ tự; đề cương chấm theo ma trận phần × chuẩn × 8 nguyên tắc\n'
+    '   (`_HOI-DONG-CONG.md` §1c).\n'
+    '6. GIAO SẢN PHẨM, KHÔNG CHIA PHẦN (bác sĩ 22/11/2026 — nhắc lại mỗi lần giao việc): bám nguyên tắc xây hệ, giao\n'
+    '   sản phẩm đúng; đầu ra/báo cáo nói đã giao gì, đạt chuẩn nào, khâu nào đã khoá — KHÔNG viết «phần của bác sĩ»,\n'
+    '   «việc còn lại cho người», «máy không làm thay được»; việc dở thì làm tiếp cho xong. Chữ ký pháp lý không giả\n'
+    '   được ⇒ trình là GÓI KÝ đã chuẩn bị (vai · mục ký · lệnh khoá), không phải danh sách việc treo. Khoá máy-đọc\n'
+    '   (`cho_nguoi`, `con_lai_cho_nguoi`…) giữ nguyên — chỉ đổi lời trình bày.\n'
+    '7. KHÔNG SỔ NỢ (bác sĩ 22/11/2026): không dùng sổ nợ, miễn trừ tay hay bánh cóc «chỉ giảm» để chốt/CI xanh khi\n'
+    '   chuẩn chưa đạt; thiếu mục thì sửa tại nguồn tới 0; chốt đỏ khi thiếu bất kỳ mục nào; sổ nợ cũ chỉ được xoá về 0,\n'
+    '   không ghi thêm, không gia hạn.\n'
+)
+
 BLOCK = f"""
 
 {MARKER}
@@ -71,7 +99,7 @@ khuyến cáo điều trị, an toàn thuốc, thống kê y khoa hoặc tài li
      gắn nhãn `[CẦN...]` khi thiếu dữ liệu, có disclaimer. R14 HARD-RED khi gói CÓ
 {NEW_RUT_BAI}{NEW_BLOCK_LOP2_LINE}2. Nếu còn lỗi đỏ, thiếu nguồn, nghi sai guideline, thiếu cảnh báo nguy cơ hại, hoặc có PII:
    không phát hành như khuyến cáo; trả về dạng `[CẦN BÁC SĨ PHÁN ĐỊNH]` / `[CẦN KIỂM CHỨNG]`.
-{NEW_KET_THUC}"""
+{NEW_KET_THUC_2211}"""
 
 
 def is_agent(path: Path) -> bool:
@@ -86,6 +114,7 @@ THAY_THE: list[tuple[str, str]] = [
     (OLD_BLOCK_LOP2_LINE, NEW_BLOCK_LOP2_LINE),
     (OLD_RUT_BAI, NEW_RUT_BAI),
     (OLD_KET_THUC, NEW_KET_THUC),
+    (NEW_KET_THUC, NEW_KET_THUC_2211),
 ]
 
 
