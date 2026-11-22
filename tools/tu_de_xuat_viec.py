@@ -1630,9 +1630,11 @@ def giac_quan_cafes_agent_an_toan(goc: Path | None = None) -> list[tuple[int, st
                                   f"cần sẽ TỰ ĐO LẠI khi đủ {cs['cafes_cach_ngay_toi_thieu']} ngày từ lượt trước "
                                   "(bác sĩ đã duyệt; ~3 USD)", "python3 tools/api_khi_can.py --chi cafes"))
         else:
+            # 22/11/2026 — bác sĩ: «gọi Claude API khi tôi duyệt» ⇒ chờ lời duyệt trong chat rồi mới gọi.
             viec.append((2, "👤", f"Agent an toàn đã ĐỔI kể từ lượt đo CAFÉ-S {luc[:10]}: {', '.join(doi)} — kết quả đo cũ "
-                                  "không còn nói về agent hiện tại; ước chi phí (miễn phí) rồi đo lại bằng --api (~3 USD)",
-                         "python3 tools/eval/cafes_suite.py --uoc-tinh"))
+                                  "không còn nói về agent hiện tại; CHỜ BÁC SĨ DUYỆT gọi Claude API (~3 USD) — duyệt "
+                                  "trong chat thì Claude chạy lệnh kèm --duyet \"<lời duyệt>\"",
+                         "python3 tools/api_khi_can.py --chay --chi cafes --duyet \"<nguyên văn lời duyệt>\""))
     return viec
 
 
@@ -1642,8 +1644,8 @@ def giac_quan_kiem_may_api(goc_mea: Path | None = None) -> list[tuple[int, str, 
     Đo BTM 17/11: lượt kiểm A12 + phản biện máy chạy 17:59, đề cương sinh lại 20:14 ⇒ cả hai báo cáo đã CŨ mà không ai biết;
     24 + 9 phát hiện chưa ai duyệt ⇒ không biết máy đúng bao nhiêu phần. Giác quan nạp `medical-ebm-automation/tools/
     duyet_kiem_may_api.py` (chỉ thư viện chuẩn, chỉ ĐỌC báo cáo — không gọi API, chi phí bằng 0):
-      • báo cáo CŨ (đề cương đổi sau lượt kiểm) ⇒ 🛎 ưu tiên 2 — hệ chạy lại (~0,15 USD/lượt, dưới ngưỡng ~1 USD phải xin
-        phép của luật dùng API theo tín dụng);
+      • báo cáo CŨ (đề cương đổi sau lượt kiểm) ⇒ 👤 ưu tiên 2 — chờ bác sĩ duyệt gọi API (~0,15 USD/lượt; 22/11/2026
+        bác sĩ: «gọi Claude API khi tôi duyệt» — bỏ ngưỡng «dưới ~1 USD tự chạy»);
       • báo cáo hỏng ⇒ 🛎 ưu tiên 2 — lỗi của hệ, hệ chạy lại;
       • báo cáo còn hiệu lực mà còn mục CHƯA PHÂN XỬ ⇒ 🛎 ưu tiên 3 — agent đối chiếu toàn văn rồi ghi `phan-xu`.
     21/11/2026 — bác sĩ: «không phải tìm và bắt tôi phải đi tìm lại chứng cứ và duyệt lại»; «việc chính của tôi là lấy
@@ -1681,9 +1683,11 @@ def giac_quan_kiem_may_api(goc_mea: Path | None = None) -> list[tuple[int, str, 
                                       "TỰ CHẠY LẠI (bác sĩ đã duyệt; ~0,15 USD)",
                              "python3 tools/api_khi_can.py --chay --chi de_cuong"))
             elif b.get("cu"):
-                viec.append((2, "🛎", f"Kiểm máy API {s}: báo cáo {b['ten']} đã CŨ ({b['ly_do']}) — hệ chạy lại trên đề "
-                                      "cương hiện hành (~0,15 USD) rồi phân xử phần còn lại",
-                             f"cd medical-ebm-automation && python3 tools/{lenh_kiem[b['loai']]} --study {s}  # chạy khô"))
+                # 22/11/2026 — bác sĩ: «gọi Claude API khi tôi duyệt» ⇒ không còn ngưỡng «dưới ~1 USD tự chạy».
+                viec.append((2, "👤", f"Kiểm máy API {s}: báo cáo {b['ten']} đã CŨ ({b['ly_do']}) — CHỜ BÁC SĨ DUYỆT gọi "
+                                      "Claude API chạy lại trên đề cương hiện hành (~0,15 USD); duyệt trong chat thì "
+                                      "Claude chạy lệnh kèm --duyet",
+                             "python3 tools/api_khi_can.py --chay --chi de_cuong --duyet \"<nguyên văn lời duyệt>\""))
             elif b.get("chua_duyet"):
                 viec.append((3, "🛎", f"Kiểm máy API {s}: {b['chua_duyet']}/{b['can_duyet']} phát hiện {b['ten']} chưa được "
                                       "hệ phân xử — agent đối chiếu toàn văn, máy đúng thì sửa đề cương, máy sai thì sửa "
