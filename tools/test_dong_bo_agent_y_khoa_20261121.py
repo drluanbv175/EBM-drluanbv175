@@ -171,3 +171,49 @@ def test_giac_quan_hom_viec_tach_keo_cay(tmp_path):
     def hong(_ten):
         raise OSError("git hỏng")
     assert "2 lệch nội dung" in TD.giac_quan_agent_lech(g, m, doc_origin=hong)[0][1], "đọc origin lỗi ⇒ vẫn báo cần PR cặp"
+
+
+# ── 23/11/2026: --vao (chép vào worktree y khoa ĐANG CÓ) và --sinh-trach-nhiem ──────────────────────────────────────────
+def test_vao_cay_chep_khac_nhau_manifest_sha_khong_commit(tmp_path):
+    goc, mea = _hai_repo(tmp_path, goc={"a.md": "1\n", "b.md": "MOI\n", "chi-goc.md": "x\n"},
+                         mea_origin={"a.md": "1\n", "b.md": "CU\n"})
+    truoc = _g(mea, "rev-parse", "HEAD").strip()
+    ma, dong = D.dong_bo_vao_cay(goc, mea, luc=dt.datetime(2026, 11, 23, 8, 0))
+    assert ma == 0, dong
+    assert (mea / ".claude/agents/b.md").read_text(encoding="utf-8") == "MOI\n"
+    assert not (mea / ".claude/agents/chi-goc.md").exists(), "không thêm agent chỉ có ở gốc"
+    reg = (mea / "runtime/agent_registry.py").read_text(encoding="utf-8")
+    assert SHA_MOI in reg and SHA_CU not in reg and "--vao" in reg
+    assert _g(mea, "rev-parse", "HEAD").strip() == truoc, "KHÔNG commit — người chạy tự commit"
+    assert any("chỉ có ở gốc" in x and "chi-goc.md" in x for x in dong)
+    ma2, dong2 = D.dong_bo_vao_cay(goc, mea)
+    assert ma2 == 0 and "không cần chép" in dong2[0], "chạy lại khi đã khớp ⇒ không ghi gì"
+
+
+def test_vao_cay_chi_chep_ban_head_va_bao_hong_manifest(tmp_path):
+    goc, mea = _hai_repo(tmp_path, goc={"b.md": "HEAD\n"}, mea_origin={"b.md": "CU\n"})
+    (goc / ".claude/agents/b.md").write_text("CHUA-COMMIT\n", encoding="utf-8", newline="\n")
+    ma, dong = D.dong_bo_vao_cay(goc, mea)
+    assert ma == 0 and (mea / ".claude/agents/b.md").read_text(encoding="utf-8") == "HEAD\n"
+    assert any("CHƯA COMMIT" in x for x in dong)
+    (mea / ".claude/agents/b.md").write_text("LECH\n", encoding="utf-8", newline="\n")
+    (mea / "scripts/regenerate_agent_manifest.py").write_text("import sys\nsys.exit(4)\n", encoding="utf-8")
+    ma3, dong3 = D.dong_bo_vao_cay(goc, mea)
+    assert ma3 == 3 and "manifest hỏng" in dong3[0]
+    ma4, dong4 = D.dong_bo_vao_cay(goc, tmp_path / "khong-phai-cay")
+    assert ma4 == 2 and "không phải cây y khoa" in dong4[0]
+
+
+def test_sinh_trach_nhiem_nhac_commit_khi_goc_doi(tmp_path):
+    goc, mea = _hai_repo(tmp_path, goc={"a.md": "1\n"}, mea_origin={"a.md": "1\n"})
+    ma, dong = D.sinh_trach_nhiem(goc, mea)
+    assert ma == 2 and "không có tools/sinh_tai_lieu_trach_nhiem.py" in dong[0]
+    (mea / "tools").mkdir()
+    (mea / "tools/sinh_tai_lieu_trach_nhiem.py").write_text(
+        "import sys\nfrom pathlib import Path\nd = Path(sys.argv[sys.argv.index('--agents-dir') + 1])\n"
+        "(d / 'a.md').write_text('1\\nKHOI MOI\\n', encoding='utf-8')\n", encoding="utf-8")
+    ma2, dong2 = D.sinh_trach_nhiem(goc, mea)
+    assert ma2 == 1 and "commit ở gốc" in dong2[0]
+    _g(goc, "commit", "-qam", "sinh lai khoi")
+    ma3, dong3 = D.sinh_trach_nhiem(goc, mea)
+    assert ma3 == 0 and "đã khớp" in dong3[0], "sinh lại không đổi gì ⇒ mã 0"

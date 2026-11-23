@@ -27,8 +27,12 @@ LÀM GÌ
     nhánh và mở PR bằng `gh`; không có cờ đó thì in lệnh đẩy/mở PR. KHÔNG tự gộp PR. Không chép agent chỉ có ở gốc.
 Nguồn chép là bản ĐÃ COMMIT (HEAD) của checkout gốc — thay đổi chưa commit không bao giờ sang y khoa (có cảnh báo).
 
+  • `--vao <worktree y khoa>` (23/11/2026): chép agent khác nhau vào một worktree y khoa ĐANG CÓ (vd nhánh tích hợp), sinh lại
+    manifest, thay SHA, `--check`; KHÔNG commit. `--sinh-trach-nhiem` chạy trước `tools/sinh_tai_lieu_trach_nhiem.py --ghi` của
+    cây đích vào nguồn agent gốc (khi bảng PHAN_CONG đổi) — gốc có tệp đổi thì dừng, nhắc commit ở gốc rồi chạy lại.
 Dùng:  python3 tools/dong_bo_agent_y_khoa.py                     # báo cáo
        python3 tools/dong_bo_agent_y_khoa.py --ap-dung [--mo-pr]  # dựng PR cặp
+       python3 tools/dong_bo_agent_y_khoa.py --vao ~/.ebm-worktrees/<cây> [--sinh-trach-nhiem]
        python3 tools/dong_bo_agent_y_khoa.py --staged             # chốt pre-commit (chỉ nhắc)
 Mã thoát (báo cáo/--ap-dung): 0 khớp hết / đã dựng xong · 1 còn việc (PR cặp hoặc kéo cây) · 2 không đo được (vắng repo y khoa,
 không đọc được origin) · 3 dựng PR cặp hỏng (manifest/--check/commit).
@@ -242,13 +246,95 @@ def ap_dung(repo: Path, mea: Path, nhanh: str, ten: list[str], *, mo_pr: bool, l
                       " — bác sĩ gộp"]
 
 
+def sinh_trach_nhiem(repo: Path, cay: Path, chay: Callable[..., subprocess.CompletedProcess] = subprocess.run
+                     ) -> tuple[int, list[str]]:
+    """Sinh lại khối trách nhiệm agent (bảng PHAN_CONG của `cay` đổi) VÀO nguồn agent ở gốc, bằng chính
+    `tools/sinh_tai_lieu_trach_nhiem.py` của cây y khoa (23/11/2026). Gốc có tệp đổi ⇒ mã 1 + nhắc COMMIT ở gốc rồi mới
+    chép sang: bản chép luôn lấy HEAD gốc, không lấy thay đổi chưa commit."""
+    cong_cu = cay / "tools" / "sinh_tai_lieu_trach_nhiem.py"
+    if not cong_cu.is_file():
+        return 2, [f"⚪ cây y khoa {cay} không có tools/sinh_tai_lieu_trach_nhiem.py — không sinh được"]
+    r = chay([sys.executable, "-B", str(cong_cu), "--ghi", "--agents-dir", str(repo / THU_MUC_AGENT)],
+             cwd=cay, capture_output=True, text=True)
+    if r.returncode != 0:
+        return 3, [f"✗ sinh khối trách nhiệm hỏng (mã {r.returncode}): {((r.stderr or '') + (r.stdout or '')).strip()[-300:]}"]
+    doi = _git(repo, "status", "--porcelain", "--", THU_MUC_AGENT)[1].decode("utf-8", "replace").strip()
+    if doi:
+        return 1, [f"🟠 đã sinh lại khối trách nhiệm ở gốc: {len(doi.splitlines())} tệp — commit ở gốc rồi chạy lại `--vao`"]
+    return 0, ["✓ khối trách nhiệm agent ở gốc đã khớp bảng phân công của cây y khoa"]
+
+
+def dong_bo_vao_cay(repo: Path, cay: Path, *, luc: dt.datetime | None = None,
+                    chay: Callable[..., subprocess.CompletedProcess] = subprocess.run) -> tuple[int, list[str]]:
+    """Chép agent gốc (bản HEAD) VÀO một worktree y khoa ĐANG CÓ (23/11/2026 — nhánh tích hợp): mọi tệp agent có ở cả hai
+    bên mà khác nhau, rồi sinh lại manifest, thay SHA vào MANIFEST_SELF_CHECK_SHA256, chạy `--check`. KHÔNG commit (người chạy
+    commit cùng thay đổi của mình). Không thêm agent chỉ có ở gốc (đổi số agent là quyết định riêng). Trả (mã, dòng):
+    0 khớp sẵn / đã chép đạt · 2 không đo được · 3 manifest/SHA/--check hỏng."""
+    luc = luc or dt.datetime.now()
+    thu_muc = cay / THU_MUC_AGENT
+    if not thu_muc.is_dir() or not (cay / TEP_REGISTRY).is_file():
+        return 2, [f"⚪ {cay} không phải cây y khoa (thiếu {THU_MUC_AGENT} hoặc {TEP_REGISTRY})"]
+    rc, out = _git(repo, "ls-tree", "--name-only", f"HEAD:{THU_MUC_AGENT}")
+    if rc != 0:
+        return 2, ["⚪ không đọc được danh sách agent ở HEAD gốc"]
+    ten_goc = [x for x in out.decode("utf-8", "replace").split("\n") if x.endswith(".md")]
+    khac, chi_goc = [], []
+    for t in ten_goc:
+        dich = thu_muc / t
+        if not dich.is_file():
+            chi_goc.append(t)
+            continue
+        ban = doc_git(repo, f"HEAD:{THU_MUC_AGENT}/{t}")
+        if ban is not None and ban != dich.read_bytes():
+            khac.append((t, ban))
+    dong = []
+    if _git(repo, "status", "--porcelain", "--", THU_MUC_AGENT)[1].strip():
+        dong.append("  ⚠ agent ở gốc có thay đổi CHƯA COMMIT — không chép; commit ở gốc rồi chạy lại")
+    if chi_goc:
+        dong.append(f"  ⓘ chỉ có ở gốc (không chép): {', '.join(chi_goc)}")
+    if not khac:
+        return 0, ["✓ agent của cây y khoa đã trùng HEAD gốc — không cần chép"] + dong
+    for t, ban in khac:
+        (thu_muc / t).write_bytes(ban)
+    ten = [t for t, _ in khac]
+    r = chay([sys.executable, "-B", "scripts/regenerate_agent_manifest.py", "--write"], cwd=cay, capture_output=True, text=True)
+    m = MAU_SHA_MOI.search(r.stdout or "")
+    if r.returncode != 0 or not m:
+        return 3, [f"✗ sinh lại manifest hỏng (mã {r.returncode}) ở {cay}"] + dong
+    reg = cay / TEP_REGISTRY
+    try:
+        reg.write_text(cap_nhat_sha(reg.read_text(encoding="utf-8"), m.group(1),
+                                    f"{luc:%d/%m/%Y}: chép {len(ten)} agent từ nguồn gốc (tools/dong_bo_agent_y_khoa.py --vao)."),
+                       encoding="utf-8", newline="\n")
+    except ValueError as e:
+        return 3, [f"✗ {e}"] + dong
+    r = chay([sys.executable, "-B", "scripts/regenerate_agent_manifest.py", "--check"], cwd=cay, capture_output=True, text=True)
+    if r.returncode != 0:
+        return 3, [f"✗ regenerate_agent_manifest.py --check KHÔNG đạt ở {cay}"] + dong
+    return 0, [f"✓ đã chép {len(ten)} agent vào {cay}: {', '.join(ten)}; manifest + SHA mới, --check đạt (chưa commit)"] + dong
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description="PR cặp cho agent gốc → bản sao repo y khoa (báo cáo mặc định)")
     ap.add_argument("--nhanh", default=NHANH_Y_KHOA, help="nhánh mặc định của repo y khoa")
     ap.add_argument("--staged", action="store_true", help="chốt pre-commit: chỉ nhắc, luôn mã 0")
     ap.add_argument("--ap-dung", action="store_true", help="dựng PR cặp trong worktree mới")
     ap.add_argument("--mo-pr", action="store_true", help="cùng --ap-dung: đẩy nhánh và mở PR bằng gh")
+    ap.add_argument("--vao", type=Path, default=None,
+                    help="chép agent (HEAD gốc) vào worktree y khoa ĐANG CÓ + manifest + SHA + --check; không commit")
+    ap.add_argument("--sinh-trach-nhiem", action="store_true",
+                    help="cùng --vao: sinh lại khối trách nhiệm agent ở gốc theo PHAN_CONG của cây đích trước khi chép")
     a = ap.parse_args(argv)
+    if a.vao is not None:
+        cay = a.vao.expanduser().resolve()
+        if a.sinh_trach_nhiem:
+            ma, dong = sinh_trach_nhiem(REPO, cay)
+            print("\n".join(dong))
+            if ma != 0:
+                return ma
+        ma, dong = dong_bo_vao_cay(REPO, cay)
+        print("\n".join(dong))
+        return ma
     mea = goc_y_khoa(REPO)
     if a.staged:
         dong = canh_bao_staged(REPO, mea, a.nhanh)
