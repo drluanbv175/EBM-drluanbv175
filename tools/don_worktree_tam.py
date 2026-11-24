@@ -156,7 +156,13 @@ def _repo_chinh(d: Path, chay) -> Path:
         pg = pg.resolve()
     except OSError:
         return d
-    return pg.parent if pg.name == ".git" and pg.parent.is_dir() else d
+    if pg.name == ".git" and pg.parent.is_dir():
+        return pg.parent
+    # B1 (24/11/2026): `.git` dời ra `~/.ebm-git/<tên>.git` ⇒ cha của common dir KHÔNG phải cây chính;
+    # cây chính khai ở config `ebm.cayChinh`. Không có ⇒ giữ hành vi cũ (gỡ từ chính `d`).
+    rc2, out2 = chay(["config", "--get", "ebm.cayChinh"], d)
+    cay = Path((out2 or "").strip()) if rc2 == 0 and (out2 or "").strip() else None
+    return cay if cay is not None and cay.is_dir() else d
 
 
 def don(ten_ds: list[str], goc: str | Path | None = None, ap_dung: bool = False, chay=None) -> dict:

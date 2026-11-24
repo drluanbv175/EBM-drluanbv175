@@ -50,6 +50,28 @@ for _s in (sys.stdout, sys.stderr):
         pass
 
 
+def _goc_cay_chinh(git_common_dir: Path, here: Path) -> Path | None:
+    """Gốc cây CHÍNH suy từ ``--git-common-dir`` — chịu được ``.git`` nằm NGOÀI cây.
+
+    Thường common dir là ``<cây chính>/.git`` ⇒ cây chính là thư mục cha. Phương án B1
+    (24/11/2026, ``audit/KE-HOACH-DUA-GIT-RA-KHOI-ONEDRIVE_20261122.md``) dời ``.git`` ra
+    ``~/.ebm-git/<tên>.git`` để OneDrive thôi thấy git xoá tệp; khi đó cha của common dir là
+    ``~/.ebm-git`` — KHÔNG phải cây chính (lấy nhầm ⇒ nối ``sync/skills`` không tồn tại cho mọi
+    phiên). Cây chính lúc ấy khai trong config ``ebm.cayChinh`` của repo. Không xác định được ⇒ None.
+    """
+    if git_common_dir.name == ".git":
+        return git_common_dir.parent
+    try:
+        r = subprocess.run(
+            ["git", "-C", str(here), "config", "--get", "ebm.cayChinh"],
+            capture_output=True, text=True, timeout=10, encoding="utf-8", errors="replace",
+        )
+    except (OSError, subprocess.SubprocessError, ValueError):
+        return None
+    cay = Path(r.stdout.strip()) if r.returncode == 0 and r.stdout.strip() else None
+    return cay if cay is not None and cay.is_dir() else None
+
+
 def _resolve_repo_root(start_dir: Path | None = None) -> Path:
     """Tìm gốc repo CHÍNH, không phải nơi file này đang nằm.
 
@@ -79,7 +101,9 @@ def _resolve_repo_root(start_dir: Path | None = None) -> Path:
         )
         git_common_dir = Path(result.stdout.strip())
         if git_common_dir.is_dir():
-            return git_common_dir.parent
+            goc = _goc_cay_chinh(git_common_dir, here)
+            if goc is not None:
+                return goc
     except (OSError, subprocess.SubprocessError, ValueError):
         pass
     return here.parent
