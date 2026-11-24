@@ -52,6 +52,22 @@ for _s in (sys.stdout, sys.stderr):
     except (AttributeError, ValueError):
         pass
 
+def _goc_cay_chinh(git_common_dir: Path, here: Path) -> Path | None:
+    """Gốc cây CHÍNH từ common dir — chịu được `.git` nằm NGOÀI cây (B1, 24/11/2026: `~/.ebm-git/<tên>.git`).
+
+    Common dir tên `.git` ⇒ thư mục cha. Khác (đã dời ra ngoài) ⇒ config `ebm.cayChinh` của repo; không có ⇒ None.
+    Lấy cha của `~/.ebm-git/<tên>.git` là SAI cây ⇒ đọc sổ khai plugin không tồn tại rồi áp lên trạng thái dùng chung."""
+    if git_common_dir.name == ".git":
+        return git_common_dir.parent
+    try:
+        r = subprocess.run(["git", "-C", str(here), "config", "--get", "ebm.cayChinh"],
+                           capture_output=True, text=True, timeout=10, encoding="utf-8", errors="replace")
+    except (OSError, subprocess.SubprocessError, ValueError):
+        return None
+    cay = Path(r.stdout.strip()) if r.returncode == 0 and r.stdout.strip() else None
+    return cay if cay is not None and cay.is_dir() else None
+
+
 def _resolve_repo_root(start_dir: Path | None = None) -> Path:
     """Tìm gốc repo CHÍNH — cùng cơ chế/lý do đã vá ở
     `tools/dong_bo_skill_claude_codex.py` (08/09/2026): công cụ này CŨNG đọc
@@ -70,7 +86,9 @@ def _resolve_repo_root(start_dir: Path | None = None) -> Path:
         )
         git_common_dir = Path(result.stdout.strip())
         if git_common_dir.is_dir():
-            return git_common_dir.parent
+            goc = _goc_cay_chinh(git_common_dir, here)
+            if goc is not None:
+                return goc
     except (OSError, subprocess.SubprocessError, ValueError):
         pass
     return here.parent

@@ -109,6 +109,22 @@ if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
 
 
+def _goc_cay_chinh(common: Path, here: Path) -> Path | None:
+    """Gốc cây CHÍNH từ common dir — chịu được `.git` nằm NGOÀI cây (B1, 24/11/2026: `~/.ebm-git/<tên>.git`).
+
+    Common dir tên `.git` ⇒ thư mục cha. Khác (đã dời ra ngoài) ⇒ config `ebm.cayChinh` của repo; không có ⇒ None.
+    Cùng cách với `dong_bo_skill_claude_codex._goc_cay_chinh` — lấy cha của `~/.ebm-git/<tên>.git` là SAI cây."""
+    if common.name == ".git":
+        return common.parent
+    try:
+        r = subprocess.run(["git", "-C", str(here), "config", "--get", "ebm.cayChinh"],
+                           capture_output=True, text=True, timeout=10, encoding="utf-8", errors="replace")
+    except (OSError, subprocess.SubprocessError, ValueError):
+        return None
+    cay = Path(r.stdout.strip()) if r.returncode == 0 and r.stdout.strip() else None
+    return cay if cay is not None and cay.is_dir() else None
+
+
 def goc_repo_chinh(tu: Path | None = None) -> Path:
     """Gốc repo CHÍNH — không phải git worktree phụ đang chứa file này.
 
@@ -131,7 +147,9 @@ def goc_repo_chinh(tu: Path | None = None) -> Path:
         )
         common = Path(r.stdout.strip())
         if common.is_dir():
-            return common.parent
+            goc = _goc_cay_chinh(common, here)
+            if goc is not None:
+                return goc
     except (OSError, subprocess.SubprocessError, ValueError):
         pass
     return here.parent

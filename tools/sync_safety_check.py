@@ -277,11 +277,27 @@ def check_conflict_copies() -> tuple[str, list[str]]:
     return ("GREEN", [])
 
 
+def _thu_muc_git_that(cay: Path) -> Path:
+    """Thư mục git THẬT của cây: `.git` là thư mục ⇒ chính nó; `.git` là TỆP «gitdir: …» (B1, 24/11/2026: `.git` dời ra
+    `~/.ebm-git/<tên>.git` ngoài OneDrive) ⇒ đích của nó. Không vậy thì `.git/index.lock` thành đường dẫn xuyên qua một
+    TỆP ⇒ `.exists()` luôn False ⇒ chốt khoá/merge dở âm thầm thành xanh giả."""
+    g = cay / ".git"
+    if g.is_file():
+        try:
+            dong = g.read_text(encoding="utf-8", errors="replace").strip()
+        except OSError:
+            return g
+        if dong.startswith("gitdir:"):
+            dich = Path(dong[len("gitdir:"):].strip())
+            return dich if dich.is_absolute() else (cay / dich)
+    return g
+
+
 def check_git_health() -> tuple[str, list[str]]:
     """Kiểm 2 repo lồng: HEAD giải được, status chạy được (không treo), không khóa/merge dở."""
     notes, worst = [], "GREEN"
     for rel, repo in GIT_REPOS:
-        gdir = repo / ".git"
+        gdir = _thu_muc_git_that(repo)
         if not gdir.exists():
             notes.append(f"[{rel}] không phải git repo (bỏ qua)")
             continue

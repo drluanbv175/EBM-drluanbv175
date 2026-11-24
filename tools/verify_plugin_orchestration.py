@@ -70,7 +70,24 @@ def cac_goc_worktree_git(root: Path) -> list[Path]:
         for dong in ra.stdout.splitlines()
         if dong.startswith("worktree ")
     ]
+    # B1 (24/11/2026): `.git` dời ra `~/.ebm-git/<tên>.git` ⇒ git in DÒNG ĐẦU là chính thư mục `.git` bên ngoài
+    # (git suy cây chính bằng cách bỏ đuôi `/.git` của common dir). Cây làm việc chính thật khai ở `ebm.cayChinh`.
+    if goc and not (goc[0] / ".git").exists():
+        chinh = _cay_chinh_khai_bao(root)
+        if chinh is not None:
+            goc[0] = chinh
     return goc or [root]
+
+
+def _cay_chinh_khai_bao(root: Path) -> Path | None:
+    """Cây làm việc chính khai trong config `ebm.cayChinh` (chỉ có khi `.git` đã dời ra ngoài cây); không có ⇒ None."""
+    try:
+        r = subprocess.run(["git", "config", "--get", "ebm.cayChinh"], cwd=root, capture_output=True, text=True,
+                           encoding="utf-8", errors="replace", timeout=10)
+    except (OSError, subprocess.SubprocessError):
+        return None
+    cay = Path(r.stdout.strip()) if r.returncode == 0 and r.stdout.strip() else None
+    return cay if cay is not None and cay.is_dir() else None
 
 
 def kiem_router_runtime_va_zip(

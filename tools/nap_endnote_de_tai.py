@@ -414,7 +414,12 @@ def _goi_y_cay_chinh() -> str:
                             capture_output=True, text=True, encoding="utf-8", timeout=15)
         chung = Path(kq.stdout.strip())
         chinh = chung.parent
-        if (kq.returncode == 0 and chung.name == ".git" and chinh.resolve() != ROOT.resolve()
+        if kq.returncode == 0 and chung.name != ".git":
+            # B1 (24/11/2026): `.git` dời ra `~/.ebm-git/<tên>.git` ⇒ cây chính khai ở config `ebm.cayChinh`.
+            kc = subprocess.run(["git", "-C", str(ROOT), "config", "--get", "ebm.cayChinh"],
+                                capture_output=True, text=True, encoding="utf-8", timeout=15)
+            chinh = Path(kc.stdout.strip()) if kc.returncode == 0 and kc.stdout.strip() else chinh
+        if (kq.returncode == 0 and chinh.resolve() != ROOT.resolve()
                 and (chinh / "EBM-Dashboards" / "toan_van_oa").is_dir()):
             return f" Cây này là worktree — chạy lại lệnh từ cây chính {chinh}."
     except (OSError, ValueError, subprocess.SubprocessError):
